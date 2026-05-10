@@ -19,71 +19,97 @@ function SimulinkBatchModifierGUI_V21()
 % --- 初始化主窗口和数据结构 ---
 app = struct();
 app.UIFigure = uifigure('Name', 'Simulink 批量修改与接口工具 V20.2.20 (终极版)', ...
-    'Position', [100 100 1000, 650], ...
+    'Position', [80 60 1280 820], ...
     'Visible', 'off');
 createComponents();
 app.UIFigure.Visible = 'on';
 
 %% %%%%%%%%%%%%%%%%%%%%% UI组件创建函数 (内嵌) %%%%%%%%%%%%%%%%%%%%%%%%%%
     function createComponents()
-        uibutton(app.UIFigure, 'push', 'Text', '选择模型文件...', 'Position', [20, 600, 120, 30], 'ButtonPushedFcn', @SelectModelButtonPushed);
-        app.ModelPathField = uieditfield(app.UIFigure, 'text', 'Editable', 'off', 'Position', [150, 600, 650, 30]);
+        uibutton(app.UIFigure, 'push', 'Text', '选择模型文件...', 'Position', [20, 770, 120, 30], 'ButtonPushedFcn', @SelectModelButtonPushed);
+        app.ModelPathField = uieditfield(app.UIFigure, 'text', 'Editable', 'off', 'Position', [150, 770, 1110, 30]);
 
         % --- 功能1面板，增加批量模式控件 ---
-        app.Function1Panel = uipanel(app.UIFigure, 'Title', '功能1: 名称批量修改 (不区分大小写)', 'Position', [20, 420, 380, 170]);
-        app.EnableF1CheckBox = uicheckbox(app.Function1Panel, 'Text', '启用此功能', 'Position', [15, 124, 100, 22], 'Value', true);
+        app.Function1Panel = uipanel(app.UIFigure, 'Title', '功能1: 名称批量修改 (不区分大小写)', 'Position', [20, 363, 500, 392]);
+        app.EnableF1CheckBox = uicheckbox(app.Function1Panel, 'Text', '启用此功能', 'Position', [15, 360, 100, 22], 'Value', true, 'Visible', 'off');
 
         % 批量模式开关
         app.BatchModeCheckBox = uicheckbox(app.Function1Panel, 'Text', '批量模式 (从Excel加载多组规则)', ...
-            'Position', [120, 124, 250, 22], 'Value', false, 'ValueChangedFcn', @BatchModeToggled);
+            'Position', [18, 342, 320, 22], 'Value', false, 'ValueChangedFcn', @BatchModeToggled);
 
-        modePanel = uipanel(app.Function1Panel, 'Title', '修改模式', 'Position', [15, 65, 350, 60]);
-        bg = uibuttongroup(modePanel, 'Position', [1, 1, 348, 58]);
+        modePanel = uipanel(app.Function1Panel, 'Title', '修改模式', 'Position', [18, 264, 464, 64]);
+        bg = uibuttongroup(modePanel, 'BorderType', 'none', 'Position', [1, 1, 462, 44]);
         app.PrefixModeButton = uiradiobutton(bg, 'Text', '① 前缀修改', 'Position', [10, 10, 120, 22], 'Value', true);
-        app.KeywordModeButton = uiradiobutton(bg, 'Text', '② 关键词修改', 'Position', [220, 10, 120, 22]);
+        app.KeywordModeButton = uiradiobutton(bg, 'Text', '② 关键词修改', 'Position', [260, 10, 120, 22]);
 
         % 单条模式输入框
-        app.SingleOldLabel = uilabel(app.Function1Panel, 'Text', '原前缀/关键词', 'Position', [15, 30, 90, 22]);
-        app.OldStringField = uieditfield(app.Function1Panel, 'text', 'Position', [110, 30, 255, 22]);
-        app.SingleNewLabel = uilabel(app.Function1Panel, 'Text', '新前缀/关键词', 'Position', [15, 5, 90, 22]);
-        app.NewStringField = uieditfield(app.Function1Panel, 'text', 'Position', [110, 5, 255, 22]);
+        app.SingleOldLabel = uilabel(app.Function1Panel, 'Text', '原前缀/关键词', 'Position', [18, 220, 100, 22]);
+        app.OldStringField = uieditfield(app.Function1Panel, 'text', 'Position', [125, 220, 357, 22]);
+        app.SingleNewLabel = uilabel(app.Function1Panel, 'Text', '新前缀/关键词', 'Position', [18, 188, 100, 22]);
+        app.NewStringField = uieditfield(app.Function1Panel, 'text', 'Position', [125, 188, 357, 22]);
 
         % 批量模式控件 (初始隐藏)
         app.BatchFileButton = uibutton(app.Function1Panel, 'push', 'Text', '选择批量Excel...', ...
-            'Position', [15, 30, 120, 22], 'ButtonPushedFcn', @SelectBatchExcelButtonPushed, 'Visible', 'off');
+            'Position', [18, 220, 120, 22], 'ButtonPushedFcn', @SelectBatchExcelButtonPushed, 'Visible', 'off');
         app.BatchFilePathField = uieditfield(app.Function1Panel, 'text', 'Editable', 'off', ...
-            'Position', [140, 30, 225, 22], 'Visible', 'off');
+            'Position', [145, 220, 337, 22], 'Visible', 'off');
         app.BatchRuleCountLabel = uilabel(app.Function1Panel, 'Text', '已加载 0 条规则', ...
-            'Position', [15, 5, 200, 22], 'Visible', 'off', 'FontColor', [0 0.5 0]);
+            'Position', [18, 188, 220, 22], 'Visible', 'off', 'FontColor', [0 0.5 0]);
 
+        scopePanel = uipanel(app.Function1Panel, 'Title', '改名范围', 'Position', [18, 8, 464, 170]);
+        app.EnableSignalRenameCheckBox = uicheckbox(scopePanel, 'Text', '信号名', ...
+            'Position', [12, 120, 80, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+        app.EnableParameterRenameCheckBox = uicheckbox(scopePanel, 'Text', '参数名', ...
+            'Position', [12, 18, 80, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+        app.EnableInOutCheckBox = uicheckbox(scopePanel, 'Text', 'In/Out模块', ...
+            'Position', [38, 96, 130, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+        app.EnableLineCheckBox = uicheckbox(scopePanel, 'Text', '信号线', ...
+            'Position', [250, 96, 90, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+        app.EnableGotoFromCheckBox = uicheckbox(scopePanel, 'Text', 'Goto/From内容', ...
+            'Position', [38, 62, 130, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+        app.EnableStateflowCheckBox = uicheckbox(scopePanel, 'Text', 'Stateflow', ...
+            'Position', [250, 62, 100, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
         % 初始化批量数据结构
         app.BatchMode = false;
         app.BatchRenameRules = {};  % cell of struct('old','new')
 
         % --- 其余面板保持不变 ---
-        app.Function2Panel = uipanel(app.UIFigure, 'Title', '功能2: 名称规范检查及修正', 'Position', [20, 255, 380, 155]);
-        app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', '启用此功能 (名称规范化)', 'Position', [15, 110, 350, 22], 'Value', true);
-        uilabel(app.Function2Panel, 'Text', '说明:该功能只会对执行功能1的名称进行规范化检查及修正', 'Position', [25, 85, 340, 18], 'FontColor', [0.6 0.6 0.6]);
-        uilabel(app.Function2Panel, 'Text', '· 信号名称首段大写，次段首字母大写，其余小写', 'Position', [25, 60, 340, 22]);
-        uilabel(app.Function2Panel, 'Text', '· 标定量全部大写', 'Position', [25, 35, 340, 22]);
-        app.EnableFamilySepCheckBox = uicheckbox(app.Function2Panel, 'Text', '自动检索fl\fr\rl\rr，frle\frri\rele\reri，fa\ra并分离', 'Position', [25, 10, 350, 22], 'Value', true);
+        app.Function2Panel = uipanel(app.UIFigure, 'Title', '功能2: 名称规范检查及修正', 'Position', [20, 223, 500, 130]);
+        app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', '启用此功能 (名称规范化)', 'Position', [15, 80, 350, 22], 'Value', true);
+        uilabel(app.Function2Panel, 'Text', '说明: 仅对功能1实际改动过的名称进行规范化修正。', 'Position', [25, 58, 430, 18], 'FontColor', [0 0 0]);
+        uilabel(app.Function2Panel, 'Text', '· 信号名称: 首段大写，次段首字母大写，其余小写', 'Position', [25, 38, 430, 18], 'FontColor', [0 0 0]);
+        uilabel(app.Function2Panel, 'Text', '· 参数名称: 全部转为大写，并移除空格', 'Position', [25, 16, 430, 18], 'FontColor', [0 0 0]);
 
-        app.ExcelPanel = uipanel(app.UIFigure, 'Title', '功能3: 配套Interface Excel修改', 'Position', [20, 160, 380, 85]);
-        app.EnableExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', '启用Excel修改功能', 'Position', [15, 35, 350, 22], 'Enable', 'off');
-        app.ExcelStatusLabel = uilabel(app.ExcelPanel, 'Text', '请先选择模型文件...', 'Position', [15, 10, 350, 22], 'HorizontalAlignment', 'center', 'FontWeight', 'bold');
+        app.ExcelPanel = uipanel(app.UIFigure, 'Title', '功能3: 配套Interface Excel修改', 'Position', [20, 55, 500, 158]);
+        app.EnableExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', '启用Excel修改功能', 'Position', [15, 106, 160, 22], 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+        app.ExcelStatusLabel = uilabel(app.ExcelPanel, 'Text', '请先选择模型文件...', 'Position', [190, 106, 295, 22], 'HorizontalAlignment', 'left', 'FontWeight', 'bold');
+        app.EnableInOutExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'IN/OUT (随In/Out模块)', ...
+            'Position', [15, 78, 170, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+        uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 IN / OUT sheet', ...
+            'Position', [210, 78, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
+        app.EnableMpExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'MP (随信号线)', ...
+            'Position', [15, 50, 130, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+        uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 MP sheet', ...
+            'Position', [210, 50, 255, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
+        app.EnableCalNvvExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'CAL/NVV (随参数名)', ...
+            'Position', [15, 20, 180, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+        uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 CAL / NVV sheet', ...
+            'Position', [210, 20, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
+        app.ExcelScopeHintLabel = uilabel(app.ExcelPanel, 'Text', '提示: 先选择模型并启用功能3后，附属Excel选项才可勾选', ...
+            'Position', [15, 130, 470, 18], 'HorizontalAlignment', 'right', 'FontSize', 10, 'FontColor', [0.6 0.6 0.6], 'Visible', 'off');
 
-        app.RunButton = uibutton(app.UIFigure, 'push', 'Text', '开始执行', 'Position', [20, 110, 380, 40], 'FontSize', 14, 'FontWeight', 'bold', 'ButtonPushedFcn', @RunButtonPushed, 'Enable', 'off');
+        app.ProgressBar = uigauge(app.UIFigure, 'linear', 'Position', [20, 12, 990, 34]);
+        app.ProgressBar.Limits = [0 100];
+        app.ProgressBar.Value = 0;
+        app.ProgressBar.MajorTicks = [0 25 50 75 100];
+        app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [1012, 18, 50, 22], 'Text', '0%');
+        app.RunButton = uibutton(app.UIFigure, 'push', 'Text', '开始执行', 'Position', [1068, 8, 192, 42], 'FontSize', 14, 'FontWeight', 'bold', 'ButtonPushedFcn', @RunButtonPushed, 'Enable', 'off');
 
-        app.LogArea = uitextarea(app.UIFigure, 'Editable', 'off', 'Position', [420, 235, 560, 395], 'Value', '');
-        learnedPanel = uipanel(app.UIFigure, 'Title', '预处理记忆库', 'Position', [420, 20, 560, 205]);
-        app.LearnedArea = uitextarea(learnedPanel, 'Editable', 'off', 'Position', [10, 35, 540, 155], 'Value', '');
-        uibutton(learnedPanel, 'push', 'Text', 'Clear', 'Position', [490, 5, 60, 22], 'ButtonPushedFcn', @ClearLearnedMapButtonPushed);
+        app.LogArea = uitextarea(app.UIFigure, 'Editable', 'off', 'Position', [540, 55, 720, 700], 'Value', '');
 
-        app.ProgressBar = uigauge(app.UIFigure, 'semicircular', 'Position', [20, 20, 180, 80]);
-        app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [220, 50, 160, 22], 'Text', '进度: 0%');
         app.ModelPath = ''; app.ExcelPath = ''; app.TotalSteps = 0; app.CurrentStep = 0;
         app.DetailedLog = {};
-        app.LearnedMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
+        refreshScopeControls();
     end
 
 % --- 批量模式开关回调 ---
@@ -105,6 +131,69 @@ app.UIFigure.Visible = 'on';
             app.BatchFileButton.Visible = 'off';
             app.BatchFilePathField.Visible = 'off';
             app.BatchRuleCountLabel.Visible = 'off';
+        end
+    end
+
+    function ScopeSelectionChanged(~, ~)
+        refreshScopeControls();
+    end
+
+    function refreshScopeControls()
+        signalEnabled = app.EnableSignalRenameCheckBox.Value;
+        hasExcelCapability = strcmp(app.EnableExcelCheckBox.Enable, 'on');
+        excelEnabled = hasExcelCapability && app.EnableExcelCheckBox.Value;
+
+        app.EnableInOutCheckBox.Enable = onOff(signalEnabled);
+        app.EnableLineCheckBox.Enable = onOff(signalEnabled);
+        app.EnableGotoFromCheckBox.Enable = onOff(signalEnabled);
+        app.EnableStateflowCheckBox.Enable = onOff(signalEnabled);
+
+        app.EnableInOutExcelCheckBox.Enable = 'off';
+        app.EnableMpExcelCheckBox.Enable = 'off';
+        app.EnableCalNvvExcelCheckBox.Enable = 'off';
+
+        if ~hasExcelCapability
+            app.ExcelScopeHintLabel.Text = '提示: 先选择模型并找到配套Excel后，附属Excel选项才可勾选';
+        elseif ~excelEnabled
+            app.ExcelScopeHintLabel.Text = '提示: 启用功能3后，附属Excel选项才可勾选';
+        elseif signalEnabled && app.EnableInOutCheckBox.Value
+            app.EnableInOutExcelCheckBox.Enable = 'on';
+        end
+
+        if excelEnabled && signalEnabled && app.EnableLineCheckBox.Value
+            app.EnableMpExcelCheckBox.Enable = 'on';
+        end
+
+        if excelEnabled && app.EnableParameterRenameCheckBox.Value
+            app.EnableCalNvvExcelCheckBox.Enable = 'on';
+        end
+
+        if excelEnabled
+            % 保留用户当前勾选，仅通过 Enable 状态控制是否可选。
+        end
+
+        if excelEnabled
+            if signalEnabled && app.EnableInOutCheckBox.Value
+                if signalEnabled && app.EnableLineCheckBox.Value
+                    if app.EnableParameterRenameCheckBox.Value
+                        app.ExcelScopeHintLabel.Text = '提示: 可单独取消附属Excel选项，只改模型不改对应Excel';
+                    else
+                        app.ExcelScopeHintLabel.Text = '提示: 参数名未启用，CAL/NVV不会同步修改';
+                    end
+                else
+                    app.ExcelScopeHintLabel.Text = '提示: 信号线未启用，MP不会同步修改';
+                end
+            else
+                app.ExcelScopeHintLabel.Text = '提示: In/Out模块未启用，IN/OUT不会同步修改';
+            end
+        end
+    end
+
+    function value = onOff(flag)
+        if flag
+            value = 'on';
+        else
+            value = 'off';
         end
     end
 
@@ -208,6 +297,8 @@ app.UIFigure.Visible = 'on';
             app.EnableExcelCheckBox.Value = false;
             log('提示: 未在模型目录下找到配套的Excel文件，将仅处理模型。');
         end
+
+        refreshScopeControls();
     end
 
     function RunButtonPushed(~, ~)
@@ -215,6 +306,9 @@ app.UIFigure.Visible = 'on';
         if ~app.EnableF1CheckBox.Value && ~app.EnableF2CheckBox.Value, msgbox('请至少启用一个功能！', '提示'); return; end
         if app.EnableF1CheckBox.Value && app.BatchMode && isempty(app.BatchRenameRules)
             errordlg('批量模式已启用但未加载有效规则，请先选择批量Excel文件。', '错误'); return;
+        end
+        if app.EnableF1CheckBox.Value && ~hasAnyEnabledRenameScope()
+            errordlg('请至少勾选一个改名范围。', '错误'); return;
         end
 
         app.RunButton.Enable = 'off'; app.LogArea.Value = ''; app.DetailedLog = {};
@@ -256,17 +350,14 @@ app.UIFigure.Visible = 'on';
             for i = 1:length(allSfObjects), if isprop(allSfObjects(i), 'Path') && ~isempty(allSfObjects(i).Path), validSfObjects{end+1} = allSfObjects(i); sfDepths(end+1) = length(strfind(allSfObjects(i).Path, '/')); end, end
             [~, sortedIdx] = sort(sfDepths, 'descend'); sortedSfObjects = validSfObjects(sortedIdx);
 
-            log('构建方向信号家族命名映射表 (如果已启用)...', false);
-            directionalRenameMap = buildDirectionalRenameMap(sortedBlockHandles, allLineHandles, sortedSfObjects);
-
             app.TotalSteps = excelSteps + length(sortedBlockHandles) + length(allLineHandles) + length(sortedSfObjects);
             log(['预计总步骤: ' num2str(app.TotalSteps)]);
 
             if app.EnableExcelCheckBox.Value && ~isempty(app.ExcelPath)
-                processExcelFile(newExcelPath, directionalRenameMap);
+                processExcelFile(newExcelPath);
             end
 
-            processAllObjects(sortedBlockHandles, allLineHandles, sortedSfObjects, directionalRenameMap);
+            processAllObjects(sortedBlockHandles, allLineHandles, sortedSfObjects);
 
             log('所有任务执行完毕，正在保存...');
             allLoadedModels = find_system('SearchDepth', 0, 'Type', 'block_diagram');
@@ -295,30 +386,118 @@ app.UIFigure.Visible = 'on';
         app.RunButton.Enable = 'on';
     end
 
+    function tf = hasAnyEnabledRenameScope()
+        tf = isSignalScopeEnabled('inout') || isSignalScopeEnabled('line') || ...
+            isSignalScopeEnabled('gotofrom') || isSignalScopeEnabled('stateflow') || ...
+            app.EnableParameterRenameCheckBox.Value;
+    end
+
+    function tf = isSignalScopeEnabled(scopeName)
+        if ~app.EnableSignalRenameCheckBox.Value
+            tf = false;
+            return;
+        end
+
+        switch lower(scopeName)
+            case 'inout'
+                tf = app.EnableInOutCheckBox.Value;
+            case 'line'
+                tf = app.EnableLineCheckBox.Value;
+            case 'gotofrom'
+                tf = app.EnableGotoFromCheckBox.Value;
+            case 'stateflow'
+                tf = app.EnableStateflowCheckBox.Value;
+            otherwise
+                tf = false;
+        end
+    end
+
+    function tf = shouldProcessExcelSheet(sheetName)
+        if ~app.EnableExcelCheckBox.Value
+            tf = false;
+            return;
+        end
+
+        switch upper(sheetName)
+            case {'IN', 'OUT'}
+                tf = isSignalScopeEnabled('inout') && app.EnableInOutExcelCheckBox.Value;
+            case 'MP'
+                tf = isSignalScopeEnabled('line') && app.EnableMpExcelCheckBox.Value;
+            case {'CAL', 'NVV'}
+                tf = app.EnableParameterRenameCheckBox.Value && app.EnableCalNvvExcelCheckBox.Value;
+            otherwise
+                tf = false;
+        end
+    end
+
 % ############# START: MODIFIED FUNCTION #############
-    function processAllObjects(blockHandles, lineHandles, sfObjects, directionalRenameMap)
+    function processAllObjects(blockHandles, lineHandles, sfObjects)
         log('--- 开始单遍处理所有Simulink对象 ---');
         for i = 1:length(blockHandles)
             handle = blockHandles(i); linkStatus = get_param(handle, 'LinkStatus');
             if ~strcmpi(linkStatus, 'none'), updateProgress(); continue; end
             blockType = get_param(handle, 'BlockType');
+
             if contains(blockType, 'Lookup')
-                finalTableName = '';
-                try, originalTableParam = get_param(handle, 'Table'); if ischar(originalTableParam) && ~isempty(originalTableParam), finalTableName = calculateFinalName(originalTableParam, 'parameter', directionalRenameMap); if ~strcmp(originalTableParam, finalTableName), set_param(handle, 'Table', finalTableName); logDetail(sprintf('Block Param (Table): "%s" -> "%s"', originalTableParam, finalTableName)); end, end, catch, end
-                originalName = get_param(handle, 'Name'); if ~isempty(finalTableName) && ~strcmp(originalName, finalTableName), safeSetParam(handle, 'Name', finalTableName); end
-                otherParams = {'BreakpointsForDimension1', 'BreakpointsForDimension2', 'BreakpointsForDimension3'};
-                for p_idx = 1:length(otherParams)
-                    try, originalParam = get_param(handle, otherParams{p_idx}); if ischar(originalParam) && ~isempty(originalParam), finalParam = calculateFinalName(originalParam, 'parameter', directionalRenameMap); if ~strcmp(originalParam, finalParam), set_param(handle, otherParams{p_idx}, finalParam); logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam)); end, end, catch, end
+                if app.EnableParameterRenameCheckBox.Value
+                    try
+                        originalTableParam = get_param(handle, 'Table');
+                        if ischar(originalTableParam) && ~isempty(originalTableParam)
+                            finalTableParam = calculateFinalName(originalTableParam, 'parameter');
+                            if ~strcmp(originalTableParam, finalTableParam)
+                                set_param(handle, 'Table', finalTableParam);
+                                logDetail(sprintf('Block Param (Table): "%s" -> "%s"', originalTableParam, finalTableParam));
+                            end
+                        end
+                    catch
+                    end
+
+                    otherParams = {'BreakpointsForDimension1', 'BreakpointsForDimension2', 'BreakpointsForDimension3'};
+                    for p_idx = 1:length(otherParams)
+                        try
+                            originalParam = get_param(handle, otherParams{p_idx});
+                            if ischar(originalParam) && ~isempty(originalParam)
+                                finalParam = calculateFinalName(originalParam, 'parameter');
+                                if ~strcmp(originalParam, finalParam)
+                                    set_param(handle, otherParams{p_idx}, finalParam);
+                                    logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam));
+                                end
+                            end
+                        catch
+                        end
+                    end
                 end
             else
-                originalName = get_param(handle, 'Name'); finalName = calculateFinalName(originalName, 'signal', directionalRenameMap);
-                if ~strcmp(originalName, finalName), safeSetParam(handle, 'Name', finalName); end
-                paramsToModify = {}; paramType = 'parameter';
-                if strcmp(blockType, 'Constant'), paramsToModify = {'Value'};
-                elseif any(strcmp(blockType, {'Goto', 'From'})), paramsToModify = {'GotoTag'}; paramType = 'signal';
+                if isSignalScopeEnabled('inout') && any(strcmp(blockType, {'Inport', 'Outport'}))
+                    originalName = get_param(handle, 'Name');
+                    finalName = calculateFinalName(originalName, 'signal');
+                    if ~strcmp(originalName, finalName)
+                        safeSetParam(handle, 'Name', finalName);
+                    end
                 end
+
+                paramsToModify = {};
+                paramType = '';
+                if app.EnableParameterRenameCheckBox.Value && strcmp(blockType, 'Constant')
+                    paramsToModify = {'Value'};
+                    paramType = 'parameter';
+                elseif isSignalScopeEnabled('gotofrom') && any(strcmp(blockType, {'Goto', 'From'}))
+                    paramsToModify = {'GotoTag'};
+                    paramType = 'signal';
+                end
+
                 for p_idx = 1:length(paramsToModify)
-                    try, originalParam = get_param(handle, paramsToModify{p_idx}); if ischar(originalParam) && ~isempty(originalParam), finalParam = calculateFinalName(originalParam, paramType, directionalRenameMap); if ~strcmp(originalParam, finalParam), set_param(handle, paramsToModify{p_idx}, finalParam); logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam)); end, end, catch, end
+                    try
+                        originalParam = get_param(handle, paramsToModify{p_idx});
+                        if ischar(originalParam) && ~isempty(originalParam)
+                            finalParam = calculateFinalName(originalParam, paramType);
+                            if ~strcmp(originalParam, finalParam)
+                                set_param(handle, paramsToModify{p_idx}, finalParam);
+                                logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam));
+                            end
+                        end
+                    catch
+                    end
                 end
             end
             updateProgress();
@@ -326,6 +505,11 @@ app.UIFigure.Visible = 'on';
 
         for i = 1:length(lineHandles)
             handle = lineHandles(i);
+
+            if ~isSignalScopeEnabled('line')
+                updateProgress();
+                continue;
+            end
 
             % --- 安全修复: 检查信号线是否连接到总线模块 ---
             isBusLine = false;
@@ -367,7 +551,7 @@ app.UIFigure.Visible = 'on';
 
             originalName = get_param(handle, 'Name');
             if ~isempty(originalName)
-                finalName = calculateFinalName(originalName, 'signal', directionalRenameMap);
+                finalName = calculateFinalName(originalName, 'signal');
                 if ~strcmp(originalName, finalName)
                     safeSetParam(handle, 'Name', finalName);
                 end
@@ -377,14 +561,37 @@ app.UIFigure.Visible = 'on';
 
         for i = 1:length(sfObjects)
             sfObj = sfObjects{i};
-            if isprop(sfObj, 'Name') && ~isempty(sfObj.Name), originalName = sfObj.Name; finalName = calculateFinalName(originalName, 'signal', directionalRenameMap); if ~strcmp(originalName, finalName), safeSetSfName(sfObj, finalName); end, end
-            if isprop(sfObj, 'LabelString') && ~isempty(sfObj.LabelString), originalContent = sfObj.LabelString; finalContent = originalContent; words = unique(regexp(originalContent, '\w+', 'match'), 'stable'); for w_idx = 1:length(words), word = words{w_idx}; finalWord = calculateFinalName(word, 'auto', directionalRenameMap); if ~strcmp(word, finalWord), finalContent = regexprep(finalContent, ['\<' word '\>'], finalWord); end, end, if ~strcmp(originalContent, finalContent), sf('set', sfObj.Id, '.labelString', finalContent); logDetail(sprintf('SF Content: "%s" -> "%s"', strrep(originalContent,newline,'\n'), strrep(finalContent,newline,'\n'))); end, end
+            if isSignalScopeEnabled('stateflow')
+                if isprop(sfObj, 'Name') && ~isempty(sfObj.Name)
+                    originalName = sfObj.Name;
+                    finalName = calculateFinalName(originalName, 'signal');
+                    if ~strcmp(originalName, finalName)
+                        safeSetSfName(sfObj, finalName);
+                    end
+                end
+                if isprop(sfObj, 'LabelString') && ~isempty(sfObj.LabelString)
+                    originalContent = sfObj.LabelString;
+                    finalContent = originalContent;
+                    words = unique(regexp(originalContent, '\w+', 'match'), 'stable');
+                    for w_idx = 1:length(words)
+                        word = words{w_idx};
+                        finalWord = calculateFinalName(word, 'signal');
+                        if ~strcmp(word, finalWord)
+                            finalContent = regexprep(finalContent, ['\<' word '\>'], finalWord);
+                        end
+                    end
+                    if ~strcmp(originalContent, finalContent)
+                        sf('set', sfObj.Id, '.labelString', finalContent);
+                        logDetail(sprintf('SF Content: "%s" -> "%s"', strrep(originalContent, newline, '\n'), strrep(finalContent, newline, '\n')));
+                    end
+                end
+            end
             updateProgress();
         end
     end
 % ############# END: MODIFIED FUNCTION #############
 
-    function processExcelFile(filePath, directionalRenameMap)
+    function processExcelFile(filePath)
         log('--- 开始处理Excel文件 ---');
         targetSheets = {'IN', 'OUT', 'MP', 'CAL', 'NVV'};
 
@@ -393,6 +600,7 @@ app.UIFigure.Visible = 'on';
         for i = 1:length(targetSheets)
             sheet = targetSheets{i};
             if ~ismember(sheet, sheetNames), log(['Excel警告: 未找到 "' sheet '" sheet, 跳过。']); continue; end
+            if ~shouldProcessExcelSheet(sheet), continue; end
 
             log(['正在处理 sheet: ' sheet]);
             T = readtable(filePath, 'Sheet', sheet);
@@ -417,17 +625,10 @@ app.UIFigure.Visible = 'on';
                 finalName = nameAfterF1;
 
                 if app.EnableF2CheckBox.Value && nameWasChangedByF1
-                    nameToNormalize = nameAfterF1;
-                    if isKey(app.LearnedMap, nameAfterF1)
-                        nameToNormalize = app.LearnedMap(nameAfterF1);
-                    elseif app.EnableFamilySepCheckBox.Value && isKey(directionalRenameMap, nameAfterF1)
-                        nameToNormalize = directionalRenameMap(nameAfterF1);
-                    end
-
                     if any(strcmpi(sheet, {'IN', 'OUT', 'MP'}))
-                        finalName = applyF2Rule(nameToNormalize, 'signal');
+                        finalName = applyF2Rule(nameAfterF1, 'signal');
                     elseif any(strcmpi(sheet, {'CAL', 'NVV'}))
-                        finalName = applyF2Rule(nameToNormalize, 'parameter');
+                        finalName = applyF2Rule(nameAfterF1, 'parameter');
                     end
                 end
 
@@ -452,7 +653,7 @@ app.UIFigure.Visible = 'on';
             [~, sheetNames] = xlsfinfo(filePath);
             for i = 1:length(targetSheets)
                 sheet = targetSheets{i};
-                if ismember(sheet, sheetNames)
+                if ismember(sheet, sheetNames) && shouldProcessExcelSheet(sheet)
                     T = readtable(filePath, 'Sheet', sheet);
                     if ismember('name', lower(T.Properties.VariableNames))
                         stepCount = stepCount + height(T);
@@ -464,7 +665,7 @@ app.UIFigure.Visible = 'on';
         end
     end
 
-    function finalName = calculateFinalName(originalName, type, directionalRenameMap)
+    function finalName = calculateFinalName(originalName, type)
         nameAfterF1 = originalName;
         if app.EnableF1CheckBox.Value, nameAfterF1 = applyF1Rule(originalName); end
 
@@ -472,137 +673,10 @@ app.UIFigure.Visible = 'on';
         finalName = nameAfterF1;
 
         if app.EnableF2CheckBox.Value && nameWasChangedByF1
-            nameToNormalize = nameAfterF1;
-            if isKey(app.LearnedMap, nameAfterF1)
-                nameToNormalize = app.LearnedMap(nameAfterF1);
-            elseif app.EnableFamilySepCheckBox.Value && isKey(directionalRenameMap, nameAfterF1)
-                nameToNormalize = directionalRenameMap(nameAfterF1);
-            end
-
-            finalName = applyF2Rule(nameToNormalize, type);
+            finalName = applyF2Rule(nameAfterF1, type);
         end
 
         finalName = sanitizeName(finalName);
-    end
-
-    function renameMap = buildDirectionalRenameMap(blockHandles, lineHandles, sfObjects)
-        log('预分析: 正在查找方向信号家族...', false);
-        renameMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
-
-        if ~app.EnableF2CheckBox.Value || ~app.EnableFamilySepCheckBox.Value
-            log('家族分离功能未启用，跳过分析。', false);
-            return;
-        end
-
-        familyDefs = { {'frle', 'frri', 'rele', 'reri'}, {'fl', 'fr', 'rl', 'rr'}, {'fa', 'ra'} };
-
-        allNamesAfterF1 = {};
-
-        function processPotentialName(name)
-            if ~ischar(name) || isempty(name), return; end
-
-            nameAfterF1 = applyF1Rule(name);
-            if ~strcmp(name, nameAfterF1)
-                allNamesAfterF1{end+1} = nameAfterF1;
-            end
-        end
-
-        for i = 1:length(blockHandles)
-            handle = blockHandles(i);
-            if strcmpi(get_param(handle, 'LinkStatus'), 'none')
-                processPotentialName(get_param(handle, 'Name'));
-
-                blockType = get_param(handle, 'BlockType');
-                paramsToScan = {};
-                if contains(blockType, 'Lookup'), paramsToScan = {'Table', 'BreakpointsForDimension1', 'BreakpointsForDimension2', 'BreakpointsForDimension3'};
-                elseif strcmp(blockType, 'Constant'), paramsToScan = {'Value'};
-                elseif any(strcmp(blockType, {'Goto', 'From'})), paramsToScan = {'GotoTag'}; end
-
-                for p_idx = 1:length(paramsToScan)
-                    try, processPotentialName(get_param(handle, paramsToScan{p_idx})); catch, end
-                end
-            end
-        end
-
-        for i = 1:length(lineHandles), processPotentialName(get_param(lineHandles(i), 'Name')); end
-        for i = 1:length(sfObjects), if isprop(sfObjects{i}, 'Name'), processPotentialName(sfObjects{i}.Name); end, end
-
-        allNamesAfterF1 = unique(allNamesAfterF1);
-
-        familyGroups = containers.Map('KeyType', 'char', 'ValueType', 'any');
-
-        for i = 1:length(allNamesAfterF1)
-            name = allNamesAfterF1{i};
-            nameLower = lower(name);
-
-            bestOverallMatch = struct('familyIdx', -1, 'matchIdx', -1, 'dir', '');
-
-            for f_idx = 1:length(familyDefs)
-                directions = familyDefs{f_idx};
-                for d_idx = 1:length(directions)
-                    dir = directions{d_idx};
-                    match_indices = strfind(nameLower, dir);
-
-                    for k = 1:length(match_indices)
-                        match_idx = match_indices(k);
-                        end_idx = match_idx + length(dir) - 1;
-
-                        is_valid_boundary = false;
-                        if end_idx == length(nameLower), is_valid_boundary = true;
-                        elseif ~isletter(nameLower(end_idx + 1)), is_valid_boundary = true; end
-
-                        if is_valid_boundary
-                            if bestOverallMatch.familyIdx == -1
-                                bestOverallMatch.familyIdx = f_idx; bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
-                            else
-                                if f_idx < bestOverallMatch.familyIdx
-                                    bestOverallMatch.familyIdx = f_idx; bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
-                                elseif f_idx == bestOverallMatch.familyIdx
-                                    if length(dir) > length(bestOverallMatch.dir)
-                                        bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
-                                    elseif length(dir) == length(bestOverallMatch.dir)
-                                        if match_idx > bestOverallMatch.matchIdx, bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir; end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-
-            if bestOverallMatch.familyIdx > -1
-                dir = bestOverallMatch.dir; match_idx = bestOverallMatch.matchIdx; f_idx = bestOverallMatch.familyIdx;
-                prefix = nameLower(1:match_idx-1); suffix = nameLower(match_idx+length(dir):end);
-                familyKey = sprintf('%d#%s#%s', f_idx, prefix, suffix);
-
-                if ~isKey(familyGroups, familyKey), familyGroups(familyKey) = containers.Map(); end
-                group = familyGroups(familyKey); group(dir) = name;
-            end
-        end
-
-        familyKeys = keys(familyGroups);
-        for i = 1:length(familyKeys)
-            key = familyKeys{i}; group = familyGroups(key);
-            keyParts = strsplit(key, '#'); familyId = str2double(keyParts{1});
-            directions = familyDefs{familyId};
-            if group.Count == length(directions)
-                prefix = keyParts{2}; suffix = keyParts{3};
-                for d_idx = 1:length(directions)
-                    dir = directions{d_idx}; originalFullName = group(dir);
-                    originalPrefix = originalFullName(1:length(prefix)); originalSuffix = originalFullName(end-length(suffix)+1:end);
-                    newFullName = [originalPrefix, '_', dir, '_', originalSuffix];
-                    newFullName = strrep(newFullName, '__', '_');
-                    if startsWith(newFullName, '_'), newFullName = newFullName(2:end); end
-                    if endsWith(newFullName, '_'), newFullName = newFullName(1:end-1); end
-                    renameMap(originalFullName) = newFullName;
-
-                    if ~isKey(app.LearnedMap, originalFullName)
-                        app.LearnedMap(originalFullName) = newFullName;
-                        updateLearnedArea();
-                    end
-                end
-            end
-        end
     end
 
 % --- 修改后的 applyF1Rule，支持批量模式 ---
@@ -679,79 +753,144 @@ app.UIFigure.Visible = 'on';
         end
     end
 
-    function safeSetSfName(sfObj, desiredName), parentObj = sfObj.getParent; finalName = desiredName; suffix = 1; while true, existingObj = parentObj.find('-isa', class(sfObj), 'Name', finalName); if isempty(existingObj) || (numel(existingObj) == 1 && existingObj.Id == sfObj.Id), break; else, finalName = sprintf('%s_%d', desiredName, suffix); suffix = suffix + 1; end, end, originalName = sfObj.Name; if ~strcmp(originalName, finalName), sf('set', sfObj.Id, '.name', finalName); logDetail(sprintf('SF Name: "%s" -> "%s" (%s)', originalName, finalName, class(sfObj))); end, end
-        function newName = applyF2Rule(oldName, type)
-            if ~ischar(oldName), newName = oldName; return; end
-            newName = oldName;
-            if strcmp(type, 'auto')
-                if ~strcmp(oldName, upper(oldName)) || isempty(regexp(oldName, '^[A-Z_0-9]+$', 'once')), type = 'signal'; else, type = 'parameter'; end
+    function safeSetSfName(sfObj, desiredName)
+        parentObj = sfObj.getParent;
+        finalName = desiredName;
+        suffix = 1;
+
+        while true
+            existingObj = parentObj.find('-isa', class(sfObj), 'Name', finalName);
+            if isempty(existingObj) || (numel(existingObj) == 1 && existingObj.Id == sfObj.Id)
+                break;
             end
-            parts = strsplit(oldName, '_');
-            if isempty(parts) || isempty(parts{1}); return; end
-            if strcmp(type, 'signal')
-                if numel(parts) >= 1; parts{1} = upper(parts{1}); end
-                if numel(parts) >= 2 && ~isempty(parts{2}); parts{2} = [upper(parts{2}(1)), lower(parts{2}(2:end))]; end
-                if numel(parts) >= 3; for i = 3:numel(parts); parts{i} = lower(parts{i}); end; end
-                newName = strjoin(parts, '_');
-            elseif strcmp(type, 'parameter'), newName = upper(strrep(oldName, ' ', '')); end
+            finalName = sprintf('%s_%d', desiredName, suffix);
+            suffix = suffix + 1;
         end
 
-        function log(message, writeToFile)
-            if nargin < 2, writeToFile = true; end
-            timestamp = datestr(now, 'HH:MM:SS');
-            fullMessage = ['[' timestamp '] ' message];
-            currentLog = app.LogArea.Value;
-            if ischar(currentLog); currentLog = {currentLog}; end
-            if numel(currentLog) == 1 && isempty(currentLog{1}); currentLog = {}; end
-            app.LogArea.Value = [currentLog; {fullMessage}];
-            drawnow;
-            if writeToFile, app.DetailedLog{end+1} = fullMessage; end
+        originalName = sfObj.Name;
+        if ~strcmp(originalName, finalName)
+            sf('set', sfObj.Id, '.name', finalName);
+            logDetail(sprintf('SF Name: "%s" -> "%s" (%s)', originalName, finalName, class(sfObj)));
+        end
+    end
+
+    function newName = applyF2Rule(oldName, type)
+        if ~ischar(oldName)
+            newName = oldName;
+            return;
         end
 
-        function logDetail(message)
-            log(message, true);
+        newName = oldName;
+        if strcmp(type, 'auto')
+            if ~strcmp(oldName, upper(oldName)) || isempty(regexp(oldName, '^[A-Z_0-9]+$', 'once'))
+                type = 'signal';
+            else
+                type = 'parameter';
+            end
         end
 
-        function writeLogToTxt(path, modelName)
-            log('正在生成TXT日志文件...');
-            try
-                logFileName = fullfile(path, ['改动日志_' modelName '_' datestr(now, 'yyyymmdd_HHMMSS') '.txt']);
-                logContent = app.DetailedLog;
-                fileID = fopen(logFileName, 'w', 'n', 'UTF-8');
-                if fileID == -1, error('无法创建日志文件。请检查文件夹权限。'); end
-                cleanupObj = onCleanup(@() fclose(fileID));
-                fprintf(fileID, '--- Simulink批量修改工具 V20.2.20 改动日志 ---\n');
-                fprintf(fileID, '--- 执行时间: %s ---\n\n', datestr(now));
-                for i = 1:numel(logContent), fprintf(fileID, '%s\n', logContent{i}); end
-                log(['TXT日志文件已生成: ', logFileName]);
-            catch ME, log(['警告: 生成TXT日志文件失败: ', ME.message]); end
+        parts = strsplit(oldName, '_');
+        if isempty(parts) || isempty(parts{1})
+            return;
         end
 
-        function updateProgress(), app.CurrentStep = app.CurrentStep + 1; if app.TotalSteps > 0, progress = round(app.CurrentStep / app.TotalSteps * 100); app.ProgressBar.Value = progress; app.ProgressLabel.Text = sprintf('进度: %d%%', progress); end, drawnow; end
-            function sanitized_name = sanitizeName(name), sanitized_name = strrep(name, '/', '_'); end
-                function restoreAllCallbacks(callbacks), if isempty(callbacks), return; end, log('正在恢复所有原始模型回调...'); for i = 1:size(callbacks, 1), model = callbacks{i, 1}; if bdIsLoaded(model), try, set_param(model, 'PreSaveFcn', callbacks{i, 2}); set_param(model, 'PostSaveFcn', callbacks{i, 3}); catch ME, log(sprintf('警告: 无法为 %s 恢复回调: %s', model, ME.message)); end, end, end, log('回调恢复完毕。'); end
+        if strcmp(type, 'signal')
+            if numel(parts) >= 1
+                parts{1} = upper(parts{1});
+            end
+            if numel(parts) >= 2 && ~isempty(parts{2})
+                parts{2} = [upper(parts{2}(1)), lower(parts{2}(2:end))];
+            end
+            if numel(parts) >= 3
+                for i = 3:numel(parts)
+                    parts{i} = lower(parts{i});
+                end
+            end
+            newName = strjoin(parts, '_');
+        elseif strcmp(type, 'parameter')
+            newName = upper(strrep(oldName, ' ', ''));
+        end
+    end
 
-                    function ClearLearnedMapButtonPushed(~, ~)
-                        app.LearnedMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
-                        updateLearnedArea();
-                        log('预处理记忆库已清空。');
-                    end
+    function log(message, writeToFile)
+        if nargin < 2
+            writeToFile = true;
+        end
 
-                    function updateLearnedArea()
-                        mapKeys = keys(app.LearnedMap);
+        timestamp = datestr(now, 'HH:MM:SS');
+        fullMessage = ['[' timestamp '] ' message];
+        currentLog = app.LogArea.Value;
+        if ischar(currentLog)
+            currentLog = {currentLog};
+        end
+        if numel(currentLog) == 1 && isempty(currentLog{1})
+            currentLog = {};
+        end
 
-                        if isempty(mapKeys)
-                            app.LearnedArea.Value = '';
-                        else
-                            mapVals = values(app.LearnedMap);
-                            displayContent = cell(length(mapKeys), 1);
-                            for i = 1:length(mapKeys)
-                                displayContent{i} = sprintf('"%s" -> "%s"', mapKeys{i}, mapVals{i});
-                            end
-                            app.LearnedArea.Value = displayContent;
-                        end
+        app.LogArea.Value = [currentLog; {fullMessage}];
+        drawnow;
+        if writeToFile
+            app.DetailedLog{end+1} = fullMessage;
+        end
+    end
 
-                        drawnow;
-                    end
+    function logDetail(message)
+        log(message, true);
+    end
+
+    function writeLogToTxt(path, modelName)
+        log('正在生成TXT日志文件...');
+        try
+            logFileName = fullfile(path, ['改动日志_' modelName '_' datestr(now, 'yyyymmdd_HHMMSS') '.txt']);
+            logContent = app.DetailedLog;
+            fileID = fopen(logFileName, 'w', 'n', 'UTF-8');
+            if fileID == -1
+                error('无法创建日志文件。请检查文件夹权限。');
+            end
+            cleanupObj = onCleanup(@() fclose(fileID));
+            fprintf(fileID, '--- Simulink批量修改工具 V20.2.20 改动日志 ---\n');
+            fprintf(fileID, '--- 执行时间: %s ---\n\n', datestr(now));
+            for i = 1:numel(logContent)
+                fprintf(fileID, '%s\n', logContent{i});
+            end
+            log(['TXT日志文件已生成: ', logFileName]);
+        catch ME
+            log(['警告: 生成TXT日志文件失败: ', ME.message]);
+        end
+    end
+
+    function updateProgress()
+        app.CurrentStep = app.CurrentStep + 1;
+        if app.TotalSteps > 0
+            progress = round(app.CurrentStep / app.TotalSteps * 100);
+            app.ProgressBar.Value = progress;
+            app.ProgressLabel.Text = sprintf('进度: %d%%', progress);
+        end
+        drawnow;
+    end
+
+    function sanitized_name = sanitizeName(name)
+        sanitized_name = strrep(name, '/', '_');
+    end
+
+    function restoreAllCallbacks(callbacks)
+        if isempty(callbacks)
+            return;
+        end
+
+        log('正在恢复所有原始模型回调...');
+        for i = 1:size(callbacks, 1)
+            model = callbacks{i, 1};
+            if bdIsLoaded(model)
+                try
+                    set_param(model, 'PreSaveFcn', callbacks{i, 2});
+                    set_param(model, 'PostSaveFcn', callbacks{i, 3});
+                catch ME
+                    log(sprintf('警告: 无法为 %s 恢复回调: %s', model, ME.message));
+                end
+            end
+        end
+        log('回调恢复完毕。');
+    end
 
 end
