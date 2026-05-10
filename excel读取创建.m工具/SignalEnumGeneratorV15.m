@@ -1,225 +1,357 @@
-function SignalEnumGenerator()
+function SignalEnumGeneratorV15()
 % 信号和枚举生成工具（支持枚举、总线、自定义数值类型、信号/参数、变量定义文件）
 % 支持生成加载脚本，一键恢复所有工作区对象（含描述信息）
 % 优化：总线生成不再产生临时变量，工作区更干净
 % 新增：可缩放UI、多文件管理、数据类型校验、加载脚本合并、单例模式
-% 兼容性：R2018b以下使用纯像素布局
+% 兼容性：优先使用 uifigure 系现代控件；缺少网格布局时回退到现代控件+像素布局
 
 % 单例模式：关闭已有实例
 persistent FIG_HANDLE
-if ~isempty(FIG_HANDLE) && ishandle(FIG_HANDLE)
+if ~isempty(FIG_HANDLE) && isvalid(FIG_HANDLE)
     delete(FIG_HANDLE);
 end
 
 % 创建主窗口
-fig = uifigure('Name', '信号与枚举生成工具', 'Position', [300 150 950 800], ...
-    'NumberTitle', 'off', 'Resize', 'on');
+baseRowHeights = [24 26 26 26 26 30 10 24 26 26 26 26 10 24 26 26 26 26 10 24 26 26 26 26 30 36];
+basePadding = 10;
+baseRowSpacing = 4;
+baseFigureHeight = 2 * basePadding + sum(baseRowHeights) + baseRowSpacing * (length(baseRowHeights) - 1);
+legacyLayout = createLegacyLayout(baseFigureHeight);
+legacyHandles = struct();
+uiText = buildUIText();
+hasModernControls = hasModernFigureControls();
+hasModernGrid = hasModernControls && hasModernGridLayout();
+if hasModernControls && ~hasModernGrid
+    hasModernControls = false;
+end
+isLegacyUI = ~hasModernControls;
+if hasModernControls
+    fig = uifigure('Name', uiText.appTitle, 'Position', [300 150 980 baseFigureHeight], ...
+        'NumberTitle', 'off', 'Resize', 'on');
+    if ~hasModernGrid && isprop(fig, 'AutoResizeChildren')
+        fig.AutoResizeChildren = 'off';
+    end
+else
+    fig = figure('Name', uiText.appTitle, 'Position', [300 150 980 baseFigureHeight], ...
+        'NumberTitle', 'off', 'Resize', 'on', 'MenuBar', 'none', 'ToolBar', 'none', ...
+        'Color', get(0, 'DefaultUicontrolBackgroundColor'));
+end
+setFigureClientSize([980, baseFigureHeight]);
 FIG_HANDLE = fig;
 
-% ---------- 版本兼容分支（修复判断条件）----------
-if ~verLessThan('matlab', '9.5')   % R2018b (9.5) 及以上
-    % ======== 原始 uigridlayout 布局 ========
-    mainGrid = uigridlayout(fig, [20, 3], ...
-        'RowHeight', {30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,'1x'}, ...
-        'ColumnWidth', {120, '1x', 90}, ...
-        'Padding', [10 10 10 10], 'RowSpacing', 5, 'ColumnSpacing', 5);
+if hasModernGrid
+    mainGrid = uigridlayout(fig, [26, 3], ...
+        'RowHeight', num2cell(baseRowHeights), ...
+        'ColumnWidth', {180, '1x', 110}, ...
+        'Padding', [10 10 10 10], 'RowSpacing', 4, 'ColumnSpacing', 6);
 
-    % ==================== 枚举文件管理区域 ====================
-    lblEnum = uilabel(mainGrid, 'Text', '枚举定义文件列表:', 'FontWeight', 'bold', ...
-        'Tooltip', '支持多个Excel文件，按顺序合并，重复定义以最后为准');
+    lblEnum = uilabel(mainGrid, 'Text', uiText.enumLabel, 'FontWeight', 'bold', ...
+        'Tooltip', uiText.enumLabelTooltip);
     lblEnum.Layout.Row = 1; lblEnum.Layout.Column = 1;
-
-    placeholder1 = uilabel(mainGrid, 'Text', '');
-    placeholder1.Layout.Row = 1; placeholder1.Layout.Column = 2;
-    placeholder2 = uilabel(mainGrid, 'Text', '');
-    placeholder2.Layout.Row = 1; placeholder2.Layout.Column = 3;
+    lblEnumDesc = uilabel(mainGrid, 'Text', uiText.enumDesc, 'FontColor', [0.45 0.45 0.45]);
+    lblEnumDesc.Layout.Row = 1; lblEnumDesc.Layout.Column = 2;
 
     enumListBox = uilistbox(mainGrid, 'Items', {}, 'Multiselect', 'on', ...
-        'Tooltip', '已选择的枚举定义文件（完整路径）');
-    enumListBox.Layout.Row = [2, 6];
+        'Tooltip', uiText.enumListTooltip);
+    enumListBox.Layout.Row = [2, 5];
     enumListBox.Layout.Column = 2;
 
-    btnAddEnumFile = uibutton(mainGrid, 'Text', '添加文件...', ...
+    btnAddEnumFile = uibutton(mainGrid, 'Text', uiText.addFile, ...
         'ButtonPushedFcn', @(src,event) addFiles('enum'));
     btnAddEnumFile.Layout.Row = 2; btnAddEnumFile.Layout.Column = 3;
-    btnAddEnumFolder = uibutton(mainGrid, 'Text', '添加文件夹...', ...
+    btnAddEnumFolder = uibutton(mainGrid, 'Text', uiText.addFolder, ...
         'ButtonPushedFcn', @(src,event) addFolder('enum'));
     btnAddEnumFolder.Layout.Row = 3; btnAddEnumFolder.Layout.Column = 3;
-    btnDelEnum = uibutton(mainGrid, 'Text', '删除选中', ...
+    btnDelEnum = uibutton(mainGrid, 'Text', uiText.deleteSelected, ...
         'ButtonPushedFcn', @(src,event) deleteSelected('enum'));
     btnDelEnum.Layout.Row = 4; btnDelEnum.Layout.Column = 3;
-    btnClearEnum = uibutton(mainGrid, 'Text', '清空全部', ...
+    btnClearEnum = uibutton(mainGrid, 'Text', uiText.clearAll, ...
         'ButtonPushedFcn', @(src,event) clearAll('enum'));
     btnClearEnum.Layout.Row = 5; btnClearEnum.Layout.Column = 3;
 
-    lblTargetPath = uilabel(mainGrid, 'Text', '枚举文件存放路径:', 'FontWeight', 'bold');
-    lblTargetPath.Layout.Row = 7; lblTargetPath.Layout.Column = 1;
+    lblTargetPath = uilabel(mainGrid, 'Text', uiText.enumTargetPathLabel, 'FontWeight', 'bold');
+    lblTargetPath.Layout.Row = 6; lblTargetPath.Layout.Column = 1;
     enumTargetPathEdit = uieditfield(mainGrid, 'text', 'Value', '');
-    enumTargetPathEdit.Layout.Row = 7; enumTargetPathEdit.Layout.Column = 2;
-    btnBrowsePath = uibutton(mainGrid, 'Text', '浏览...', ...
+    enumTargetPathEdit.Layout.Row = 6; enumTargetPathEdit.Layout.Column = 2;
+    btnBrowsePath = uibutton(mainGrid, 'Text', uiText.browse, ...
         'ButtonPushedFcn', @(src,event) selectEnumTargetFolder());
-    btnBrowsePath.Layout.Row = 7; btnBrowsePath.Layout.Column = 3;
+    btnBrowsePath.Layout.Row = 6; btnBrowsePath.Layout.Column = 3;
 
-    % ==================== Interface 文件管理区域 ====================
-    lblIntf = uilabel(mainGrid, 'Text', 'Interface文件列表:', 'FontWeight', 'bold');
+    lblIntf = uilabel(mainGrid, 'Text', uiText.interfaceLabel, 'FontWeight', 'bold');
     lblIntf.Layout.Row = 8; lblIntf.Layout.Column = 1;
-    placeholder3 = uilabel(mainGrid, 'Text', '');
-    placeholder3.Layout.Row = 8; placeholder3.Layout.Column = 2;
-    placeholder4 = uilabel(mainGrid, 'Text', '');
-    placeholder4.Layout.Row = 8; placeholder4.Layout.Column = 3;
+    lblIntfDesc = uilabel(mainGrid, 'Text', uiText.interfaceDesc, 'FontColor', [0.45 0.45 0.45]);
+    lblIntfDesc.Layout.Row = 8; lblIntfDesc.Layout.Column = 2;
 
     interfaceListBox = uilistbox(mainGrid, 'Items', {}, 'Multiselect', 'on', ...
-        'Tooltip', '已选择的Interface文件（完整路径）');
+        'Tooltip', uiText.interfaceListTooltip);
     interfaceListBox.Layout.Row = [9, 12];
     interfaceListBox.Layout.Column = 2;
 
-    btnAddIntf = uibutton(mainGrid, 'Text', '添加文件...', ...
+    btnAddIntf = uibutton(mainGrid, 'Text', uiText.addFile, ...
         'ButtonPushedFcn', @(src,event) addFiles('interface'));
     btnAddIntf.Layout.Row = 9; btnAddIntf.Layout.Column = 3;
-    btnAddIntfFolder = uibutton(mainGrid, 'Text', '添加文件夹...', ...
+    btnAddIntfFolder = uibutton(mainGrid, 'Text', uiText.addFolder, ...
         'ButtonPushedFcn', @(src,event) addFolder('interface'));
     btnAddIntfFolder.Layout.Row = 10; btnAddIntfFolder.Layout.Column = 3;
-    btnDelIntf = uibutton(mainGrid, 'Text', '删除选中', ...
+    btnDelIntf = uibutton(mainGrid, 'Text', uiText.deleteSelected, ...
         'ButtonPushedFcn', @(src,event) deleteSelected('interface'));
     btnDelIntf.Layout.Row = 11; btnDelIntf.Layout.Column = 3;
-    btnClearIntf = uibutton(mainGrid, 'Text', '清空全部', ...
+    btnClearIntf = uibutton(mainGrid, 'Text', uiText.clearAll, ...
         'ButtonPushedFcn', @(src,event) clearAll('interface'));
     btnClearIntf.Layout.Row = 12; btnClearIntf.Layout.Column = 3;
 
-    % ==================== 变量定义文件管理区域 ====================
-    lblVar = uilabel(mainGrid, 'Text', '变量定义文件列表:', 'FontWeight', 'bold');
-    lblVar.Layout.Row = 13; lblVar.Layout.Column = 1;
-    placeholder5 = uilabel(mainGrid, 'Text', '');
-    placeholder5.Layout.Row = 13; placeholder5.Layout.Column = 2;
-    placeholder6 = uilabel(mainGrid, 'Text', '');
-    placeholder6.Layout.Row = 13; placeholder6.Layout.Column = 3;
+    lblVar = uilabel(mainGrid, 'Text', uiText.varLabel, 'FontWeight', 'bold');
+    lblVar.Layout.Row = 14; lblVar.Layout.Column = 1;
+    lblVarDesc = uilabel(mainGrid, 'Text', uiText.varDesc, 'FontColor', [0.45 0.45 0.45]);
+    lblVarDesc.Layout.Row = 14; lblVarDesc.Layout.Column = 2;
 
     varListBox = uilistbox(mainGrid, 'Items', {}, 'Multiselect', 'on', ...
-        'Tooltip', '已选择的变量定义文件（完整路径）');
-    varListBox.Layout.Row = [14, 17];
+        'Tooltip', uiText.varListTooltip);
+    varListBox.Layout.Row = [15, 18];
     varListBox.Layout.Column = 2;
 
-    btnAddVar = uibutton(mainGrid, 'Text', '添加文件...', ...
+    btnAddVar = uibutton(mainGrid, 'Text', uiText.addFile, ...
         'ButtonPushedFcn', @(src,event) addFiles('var'));
-    btnAddVar.Layout.Row = 14; btnAddVar.Layout.Column = 3;
-    btnAddVarFolder = uibutton(mainGrid, 'Text', '添加文件夹...', ...
+    btnAddVar.Layout.Row = 15; btnAddVar.Layout.Column = 3;
+    btnAddVarFolder = uibutton(mainGrid, 'Text', uiText.addFolder, ...
         'ButtonPushedFcn', @(src,event) addFolder('var'));
-    btnAddVarFolder.Layout.Row = 15; btnAddVarFolder.Layout.Column = 3;
-    btnDelVar = uibutton(mainGrid, 'Text', '删除选中', ...
+    btnAddVarFolder.Layout.Row = 16; btnAddVarFolder.Layout.Column = 3;
+    btnDelVar = uibutton(mainGrid, 'Text', uiText.deleteSelected, ...
         'ButtonPushedFcn', @(src,event) deleteSelected('var'));
-    btnDelVar.Layout.Row = 16; btnDelVar.Layout.Column = 3;
-    btnClearVar = uibutton(mainGrid, 'Text', '清空全部', ...
+    btnDelVar.Layout.Row = 17; btnDelVar.Layout.Column = 3;
+    btnClearVar = uibutton(mainGrid, 'Text', uiText.clearAll, ...
         'ButtonPushedFcn', @(src,event) clearAll('var'));
-    btnClearVar.Layout.Row = 17; btnClearVar.Layout.Column = 3;
+    btnClearVar.Layout.Row = 18; btnClearVar.Layout.Column = 3;
 
-    lblScript = uilabel(mainGrid, 'Text', '加载脚本文件名:', 'FontWeight', 'bold');
-    lblScript.Layout.Row = 18; lblScript.Layout.Column = 1;
+    lblOtherM = uilabel(mainGrid, 'Text', uiText.otherScriptLabel, 'FontWeight', 'bold');
+    lblOtherM.Layout.Row = 20; lblOtherM.Layout.Column = 1;
+    lblOtherMDesc = uilabel(mainGrid, 'Text', uiText.otherScriptDesc, 'FontColor', [0.45 0.45 0.45]);
+    lblOtherMDesc.Layout.Row = 20; lblOtherMDesc.Layout.Column = 2;
+
+    otherMListBox = uilistbox(mainGrid, 'Items', {}, 'Multiselect', 'on', ...
+        'Tooltip', uiText.otherScriptTooltip);
+    otherMListBox.Layout.Row = [21, 24];
+    otherMListBox.Layout.Column = 2;
+
+    btnAddOtherM = uibutton(mainGrid, 'Text', uiText.addFile, ...
+        'ButtonPushedFcn', @(src,event) addFiles('script'));
+    btnAddOtherM.Layout.Row = 21; btnAddOtherM.Layout.Column = 3;
+    btnAddOtherMFolder = uibutton(mainGrid, 'Text', uiText.addFolder, ...
+        'ButtonPushedFcn', @(src,event) addFolder('script'));
+    btnAddOtherMFolder.Layout.Row = 22; btnAddOtherMFolder.Layout.Column = 3;
+    btnDelOtherM = uibutton(mainGrid, 'Text', uiText.deleteSelected, ...
+        'ButtonPushedFcn', @(src,event) deleteSelected('script'));
+    btnDelOtherM.Layout.Row = 23; btnDelOtherM.Layout.Column = 3;
+    btnClearOtherM = uibutton(mainGrid, 'Text', uiText.clearAll, ...
+        'ButtonPushedFcn', @(src,event) clearAll('script'));
+    btnClearOtherM.Layout.Row = 24; btnClearOtherM.Layout.Column = 3;
+
+    lblScript = uilabel(mainGrid, 'Text', uiText.scriptNameLabel, 'FontWeight', 'bold');
+    lblScript.Layout.Row = 25; lblScript.Layout.Column = 1;
     scriptNameEdit = uieditfield(mainGrid, 'text', 'Value', 'LoadWorkspaceData.m');
-    scriptNameEdit.Layout.Row = 18; scriptNameEdit.Layout.Column = 2;
-    lblScriptHint = uilabel(mainGrid, 'Text', '（.m文件，保存在当前目录）', ...
-        'FontColor', [0.5 0.5 0.5]);
-    lblScriptHint.Layout.Row = 18; lblScriptHint.Layout.Column = 3;
+    scriptNameEdit.Layout.Row = 25; scriptNameEdit.Layout.Column = [2,3];
 
     btnPanel = uigridlayout(mainGrid, [1,2], 'ColumnWidth', {'1x','1x'}, ...
-        'Padding', [0 0 0 0]);
-    btnPanel.Layout.Row = 19; btnPanel.Layout.Column = [1,3];
-    btnGenerate = uibutton(btnPanel, 'Text', '生成', 'BackgroundColor', [0.3 0.7 0.3], ...
+        'Padding', [0 0 0 0], 'ColumnSpacing', 8);
+    btnPanel.Layout.Row = 26; btnPanel.Layout.Column = [1,3];
+    btnGenerate = uibutton(btnPanel, 'Text', uiText.generate, 'BackgroundColor', [0.3 0.7 0.3], ...
         'FontColor','w','FontWeight','bold','FontSize',12, ...
         'ButtonPushedFcn', @(src,event) generate());
     btnGenerate.Layout.Row = 1; btnGenerate.Layout.Column = 1;
-    btnExit = uibutton(btnPanel, 'Text', '退出', 'BackgroundColor', [0.8 0.3 0.3], ...
+    btnExit = uibutton(btnPanel, 'Text', uiText.exit, 'BackgroundColor', [0.8 0.3 0.3], ...
         'FontColor','w','FontWeight','bold','FontSize',12, ...
         'ButtonPushedFcn', @(src,event) delete(fig));
     btnExit.Layout.Row = 1; btnExit.Layout.Column = 2;
 
-    statusLabel = uilabel(mainGrid, 'Text', '就绪', 'FontAngle', 'italic', ...
-        'BackgroundColor', [0.9 0.9 0.9]);
-    statusLabel.Layout.Row = 20; statusLabel.Layout.Column = [1,3];
-
 else
-    % ======== R2018a及以下：纯像素定位，禁用缩放 ========
-    fig.Resize = 'off';
-    fW = fig.Position(3); fH = fig.Position(4);
-    fillH = max(fH - 30*19, 0);
-    rowHeights = [repmat(30,1,19), fillH];
-    col2W = max(fW - 120 - 90, 0);
-    colWidths = [120, col2W, 90];
+    if isLegacyUI
+        set(fig, 'Color', legacyLayout.figureColor);
 
-    uilabel(fig, 'Text', '枚举定义文件列表:', 'FontWeight', 'bold', ...
-        'Position', getPosCompat(1,1, rowHeights, colWidths));
-    enumListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on', ...
-        'Position', getPosCompat([2,6], 2, rowHeights, colWidths));
-    btnAddEnumFile = uibutton(fig, 'Text', '添加文件...', ...
-        'ButtonPushedFcn', @(src,event) addFiles('enum'), ...
-        'Position', getPosCompat(2,3, rowHeights, colWidths));
-    btnAddEnumFolder = uibutton(fig, 'Text', '添加文件夹...', ...
-        'ButtonPushedFcn', @(src,event) addFolder('enum'), ...
-        'Position', getPosCompat(3,3, rowHeights, colWidths));
-    btnDelEnum = uibutton(fig, 'Text', '删除选中', ...
-        'ButtonPushedFcn', @(src,event) deleteSelected('enum'), ...
-        'Position', getPosCompat(4,3, rowHeights, colWidths));
-    btnClearEnum = uibutton(fig, 'Text', '清空全部', ...
-        'ButtonPushedFcn', @(src,event) clearAll('enum'), ...
-        'Position', getPosCompat(5,3, rowHeights, colWidths));
-    uilabel(fig, 'Text', '枚举文件存放路径:', 'FontWeight', 'bold', ...
-        'Position', getPosCompat(7,1, rowHeights, colWidths));
-    enumTargetPathEdit = uieditfield(fig, 'text', 'Value', '', ...
-        'Position', getPosCompat(7,2, rowHeights, colWidths));
-    btnBrowsePath = uibutton(fig, 'Text', '浏览...', ...
-        'ButtonPushedFcn', @(src,event) selectEnumTargetFolder(), ...
-        'Position', getPosCompat(7,3, rowHeights, colWidths));
-    uilabel(fig, 'Text', 'Interface文件列表:', 'FontWeight', 'bold', ...
-        'Position', getPosCompat(8,1, rowHeights, colWidths));
-    interfaceListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on', ...
-        'Position', getPosCompat([9,12], 2, rowHeights, colWidths));
-    btnAddIntf = uibutton(fig, 'Text', '添加文件...', ...
-        'ButtonPushedFcn', @(src,event) addFiles('interface'), ...
-        'Position', getPosCompat(9,3, rowHeights, colWidths));
-    btnAddIntfFolder = uibutton(fig, 'Text', '添加文件夹...', ...
-        'ButtonPushedFcn', @(src,event) addFolder('interface'), ...
-        'Position', getPosCompat(10,3, rowHeights, colWidths));
-    btnDelIntf = uibutton(fig, 'Text', '删除选中', ...
-        'ButtonPushedFcn', @(src,event) deleteSelected('interface'), ...
-        'Position', getPosCompat(11,3, rowHeights, colWidths));
-    btnClearIntf = uibutton(fig, 'Text', '清空全部', ...
-        'ButtonPushedFcn', @(src,event) clearAll('interface'), ...
-        'Position', getPosCompat(12,3, rowHeights, colWidths));
-    uilabel(fig, 'Text', '变量定义文件列表:', 'FontWeight', 'bold', ...
-        'Position', getPosCompat(13,1, rowHeights, colWidths));
-    varListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on', ...
-        'Position', getPosCompat([14,17], 2, rowHeights, colWidths));
-    btnAddVar = uibutton(fig, 'Text', '添加文件...', ...
-        'ButtonPushedFcn', @(src,event) addFiles('var'), ...
-        'Position', getPosCompat(14,3, rowHeights, colWidths));
-    btnAddVarFolder = uibutton(fig, 'Text', '添加文件夹...', ...
-        'ButtonPushedFcn', @(src,event) addFolder('var'), ...
-        'Position', getPosCompat(15,3, rowHeights, colWidths));
-    btnDelVar = uibutton(fig, 'Text', '删除选中', ...
-        'ButtonPushedFcn', @(src,event) deleteSelected('var'), ...
-        'Position', getPosCompat(16,3, rowHeights, colWidths));
-    btnClearVar = uibutton(fig, 'Text', '清空全部', ...
-        'ButtonPushedFcn', @(src,event) clearAll('var'), ...
-        'Position', getPosCompat(17,3, rowHeights, colWidths));
-    uilabel(fig, 'Text', '加载脚本文件名:', 'FontWeight', 'bold', ...
-        'Position', getPosCompat(18,1, rowHeights, colWidths));
-    scriptNameEdit = uieditfield(fig, 'text', 'Value', 'LoadWorkspaceData.m', ...
-        'Position', getPosCompat(18,2, rowHeights, colWidths));
-    uilabel(fig, 'Text', '（.m文件，保存在当前目录）', ...
-        'FontColor', [0.5 0.5 0.5], ...
-        'Position', getPosCompat(18,3, rowHeights, colWidths));
-    btnPos = getPosCompat(19, [1,3], rowHeights, colWidths);
-    btnW = (btnPos(3) - 10) / 2;
-    btnGenerate = uibutton(fig, 'Text', '生成', ...
-        'BackgroundColor', [0.3 0.7 0.3], 'FontColor','w','FontWeight','bold','FontSize',12, ...
-        'ButtonPushedFcn', @(src,event) generate(), ...
-        'Position', [btnPos(1), btnPos(2), btnW, btnPos(4)]);
-    btnExit = uibutton(fig, 'Text', '退出', ...
-        'BackgroundColor', [0.8 0.3 0.3], 'FontColor','w','FontWeight','bold','FontSize',12, ...
-        'ButtonPushedFcn', @(src,event) delete(fig), ...
-        'Position', [btnPos(1)+btnW+10, btnPos(2), btnW, btnPos(4)]);
-    statusLabel = uilabel(fig, 'Text', '就绪（兼容模式）', 'FontAngle', 'italic', ...
-        'BackgroundColor', [0.9 0.9 0.9], ...
-        'Position', getPosCompat(20, [1,3], rowHeights, colWidths));
+        legacyHandles.lblEnum = uicontrol(fig, 'Style', 'text', 'String', uiText.enumLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left', 'BackgroundColor', legacyLayout.figureColor);
+        legacyHandles.lblEnumDesc = uicontrol(fig, 'Style', 'text', 'String', uiText.enumDesc, ...
+            'HorizontalAlignment', 'left', 'ForegroundColor', legacyLayout.descColor, 'BackgroundColor', legacyLayout.figureColor);
+        enumListBox = uicontrol(fig, 'Style', 'listbox', 'String', {}, 'Max', 2, 'Min', 0, ...
+            'BackgroundColor', legacyLayout.fieldColor, 'HorizontalAlignment', 'left');
+        legacyHandles.enumButtons(1) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFile, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFiles('enum'));
+        legacyHandles.enumButtons(2) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFolder, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFolder('enum'));
+        legacyHandles.enumButtons(3) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.deleteSelected, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) deleteSelected('enum'));
+        legacyHandles.enumButtons(4) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.clearAll, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) clearAll('enum'));
+
+        legacyHandles.lblTargetPath = uicontrol(fig, 'Style', 'text', 'String', uiText.enumTargetPathLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left', 'BackgroundColor', legacyLayout.figureColor);
+        enumTargetPathEdit = uicontrol(fig, 'Style', 'edit', 'String', '', 'HorizontalAlignment', 'left', ...
+            'BackgroundColor', legacyLayout.fieldColor);
+        legacyHandles.btnBrowsePath = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.browse, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) selectEnumTargetFolder());
+
+        legacyHandles.lblIntf = uicontrol(fig, 'Style', 'text', 'String', uiText.interfaceLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left', 'BackgroundColor', legacyLayout.figureColor);
+        legacyHandles.lblIntfDesc = uicontrol(fig, 'Style', 'text', 'String', uiText.interfaceDesc, ...
+            'HorizontalAlignment', 'left', 'ForegroundColor', legacyLayout.descColor, 'BackgroundColor', legacyLayout.figureColor);
+        interfaceListBox = uicontrol(fig, 'Style', 'listbox', 'String', {}, 'Max', 2, 'Min', 0, ...
+            'BackgroundColor', legacyLayout.fieldColor, 'HorizontalAlignment', 'left');
+        legacyHandles.intfButtons(1) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFile, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFiles('interface'));
+        legacyHandles.intfButtons(2) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFolder, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFolder('interface'));
+        legacyHandles.intfButtons(3) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.deleteSelected, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) deleteSelected('interface'));
+        legacyHandles.intfButtons(4) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.clearAll, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) clearAll('interface'));
+
+        legacyHandles.lblVar = uicontrol(fig, 'Style', 'text', 'String', uiText.varLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left', 'BackgroundColor', legacyLayout.figureColor);
+        legacyHandles.lblVarDesc = uicontrol(fig, 'Style', 'text', 'String', uiText.varDesc, ...
+            'HorizontalAlignment', 'left', 'ForegroundColor', legacyLayout.descColor, 'BackgroundColor', legacyLayout.figureColor);
+        varListBox = uicontrol(fig, 'Style', 'listbox', 'String', {}, 'Max', 2, 'Min', 0, ...
+            'BackgroundColor', legacyLayout.fieldColor, 'HorizontalAlignment', 'left');
+        legacyHandles.varButtons(1) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFile, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFiles('var'));
+        legacyHandles.varButtons(2) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFolder, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFolder('var'));
+        legacyHandles.varButtons(3) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.deleteSelected, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) deleteSelected('var'));
+        legacyHandles.varButtons(4) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.clearAll, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) clearAll('var'));
+
+        legacyHandles.lblOtherM = uicontrol(fig, 'Style', 'text', 'String', uiText.otherScriptLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left', 'BackgroundColor', legacyLayout.figureColor);
+        legacyHandles.lblOtherMDesc = uicontrol(fig, 'Style', 'text', 'String', uiText.otherScriptDesc, ...
+            'HorizontalAlignment', 'left', 'ForegroundColor', legacyLayout.descColor, 'BackgroundColor', legacyLayout.figureColor);
+        otherMListBox = uicontrol(fig, 'Style', 'listbox', 'String', {}, 'Max', 2, 'Min', 0, ...
+            'BackgroundColor', legacyLayout.fieldColor, 'HorizontalAlignment', 'left');
+        legacyHandles.otherButtons(1) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFile, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFiles('script'));
+        legacyHandles.otherButtons(2) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.addFolder, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) addFolder('script'));
+        legacyHandles.otherButtons(3) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.deleteSelected, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) deleteSelected('script'));
+        legacyHandles.otherButtons(4) = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.clearAll, ...
+            'FontWeight', 'normal', 'BackgroundColor', legacyLayout.buttonColor, 'ForegroundColor', legacyLayout.buttonTextColor, ...
+            'Callback', @(src,event) clearAll('script'));
+
+        legacyHandles.lblScript = uicontrol(fig, 'Style', 'text', 'String', uiText.scriptNameLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left', 'BackgroundColor', legacyLayout.figureColor);
+        scriptNameEdit = uicontrol(fig, 'Style', 'edit', 'String', 'LoadWorkspaceData.m', ...
+            'HorizontalAlignment', 'left', 'BackgroundColor', legacyLayout.fieldColor);
+
+        legacyHandles.btnGenerate = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.generate, ...
+            'BackgroundColor', [0.3 0.7 0.3], 'ForegroundColor', 'w', 'FontWeight', 'bold', 'FontSize', 12, ...
+            'Callback', @(src,event) generate());
+        legacyHandles.btnExit = uicontrol(fig, 'Style', 'pushbutton', 'String', uiText.exit, ...
+            'BackgroundColor', [0.8 0.3 0.3], 'ForegroundColor', 'w', 'FontWeight', 'bold', 'FontSize', 12, ...
+            'Callback', @(src,event) delete(fig));
+
+        set(fig, 'ResizeFcn', @(src,event) relayoutLegacyUI());
+    else
+        fig.Color = legacyLayout.figureColor;
+
+        legacyHandles.lblEnum = uilabel(fig, 'Text', uiText.enumLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left');
+        legacyHandles.lblEnumDesc = uilabel(fig, 'Text', uiText.enumDesc, ...
+            'HorizontalAlignment', 'left', 'FontColor', legacyLayout.descColor);
+        enumListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on');
+        legacyHandles.enumButtons(1) = uibutton(fig, 'Text', uiText.addFile, ...
+            'ButtonPushedFcn', @(src,event) addFiles('enum'));
+        legacyHandles.enumButtons(2) = uibutton(fig, 'Text', uiText.addFolder, ...
+            'ButtonPushedFcn', @(src,event) addFolder('enum'));
+        legacyHandles.enumButtons(3) = uibutton(fig, 'Text', uiText.deleteSelected, ...
+            'ButtonPushedFcn', @(src,event) deleteSelected('enum'));
+        legacyHandles.enumButtons(4) = uibutton(fig, 'Text', uiText.clearAll, ...
+            'ButtonPushedFcn', @(src,event) clearAll('enum'));
+
+        legacyHandles.lblTargetPath = uilabel(fig, 'Text', uiText.enumTargetPathLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left');
+        enumTargetPathEdit = uieditfield(fig, 'text', 'Value', '');
+        legacyHandles.btnBrowsePath = uibutton(fig, 'Text', uiText.browse, ...
+            'ButtonPushedFcn', @(src,event) selectEnumTargetFolder());
+
+        legacyHandles.lblIntf = uilabel(fig, 'Text', uiText.interfaceLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left');
+        legacyHandles.lblIntfDesc = uilabel(fig, 'Text', uiText.interfaceDesc, ...
+            'HorizontalAlignment', 'left', 'FontColor', legacyLayout.descColor);
+        interfaceListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on');
+        legacyHandles.intfButtons(1) = uibutton(fig, 'Text', uiText.addFile, ...
+            'ButtonPushedFcn', @(src,event) addFiles('interface'));
+        legacyHandles.intfButtons(2) = uibutton(fig, 'Text', uiText.addFolder, ...
+            'ButtonPushedFcn', @(src,event) addFolder('interface'));
+        legacyHandles.intfButtons(3) = uibutton(fig, 'Text', uiText.deleteSelected, ...
+            'ButtonPushedFcn', @(src,event) deleteSelected('interface'));
+        legacyHandles.intfButtons(4) = uibutton(fig, 'Text', uiText.clearAll, ...
+            'ButtonPushedFcn', @(src,event) clearAll('interface'));
+
+        legacyHandles.lblVar = uilabel(fig, 'Text', uiText.varLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left');
+        legacyHandles.lblVarDesc = uilabel(fig, 'Text', uiText.varDesc, ...
+            'HorizontalAlignment', 'left', 'FontColor', legacyLayout.descColor);
+        varListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on');
+        legacyHandles.varButtons(1) = uibutton(fig, 'Text', uiText.addFile, ...
+            'ButtonPushedFcn', @(src,event) addFiles('var'));
+        legacyHandles.varButtons(2) = uibutton(fig, 'Text', uiText.addFolder, ...
+            'ButtonPushedFcn', @(src,event) addFolder('var'));
+        legacyHandles.varButtons(3) = uibutton(fig, 'Text', uiText.deleteSelected, ...
+            'ButtonPushedFcn', @(src,event) deleteSelected('var'));
+        legacyHandles.varButtons(4) = uibutton(fig, 'Text', uiText.clearAll, ...
+            'ButtonPushedFcn', @(src,event) clearAll('var'));
+
+        legacyHandles.lblOtherM = uilabel(fig, 'Text', uiText.otherScriptLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left');
+        legacyHandles.lblOtherMDesc = uilabel(fig, 'Text', uiText.otherScriptDesc, ...
+            'HorizontalAlignment', 'left', 'FontColor', legacyLayout.descColor);
+        otherMListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on');
+        legacyHandles.otherButtons(1) = uibutton(fig, 'Text', uiText.addFile, ...
+            'ButtonPushedFcn', @(src,event) addFiles('script'));
+        legacyHandles.otherButtons(2) = uibutton(fig, 'Text', uiText.addFolder, ...
+            'ButtonPushedFcn', @(src,event) addFolder('script'));
+        legacyHandles.otherButtons(3) = uibutton(fig, 'Text', uiText.deleteSelected, ...
+            'ButtonPushedFcn', @(src,event) deleteSelected('script'));
+        legacyHandles.otherButtons(4) = uibutton(fig, 'Text', uiText.clearAll, ...
+            'ButtonPushedFcn', @(src,event) clearAll('script'));
+
+        legacyHandles.lblScript = uilabel(fig, 'Text', uiText.scriptNameLabel, ...
+            'FontWeight', 'bold', 'HorizontalAlignment', 'left');
+        scriptNameEdit = uieditfield(fig, 'text', 'Value', 'LoadWorkspaceData.m');
+
+        legacyHandles.btnGenerate = uibutton(fig, 'Text', uiText.generate, ...
+            'BackgroundColor', [0.3 0.7 0.3], 'FontColor', 'w', 'FontWeight', 'bold', 'FontSize', 12, ...
+            'ButtonPushedFcn', @(src,event) generate());
+        legacyHandles.btnExit = uibutton(fig, 'Text', uiText.exit, ...
+            'BackgroundColor', [0.8 0.3 0.3], 'FontColor', 'w', 'FontWeight', 'bold', 'FontSize', 12, ...
+            'ButtonPushedFcn', @(src,event) delete(fig));
+
+        if isprop(fig, 'AutoResizeChildren')
+            fig.AutoResizeChildren = 'off';
+        end
+        fig.SizeChangedFcn = @(src,event) relayoutLegacyUI();
+    end
+
+    relayoutLegacyUI();
+    if isLegacyUI
+        drawnow;
+        rmappdata(fig, 'LegacyLastFigureSize');
+        relayoutLegacyUI();
+    end
 end
 
 % 存储数据
@@ -228,42 +360,307 @@ appData.enumFiles = {};
 appData.targetPath = '';
 appData.interfaceFiles = {};
 appData.varFiles = {};
+appData.otherMFiles = {};
 appData.enumListBox = enumListBox;
 appData.interfaceListBox = interfaceListBox;
 appData.varListBox = varListBox;
+appData.otherMListBox = otherMListBox;
 set(fig, 'UserData', appData);
+
+    function tf = hasModernFigureControls()
+        tf = exist('uifigure', 'file') == 2 && ...
+            exist('uilabel', 'file') == 2 && ...
+            exist('uilistbox', 'file') == 2 && ...
+            exist('uibutton', 'file') == 2 && ...
+            exist('uieditfield', 'file') == 2;
+    end
+
+    function tf = hasModernGridLayout()
+        tf = exist('uigridlayout', 'file') == 2;
+    end
+
+    function layout = createLegacyLayout(figureHeight)
+        layout = struct();
+        layout.baseFigureSize = [980, figureHeight];
+        layout.padding = 10;
+        layout.rowSpacing = 4;
+        layout.columnSpacing = 6;
+        layout.baseRowHeights = baseRowHeights;
+        layout.baseColumnWidths = [180 658 110];
+        layout.figureColor = [0.94 0.94 0.94];
+        layout.fieldColor = [1 1 1];
+        layout.descColor = [0.45 0.45 0.45];
+        layout.buttonColor = [0.97 0.97 0.97];
+        layout.buttonTextColor = [0.15 0.15 0.15];
+        layout.compatFrameInsets = [16 39];
+    end
+
+    function texts = buildUIText()
+        mk = @(codes) char(uint16(codes));
+        texts = struct();
+        texts.appTitle = mk([27169 22411 23450 20041 21019 24314 24037 20855]);
+        texts.enumLabel = mk([26522 20030 23450 20041 25991 20214 21015 34920 58]);
+        texts.enumDesc = mk([23450 20041 26522 20030 12289 66 85 83 12289 21333 20301]);
+        texts.addFile = mk([28155 21152 25991 20214 46 46 46]);
+        texts.addFolder = mk([28155 21152 25991 20214 22841 46 46 46]);
+        texts.deleteSelected = mk([21024 38500 36873 20013]);
+        texts.clearAll = mk([28165 31354 20840 37096]);
+        texts.enumTargetPathLabel = mk([26522 20030 25991 20214 23384 25918 36335 24452 58]);
+        texts.browse = mk([27983 35272 46 46 46]);
+        texts.interfaceLabel = mk([73 110 116 101 114 102 97 99 101 25991 20214 21015 34920 58]);
+        texts.interfaceDesc = mk([23450 20041 35266 27979 37327 12289 26631 23450 37327]);
+        texts.varLabel = mk([20854 20182 21464 37327 23450 20041 25991 20214 21015 34920 58]);
+        texts.varDesc = mk([20165 23450 20041 26631 23450 37327]);
+        texts.otherScriptLabel = mk([20854 20182 32 46 109 32 25991 20214 58]);
+        texts.otherScriptDesc = mk([21487 21512 24182 20854 20182 33050 26412 20869 23481]);
+        texts.scriptNameLabel = mk([21152 36733 33050 26412 25991 20214 21517 58]);
+        texts.generate = mk([29983 25104]);
+        texts.exit = mk([36864 20986]);
+        texts.enumLabelTooltip = mk([25903 25345 22810 20010 32 69 120 99 101 108 32 25991 20214 65292 25353 39034 24207 21512 24182 65292 37325 22797 23450 20041 20197 26368 21518 20026 20934]);
+        texts.enumListTooltip = mk([24050 36873 25321 30340 26522 20030 23450 20041 25991 20214 65288 23436 25972 36335 24452 65289]);
+        texts.interfaceListTooltip = mk([24050 36873 25321 30340 32 73 110 116 101 114 102 97 99 101 32 25991 20214 65288 23436 25972 36335 24452 65289]);
+        texts.varListTooltip = mk([24050 36873 25321 30340 20854 20182 21464 37327 23450 20041 25991 20214 65288 23436 25972 36335 24452 65289]);
+        texts.otherScriptTooltip = mk([36825 20123 33050 26412 20869 23481 20250 36861 21152 21040 29983 25104 33050 26412 30340 26411 23614]);
+        texts.promptTitle = mk([25552 31034]);
+        texts.errorTitle = mk([38169 35823]);
+        texts.warningTitle = mk([35686 21578]);
+        texts.doneTitle = mk([23436 25104]);
+        texts.selectEnumTargetFolder = mk([36873 25321 26522 20030 31867 29983 25104 30446 26631 36335 24452]);
+        texts.selectEnumFiles = mk([36873 25321 19968 20010 25110 22810 20010 26522 20030 32 69 120 99 101 108 32 25991 20214]);
+        texts.selectInterfaceFiles = mk([36873 25321 19968 20010 25110 22810 20010 32 73 110 116 101 114 102 97 99 101 32 69 120 99 101 108 32 25991 20214]);
+        texts.selectVarFiles = mk([36873 25321 19968 20010 25110 22810 20010 21464 37327 23450 20041 32 69 120 99 101 108 32 25991 20214]);
+        texts.selectScriptFiles = mk([36873 25321 19968 20010 25110 22810 20010 33050 26412 25991 20214]);
+        texts.selectEnumFolder = mk([36873 25321 21253 21547 26522 20030 32 69 120 99 101 108 32 25991 20214 30340 26681 25991 20214 22841]);
+        texts.selectInterfaceFolder = mk([36873 25321 21253 21547 32 73 110 116 101 114 102 97 99 101 32 69 120 99 101 108 32 25991 20214 30340 26681 25991 20214 22841]);
+        texts.selectVarFolder = mk([36873 25321 21253 21547 21464 37327 23450 20041 32 69 120 99 101 108 32 25991 20214 30340 26681 25991 20214 22841]);
+        texts.selectScriptFolder = mk([36873 25321 21253 21547 33050 26412 25991 20214 30340 26681 25991 20214 22841]);
+    end
+
+    function relayoutLegacyUI()
+        if hasModernGrid || isempty(fieldnames(legacyHandles)) || ~isvalid(fig)
+            return;
+        end
+
+        metrics = getLegacyMetrics();
+        currentFigureSize = [metrics.figureWidth, metrics.figureHeight];
+        lastFigureSize = getappdata(fig, 'LegacyLastFigureSize');
+        if isequal(lastFigureSize, currentFigureSize)
+            return;
+        end
+        setappdata(fig, 'LegacyLastFigureSize', currentFigureSize);
+
+        setLegacyControl(legacyHandles.lblEnum, legacyGridRect(metrics, 1, 1, 1, 1), 11, 'bold');
+        setLegacyControl(legacyHandles.lblEnumDesc, legacyGridRect(metrics, 1, 1, 2, 2), 9, 'normal');
+        setLegacyControl(enumListBox, legacyGridRect(metrics, 2, 5, 2, 2), 10, 'normal');
+        layoutButtonColumn(legacyHandles.enumButtons, metrics, 2, 'normal');
+
+        setLegacyControl(legacyHandles.lblTargetPath, legacyGridRect(metrics, 6, 6, 1, 1), 11, 'bold');
+        setLegacyControl(enumTargetPathEdit, legacyGridRect(metrics, 6, 6, 2, 2), 10, 'normal');
+        setLegacyControl(legacyHandles.btnBrowsePath, legacyGridRect(metrics, 6, 6, 3, 3), 10, 'normal');
+
+        setLegacyControl(legacyHandles.lblIntf, legacyGridRect(metrics, 8, 8, 1, 1), 11, 'bold');
+        setLegacyControl(legacyHandles.lblIntfDesc, legacyGridRect(metrics, 8, 8, 2, 2), 9, 'normal');
+        setLegacyControl(interfaceListBox, legacyGridRect(metrics, 9, 12, 2, 2), 10, 'normal');
+        layoutButtonColumn(legacyHandles.intfButtons, metrics, 9, 'normal');
+
+        setLegacyControl(legacyHandles.lblVar, legacyGridRect(metrics, 14, 14, 1, 1), 11, 'bold');
+        setLegacyControl(legacyHandles.lblVarDesc, legacyGridRect(metrics, 14, 14, 2, 2), 9, 'normal');
+        setLegacyControl(varListBox, legacyGridRect(metrics, 15, 18, 2, 2), 10, 'normal');
+        layoutButtonColumn(legacyHandles.varButtons, metrics, 15, 'normal');
+
+        setLegacyControl(legacyHandles.lblOtherM, legacyGridRect(metrics, 20, 20, 1, 1), 11, 'bold');
+        setLegacyControl(legacyHandles.lblOtherMDesc, legacyGridRect(metrics, 20, 20, 2, 2), 9, 'normal');
+        setLegacyControl(otherMListBox, legacyGridRect(metrics, 21, 24, 2, 2), 10, 'normal');
+        layoutButtonColumn(legacyHandles.otherButtons, metrics, 21, 'normal');
+
+        setLegacyControl(legacyHandles.lblScript, legacyGridRect(metrics, 25, 25, 1, 1), 11, 'bold');
+        setLegacyControl(scriptNameEdit, legacyGridRect(metrics, 25, 25, 2, 3), 10, 'normal');
+
+        buttonPanelRect = legacyGridRect(metrics, 26, 26, 1, 3);
+        buttonGap = metrics.columnSpacing + 2;
+        buttonWidth = floor((buttonPanelRect(3) - buttonGap) / 2);
+        setLegacyControl(legacyHandles.btnGenerate, [buttonPanelRect(1), buttonPanelRect(2), buttonWidth, buttonPanelRect(4)], 11, 'bold');
+        setLegacyControl(legacyHandles.btnExit, [buttonPanelRect(1) + buttonWidth + buttonGap, buttonPanelRect(2), buttonWidth, buttonPanelRect(4)], 11, 'bold');
+    end
+
+    function metrics = getLegacyMetrics()
+        figPos = getFigureClientPosition();
+        metrics.figureWidth = figPos(3);
+        metrics.figureHeight = figPos(4);
+
+        baseHeight = 2 * legacyLayout.padding + sum(legacyLayout.baseRowHeights) + legacyLayout.rowSpacing * (length(legacyLayout.baseRowHeights) - 1);
+        metrics.paddingX = legacyLayout.padding;
+        metrics.paddingY = legacyLayout.padding;
+        metrics.columnSpacing = legacyLayout.columnSpacing;
+        metrics.rowSpacing = legacyLayout.rowSpacing;
+
+        minMiddleColumnWidth = 260;
+        fixedSideColumnsWidth = legacyLayout.baseColumnWidths(1) + legacyLayout.baseColumnWidths(3);
+        availableMiddleWidth = metrics.figureWidth - 2 * metrics.paddingX - 2 * metrics.columnSpacing - fixedSideColumnsWidth;
+        metrics.columnWidths = [legacyLayout.baseColumnWidths(1), max(minMiddleColumnWidth, availableMiddleWidth), legacyLayout.baseColumnWidths(3)];
+
+        metrics.rowHeights = legacyLayout.baseRowHeights;
+        flexibleRows = [2:5, 9:12, 15:18, 21:24];
+        extraHeight = metrics.figureHeight - baseHeight;
+        if extraHeight ~= 0
+            rowDelta = floor(extraHeight / numel(flexibleRows));
+            remainder = extraHeight - rowDelta * numel(flexibleRows);
+            metrics.rowHeights(flexibleRows) = max(18, metrics.rowHeights(flexibleRows) + rowDelta);
+
+            if remainder ~= 0
+                rowStep = sign(remainder);
+                remainder = abs(remainder);
+                for rowIdx = 1:numel(flexibleRows)
+                    if remainder == 0
+                        break;
+                    end
+                    targetRow = flexibleRows(rowIdx);
+                    if rowStep > 0 || metrics.rowHeights(targetRow) > 18
+                        metrics.rowHeights(targetRow) = metrics.rowHeights(targetRow) + rowStep;
+                        remainder = remainder - 1;
+                    end
+                end
+            end
+        end
+    end
+
+    function rect = legacyGridRect(metrics, rowStart, rowEnd, colStart, colEnd)
+        x = metrics.paddingX;
+        for colIdx = 1:(colStart - 1)
+            x = x + metrics.columnWidths(colIdx) + metrics.columnSpacing;
+        end
+
+        width = sum(metrics.columnWidths(colStart:colEnd)) + metrics.columnSpacing * (colEnd - colStart);
+        usedHeight = metrics.paddingY;
+        for rowIdx = 1:rowEnd
+            usedHeight = usedHeight + metrics.rowHeights(rowIdx);
+            if rowIdx < rowEnd
+                usedHeight = usedHeight + metrics.rowSpacing;
+            end
+        end
+        height = sum(metrics.rowHeights(rowStart:rowEnd)) + metrics.rowSpacing * (rowEnd - rowStart);
+        y = metrics.figureHeight - usedHeight;
+        rect = [x, y, width, height];
+    end
+
+    function layoutButtonColumn(buttonHandles, metrics, startRow, fontWeight)
+        if nargin < 4
+            fontWeight = 'normal';
+        end
+        for btnIdx = 1:length(buttonHandles)
+            setLegacyControl(buttonHandles(btnIdx), legacyGridRect(metrics, startRow + btnIdx - 1, startRow + btnIdx - 1, 3, 3), 10, fontWeight);
+        end
+    end
+
+    function setFigureClientSize(contentSize)
+        drawnow;
+        if isprop(fig, 'InnerPosition')
+            outerPos = fig.Position;
+            innerPos = fig.InnerPosition;
+            chromeWidth = max(0, outerPos(3) - innerPos(3));
+            chromeHeight = max(0, outerPos(4) - innerPos(4));
+            fig.Position = [outerPos(1), outerPos(2), contentSize(1) + chromeWidth, contentSize(2) + chromeHeight];
+        elseif isLegacyUI
+            outerPos = get(fig, 'Position');
+            set(fig, 'Position', [outerPos(1), outerPos(2), ...
+                contentSize(1) + legacyLayout.compatFrameInsets(1), ...
+                contentSize(2) + legacyLayout.compatFrameInsets(2)]);
+        elseif ~isLegacyUI && ~hasModernGrid
+            outerPos = fig.Position;
+            fig.Position = [outerPos(1), outerPos(2), ...
+                contentSize(1) + legacyLayout.compatFrameInsets(1), ...
+                contentSize(2) + legacyLayout.compatFrameInsets(2)];
+        end
+    end
+
+    function figPos = getFigureClientPosition()
+        if isprop(fig, 'InnerPosition')
+            figPos = fig.InnerPosition;
+        elseif ~isLegacyUI && ~hasModernGrid
+            outerPos = fig.Position;
+            figPos = [1, 1, ...
+                max(1, outerPos(3) - legacyLayout.compatFrameInsets(1)), ...
+                max(1, outerPos(4) - legacyLayout.compatFrameInsets(2))];
+        elseif isLegacyUI
+            figPos = getpixelposition(fig);
+        else
+            figPos = fig.Position;
+        end
+    end
+
+    function setLegacyControl(handleObj, rect, fontSize, fontWeight)
+        if isempty(handleObj) || ~isvalid(handleObj)
+            return;
+        end
+        layoutCache = getappdata(handleObj, 'LegacyLayoutCache');
+        needsPositionUpdate = isempty(layoutCache) || ~isequal(layoutCache.Position, rect);
+        needsFontSizeUpdate = isempty(layoutCache) || layoutCache.FontSize ~= fontSize;
+        needsFontWeightUpdate = isempty(layoutCache) || ~strcmp(layoutCache.FontWeight, fontWeight);
+        if isLegacyUI
+            props = {};
+            if isempty(layoutCache)
+                props = [props, {'Units', 'pixels'}];
+            end
+            if needsPositionUpdate
+                props = [props, {'Position', rect}];
+            end
+            if needsFontSizeUpdate
+                props = [props, {'FontSize', fontSize}];
+            end
+            if needsFontWeightUpdate
+                props = [props, {'FontWeight', fontWeight}];
+            end
+            if ~isempty(props)
+                set(handleObj, props{:});
+            end
+        else
+            if needsPositionUpdate
+                handleObj.Position = rect;
+            end
+            if needsFontSizeUpdate
+                handleObj.FontSize = fontSize;
+            end
+            if needsFontWeightUpdate
+                handleObj.FontWeight = fontWeight;
+            end
+        end
+        if needsPositionUpdate || needsFontSizeUpdate || needsFontWeightUpdate || isempty(layoutCache)
+            setappdata(handleObj, 'LegacyLayoutCache', struct('Position', rect, 'FontSize', fontSize, 'FontWeight', fontWeight));
+        end
+    end
 
 % ==================== 回调函数 ====================
     function selectEnumTargetFolder()
-        folder = uigetdir(pwd, '选择枚举类生成目标路径');
+        folder = uigetdir(pwd, uiText.selectEnumTargetFolder);
         pause(0.01);
-        figure(fig);
-        drawnow;
+        focusMainWindow();
         appData = get(fig, 'UserData');
         updateListBox(appData.enumListBox, appData.enumFiles);
         if folder ~= 0
-            enumTargetPathEdit.Value = folder;
+            setEditFieldValue(enumTargetPathEdit, folder);
             appData.targetPath = folder;
             set(fig, 'UserData', appData);
-            statusLabel.Text = sprintf('枚举文件存放路径: %s', folder);
+            setStatus(sprintf('枚举文件存放路径: %s', folder), [0 0 0]);
         end
     end
 
     function addFiles(type)
         switch type
             case 'enum'
-                [files, path] = uigetfile('*.xlsx', '选择一个或多个枚举 Excel 文件', ...
+                [files, path] = uigetfile('*.xlsx', uiText.selectEnumFiles, ...
                     pwd, 'MultiSelect', 'on');
             case 'interface'
-                [files, path] = uigetfile('*.xlsx', '选择一个或多个 Interface Excel 文件', ...
+                [files, path] = uigetfile('*.xlsx', uiText.selectInterfaceFiles, ...
                     pwd, 'MultiSelect', 'on');
             case 'var'
-                [files, path] = uigetfile('*.xlsx', '选择一个或多个变量定义 Excel 文件', ...
+                [files, path] = uigetfile('*.xlsx', uiText.selectVarFiles, ...
+                    pwd, 'MultiSelect', 'on');
+            case 'script'
+                [files, path] = uigetfile('*.m', uiText.selectScriptFiles, ...
                     pwd, 'MultiSelect', 'on');
         end
         pause(0.01);
-        figure(fig);
-        drawnow;
+        focusMainWindow();
         if isequal(files, 0), return; end
         if ischar(files), files = {files}; end
 
@@ -275,7 +672,7 @@ set(fig, 'UserData', appData);
         end
 
         if isempty(validFiles)
-            statusLabel.Text = '未选择有效的文件（临时文件已被过滤）';
+            setStatus('未选择有效的文件（临时文件已被过滤）', [0.8 0.4 0]);
             return;
         end
 
@@ -287,19 +684,25 @@ set(fig, 'UserData', appData);
                 allFiles = unique(allFiles, 'stable');
                 appData.enumFiles = allFiles;
                 updateListBox(appData.enumListBox, allFiles);
-                statusLabel.Text = sprintf('已添加 %d 个枚举文件，共 %d 个', length(newPaths), length(allFiles));
+                setStatus(sprintf('已添加 %d 个枚举文件，共 %d 个', length(newPaths), length(allFiles)), [0 0 0]);
             case 'interface'
                 allFiles = [appData.interfaceFiles, newPaths];
                 allFiles = unique(allFiles, 'stable');
                 appData.interfaceFiles = allFiles;
                 updateListBox(appData.interfaceListBox, allFiles);
-                statusLabel.Text = sprintf('已添加 %d 个 Interface 文件，共 %d 个', length(newPaths), length(allFiles));
+                setStatus(sprintf('已添加 %d 个 Interface 文件，共 %d 个', length(newPaths), length(allFiles)), [0 0 0]);
             case 'var'
                 allFiles = [appData.varFiles, newPaths];
                 allFiles = unique(allFiles, 'stable');
                 appData.varFiles = allFiles;
                 updateListBox(appData.varListBox, allFiles);
-                statusLabel.Text = sprintf('已添加 %d 个变量定义文件，共 %d 个', length(newPaths), length(allFiles));
+                setStatus(sprintf('已添加 %d 个其他变量定义文件，共 %d 个', length(newPaths), length(allFiles)), [0 0 0]);
+            case 'script'
+                allFiles = [appData.otherMFiles, newPaths];
+                allFiles = unique(allFiles, 'stable');
+                appData.otherMFiles = allFiles;
+                updateListBox(appData.otherMListBox, allFiles);
+                setStatus(sprintf('已添加 %d 个其他 .m 文件，共 %d 个', length(newPaths), length(allFiles)), [0 0 0]);
         end
         set(fig, 'UserData', appData);
     end
@@ -307,17 +710,18 @@ set(fig, 'UserData', appData);
     function addFolder(type)
         switch type
             case 'enum'
-                folder = uigetdir(pwd, '选择包含枚举 Excel 文件的根文件夹');
+                folder = uigetdir(pwd, uiText.selectEnumFolder);
             case 'interface'
-                folder = uigetdir(pwd, '选择包含 Interface Excel 文件的根文件夹');
+                folder = uigetdir(pwd, uiText.selectInterfaceFolder);
             case 'var'
-                folder = uigetdir(pwd, '选择包含变量定义 Excel 文件的根文件夹');
+                folder = uigetdir(pwd, uiText.selectVarFolder);
+            case 'script'
+                folder = uigetdir(pwd, uiText.selectScriptFolder);
         end
         pause(0.01);
-        figure(fig);
-        drawnow;
+        focusMainWindow();
         if folder == 0, return; end
-        statusLabel.Text = '正在扫描文件夹...';
+        setStatus('正在扫描文件夹...', [0.5 0 0]);
         appData = get(fig, 'UserData');
         switch type
             case 'enum'
@@ -326,27 +730,38 @@ set(fig, 'UserData', appData);
                 updateListBox(appData.interfaceListBox, appData.interfaceFiles);
             case 'var'
                 updateListBox(appData.varListBox, appData.varFiles);
+            case 'script'
+                updateListBox(appData.otherMListBox, appData.otherMFiles);
         end
-        excelFiles = findAllExcelFiles(folder);
         switch type
             case 'enum'
+                excelFiles = findAllExcelFiles(folder);
                 allFiles = [appData.enumFiles, excelFiles];
                 allFiles = unique(allFiles, 'stable');
                 appData.enumFiles = allFiles;
                 updateListBox(appData.enumListBox, allFiles);
-                statusLabel.Text = sprintf('从文件夹中添加了 %d 个枚举文件，共 %d 个', length(excelFiles), length(allFiles));
+                setStatus(sprintf('从文件夹中添加了 %d 个枚举文件，共 %d 个', length(excelFiles), length(allFiles)), [0 0 0]);
             case 'interface'
+                excelFiles = findAllExcelFiles(folder);
                 allFiles = [appData.interfaceFiles, excelFiles];
                 allFiles = unique(allFiles, 'stable');
                 appData.interfaceFiles = allFiles;
                 updateListBox(appData.interfaceListBox, allFiles);
-                statusLabel.Text = sprintf('从文件夹中添加了 %d 个 Interface 文件，共 %d 个', length(excelFiles), length(allFiles));
+                setStatus(sprintf('从文件夹中添加了 %d 个 Interface 文件，共 %d 个', length(excelFiles), length(allFiles)), [0 0 0]);
             case 'var'
+                excelFiles = findAllExcelFiles(folder);
                 allFiles = [appData.varFiles, excelFiles];
                 allFiles = unique(allFiles, 'stable');
                 appData.varFiles = allFiles;
                 updateListBox(appData.varListBox, allFiles);
-                statusLabel.Text = sprintf('从文件夹中添加了 %d 个变量定义文件，共 %d 个', length(excelFiles), length(allFiles));
+                setStatus(sprintf('从文件夹中添加了 %d 个其他变量定义文件，共 %d 个', length(excelFiles), length(allFiles)), [0 0 0]);
+            case 'script'
+                scriptFiles = findAllScriptFiles(folder);
+                allFiles = [appData.otherMFiles, scriptFiles];
+                allFiles = unique(allFiles, 'stable');
+                appData.otherMFiles = allFiles;
+                updateListBox(appData.otherMListBox, allFiles);
+                setStatus(sprintf('从文件夹中添加了 %d 个其他 .m 文件，共 %d 个', length(scriptFiles), length(allFiles)), [0 0 0]);
         end
         set(fig, 'UserData', appData);
     end
@@ -356,28 +771,36 @@ set(fig, 'UserData', appData);
         switch type
             case 'enum'
                 if isempty(appData.enumFiles), return; end
-                selected = appData.enumListBox.Value;
+                selected = getListBoxSelection(appData.enumListBox);
                 if isempty(selected), return; end
                 [~, idx] = intersect(appData.enumFiles, selected);
                 appData.enumFiles(idx) = [];
                 updateListBox(appData.enumListBox, appData.enumFiles);
-                statusLabel.Text = sprintf('已删除 %d 个枚举文件，剩余 %d 个', length(idx), length(appData.enumFiles));
+                setStatus(sprintf('已删除 %d 个枚举文件，剩余 %d 个', length(idx), length(appData.enumFiles)), [0 0 0]);
             case 'interface'
                 if isempty(appData.interfaceFiles), return; end
-                selected = appData.interfaceListBox.Value;
+                selected = getListBoxSelection(appData.interfaceListBox);
                 if isempty(selected), return; end
                 [~, idx] = intersect(appData.interfaceFiles, selected);
                 appData.interfaceFiles(idx) = [];
                 updateListBox(appData.interfaceListBox, appData.interfaceFiles);
-                statusLabel.Text = sprintf('已删除 %d 个 Interface 文件，剩余 %d 个', length(idx), length(appData.interfaceFiles));
+                setStatus(sprintf('已删除 %d 个 Interface 文件，剩余 %d 个', length(idx), length(appData.interfaceFiles)), [0 0 0]);
             case 'var'
                 if isempty(appData.varFiles), return; end
-                selected = appData.varListBox.Value;
+                selected = getListBoxSelection(appData.varListBox);
                 if isempty(selected), return; end
                 [~, idx] = intersect(appData.varFiles, selected);
                 appData.varFiles(idx) = [];
                 updateListBox(appData.varListBox, appData.varFiles);
-                statusLabel.Text = sprintf('已删除 %d 个变量定义文件，剩余 %d 个', length(idx), length(appData.varFiles));
+                setStatus(sprintf('已删除 %d 个其他变量定义文件，剩余 %d 个', length(idx), length(appData.varFiles)), [0 0 0]);
+            case 'script'
+                if isempty(appData.otherMFiles), return; end
+                selected = getListBoxSelection(appData.otherMListBox);
+                if isempty(selected), return; end
+                [~, idx] = intersect(appData.otherMFiles, selected);
+                appData.otherMFiles(idx) = [];
+                updateListBox(appData.otherMListBox, appData.otherMFiles);
+                setStatus(sprintf('已删除 %d 个其他 .m 文件，剩余 %d 个', length(idx), length(appData.otherMFiles)), [0 0 0]);
         end
         set(fig, 'UserData', appData);
     end
@@ -388,20 +811,32 @@ set(fig, 'UserData', appData);
             case 'enum'
                 appData.enumFiles = {};
                 updateListBox(appData.enumListBox, {});
-                statusLabel.Text = '已清空枚举文件列表';
+                setStatus('已清空枚举文件列表', [0 0 0]);
             case 'interface'
                 appData.interfaceFiles = {};
                 updateListBox(appData.interfaceListBox, {});
-                statusLabel.Text = '已清空 Interface 文件列表';
+                setStatus('已清空 Interface 文件列表', [0 0 0]);
             case 'var'
                 appData.varFiles = {};
                 updateListBox(appData.varListBox, {});
-                statusLabel.Text = '已清空变量定义文件列表';
+                setStatus('已清空其他变量定义文件列表', [0 0 0]);
+            case 'script'
+                appData.otherMFiles = {};
+                updateListBox(appData.otherMListBox, {});
+                setStatus('已清空其他 .m 文件列表', [0 0 0]);
         end
         set(fig, 'UserData', appData);
     end
 
     function updateListBox(listbox, filePaths)
+        if isLegacyUI
+            if isempty(filePaths)
+                set(listbox, 'String', {}, 'Value', []);
+            else
+                set(listbox, 'String', filePaths, 'Value', []);
+            end
+            return;
+        end
         if isempty(filePaths)
             listbox.Items = {};
             listbox.Value = {};
@@ -424,11 +859,106 @@ set(fig, 'UserData', appData);
         end
     end
 
+    function scriptFiles = findAllScriptFiles(rootFolder)
+        scriptFiles = {};
+        items = dir(rootFolder);
+        for i = 1:length(items)
+            if items(i).isdir && ~ismember(items(i).name, {'.', '..'})
+                subFiles = findAllScriptFiles(fullfile(rootFolder, items(i).name));
+                scriptFiles = [scriptFiles, subFiles];
+            elseif ~items(i).isdir && endsWith(items(i).name, '.m', 'IgnoreCase', true)
+                scriptFiles{end+1} = fullfile(rootFolder, items(i).name);
+            end
+        end
+    end
+
+    function focusMainWindow()
+        if isLegacyUI
+            figure(fig);
+        end
+        drawnow;
+    end
+
+    function setEditFieldValue(handleObj, value)
+        if isLegacyUI
+            set(handleObj, 'String', value);
+        else
+            handleObj.Value = value;
+        end
+    end
+
+    function value = getEditFieldValue(handleObj)
+        if isLegacyUI
+            value = get(handleObj, 'String');
+        else
+            value = handleObj.Value;
+        end
+    end
+
+    function selected = getListBoxSelection(listbox)
+        if isLegacyUI
+            items = get(listbox, 'String');
+            idx = get(listbox, 'Value');
+            if isempty(items) || isempty(idx)
+                selected = {};
+                return;
+            end
+            if ischar(items)
+                items = cellstr(items);
+            end
+            idx = idx(idx >= 1 & idx <= numel(items));
+            selected = items(idx);
+            return;
+        end
+        selected = listbox.Value;
+        if ischar(selected)
+            selected = {selected};
+        end
+    end
+
+    function setStatus(message, color)
+        unusedArgs = {message, color};
+        if isempty(unusedArgs)
+            return;
+        end
+    end
+
+    function showAlert(level, message, titleText)
+        dialogTitle = uiText.promptTitle;
+        if nargin >= 3 && ~isempty(titleText)
+            dialogTitle = titleText;
+        end
+        if ~isLegacyUI
+            iconType = 'info';
+            switch lower(level)
+                case 'error'
+                    iconType = 'error';
+                    if nargin < 3 || isempty(titleText), dialogTitle = uiText.errorTitle; end
+                case 'warning'
+                    iconType = 'warning';
+                    if nargin < 3 || isempty(titleText), dialogTitle = uiText.warningTitle; end
+                case 'success'
+                    iconType = 'success';
+                    if nargin < 3 || isempty(titleText), dialogTitle = uiText.doneTitle; end
+            end
+            uialert(fig, message, dialogTitle, 'Icon', iconType);
+        else
+            switch lower(level)
+                case 'error'
+                    errordlg(message, dialogTitle);
+                case 'warning'
+                    warndlg(message, dialogTitle);
+                otherwise
+                    msgbox(message, dialogTitle);
+            end
+        end
+    end
+
 % ==================== 生成主函数 ====================
     function generate()
         appData = get(fig, 'UserData');
         if ~isempty(appData.enumFiles) && isempty(appData.targetPath)
-            uialert(fig, '选择了枚举文件，请选择枚举文件存放路径！', '错误');
+            showAlert('error', '选择了枚举文件，请选择枚举文件存放路径！', uiText.errorTitle);
             return;
         end
 
@@ -457,18 +987,17 @@ set(fig, 'UserData', appData);
                 'savepath;'; ...
                 ''}];
         end
-        for i = 1:length(headerLines)
-            recordScriptLine(['__header__' num2str(i)], headerLines{i});
+        for headerLineIdx = 1:length(headerLines)
+            recordScriptLine(['__header__' num2str(headerLineIdx)], headerLines{headerLineIdx});
         end
 
-        statusLabel.Text = '正在生成...';
-        statusLabel.FontColor = [0.5 0 0];
+        setStatus('正在生成...', [0.5 0 0]);
         drawnow;
 
         try
-            for i = 1:length(appData.enumFiles)
-                enumFile = appData.enumFiles{i};
-                fprintf('\n--- 处理枚举文件 (%d/%d): %s ---\n', i, length(appData.enumFiles), enumFile);
+            for enumIdx = 1:length(appData.enumFiles)
+                enumFile = appData.enumFiles{enumIdx};
+                fprintf('\n--- 处理枚举文件 (%d/%d): %s ---\n', enumIdx, length(appData.enumFiles), enumFile);
                 try
                     [newVars, errors, warnings] = processEnumFile(enumFile, appData.targetPath);
                     generatedVarNames = [generatedVarNames, newVars];
@@ -479,9 +1008,9 @@ set(fig, 'UserData', appData);
                 end
             end
 
-            for i = 1:length(appData.interfaceFiles)
-                intfFile = appData.interfaceFiles{i};
-                fprintf('\n--- 处理 Interface 文件 (%d/%d): %s ---\n', i, length(appData.interfaceFiles), intfFile);
+            for intfIdx = 1:length(appData.interfaceFiles)
+                intfFile = appData.interfaceFiles{intfIdx};
+                fprintf('\n--- 处理 Interface 文件 (%d/%d): %s ---\n', intfIdx, length(appData.interfaceFiles), intfFile);
                 try
                     [newVars, errors, warnings] = processInterfaceFile(intfFile);
                     generatedVarNames = [generatedVarNames, newVars];
@@ -492,9 +1021,9 @@ set(fig, 'UserData', appData);
                 end
             end
 
-            for i = 1:length(appData.varFiles)
-                varFile = appData.varFiles{i};
-                fprintf('\n--- 处理变量定义文件 (%d/%d): %s ---\n', i, length(appData.varFiles), varFile);
+            for varIdx = 1:length(appData.varFiles)
+                varFile = appData.varFiles{varIdx};
+                fprintf('\n--- 处理变量定义文件 (%d/%d): %s ---\n', varIdx, length(appData.varFiles), varFile);
                 try
                     [newVars, errors, warnings] = processVariableDefinitionFile(varFile);
                     generatedVarNames = [generatedVarNames, newVars];
@@ -505,37 +1034,56 @@ set(fig, 'UserData', appData);
                 end
             end
 
-            scriptFileName = strtrim(scriptNameEdit.Value);
+            scriptFileName = strtrim(getEditFieldValue(scriptNameEdit));
             if isempty(scriptFileName), scriptFileName = 'LoadWorkspaceData.m'; end
             if ~endsWith(scriptFileName, '.m'), scriptFileName = [scriptFileName, '.m']; end
             scriptPath = fullfile(pwd, scriptFileName);
-            mergeLoadScript(scriptPath, scriptMap, scriptOrder, generatedVarNames);
+            extraScriptLines = buildMergedScriptLines(appData.otherMFiles);
+            mergeLoadScript(scriptPath, scriptMap, scriptOrder, generatedVarNames, extraScriptLines);
 
             if ~isempty(warningLog)
-                fprintf('\n?? 警告信息汇总:\n');
-                for i = 1:length(warningLog)
-                    fprintf('   %s\n', warningLog{i});
+                fprintf('\n[WARN] 警告信息汇总:\n');
+                for warningIdx = 1:length(warningLog)
+                    fprintf('   %s\n', warningLog{warningIdx});
                 end
             end
             if ~isempty(errorLog)
-                fprintf('\n? 错误信息汇总:\n');
-                for i = 1:length(errorLog)
-                    fprintf('   %s\n', errorLog{i});
+                fprintf('\n[ERROR] 错误信息汇总:\n');
+                for errorIdx = 1:length(errorLog)
+                    fprintf('   %s\n', errorLog{errorIdx});
                 end
-                statusLabel.Text = '生成完成，但存在错误';
-                statusLabel.FontColor = [0.8 0.5 0];
-                uialert(fig, sprintf('生成过程中发生 %d 个错误，请查看命令窗口', length(errorLog)), '警告');
+                setStatus('生成完成，但存在错误', [0.8 0.5 0]);
+                showAlert('warning', sprintf('生成过程中发生 %d 个错误，请查看命令窗口', length(errorLog)), uiText.warningTitle);
             else
-                fprintf('\n? 生成完成！所有处理成功。\n');
-                statusLabel.Text = '? 生成完成！';
-                statusLabel.FontColor = [0 0.5 0];
-                uialert(fig, sprintf('生成成功！\n加载脚本已保存至:\n%s', scriptPath), '完成', 'icon','success');
+                fprintf('\n[OK] 生成完成，所有处理成功。\n');
+                setStatus('[OK] 生成完成', [0 0.5 0]);
+                showAlert('success', sprintf('生成成功！\n加载脚本已保存至:\n%s', scriptPath), uiText.doneTitle);
             end
         catch ME
-            statusLabel.Text = '? 生成失败';
-            statusLabel.FontColor = [0.8 0 0];
-            uialert(fig, sprintf('生成失败:\n%s', ME.message), '错误');
+            setStatus('[FAIL] 生成失败', [0.8 0 0]);
+            showAlert('error', sprintf('生成失败:\n%s', ME.message), uiText.errorTitle);
             rethrow(ME);
+        end
+
+        function lines = buildMergedScriptLines(filePaths)
+            lines = {};
+            for fileIdx = 1:length(filePaths)
+                scriptFile = filePaths{fileIdx};
+                if ~exist(scriptFile, 'file')
+                    warningLog{end+1} = sprintf('附加脚本不存在，已跳过: %s', scriptFile);
+                    continue;
+                end
+                try
+                    scriptContent = fileread(scriptFile);
+                    scriptLines = regexp(scriptContent, '\r\n|\n|\r', 'split');
+                    lines{end+1} = sprintf('%% ===== 合并脚本: %s =====', scriptFile);
+                    lines = [lines; scriptLines(:)];
+                    lines{end+1} = sprintf('%% ===== 结束: %s =====', scriptFile);
+                    lines{end+1} = '';
+                catch ME
+                    warningLog{end+1} = sprintf('读取附加脚本失败 %s: %s', scriptFile, ME.message);
+                end
+            end
         end
 
         % ==================== 嵌套辅助函数 ====================
@@ -546,11 +1094,11 @@ set(fig, 'UserData', appData);
                 errors = [errors; enumErrors];
                 if ~isempty(enumGroups)
                     if ~exist(targetPath, 'dir'), mkdir(targetPath); end
-                    for i = 1:length(enumGroups)
-                        enumInfo = enumGroups{i};
+                    for enumGroupIdx = 1:length(enumGroups)
+                        enumInfo = enumGroups{enumGroupIdx};
                         className = matlab.lang.makeValidName(enumInfo.Name);
                         filePath = fullfile(targetPath, [className, '.m']);
-                        fid = fopen(filePath, 'w', 'n', 'UTF-8');
+                        fid = fopen(filePath, 'w');
                         if fid == -1
                             errors{end+1} = sprintf('无法创建枚举文件: %s', className);
                             continue;
@@ -569,7 +1117,7 @@ set(fig, 'UserData', appData);
                         fprintf(fid, '    end\r\n');
                         fprintf(fid, 'end\r\n');
                         fclose(fid);
-                        fprintf('   ? 生成枚举: %s.m\n', className);
+                        fprintf('   [OK] 生成枚举: %s.m\n', className);
                     end
                 end
             catch ME
@@ -706,7 +1254,7 @@ set(fig, 'UserData', appData);
                             sprintf('assignin(''base'', ''%s'', %s);', typeName, typeName);
                             ''};
                         recordScriptLine(typeName, lines);
-                        fprintf('   ? 创建自定义类型: %s (本质类型: %s)\n', typeName, baseType);
+                        fprintf('   [OK] 创建自定义类型: %s (本质类型: %s)\n', typeName, baseType);
                     catch ME
                         errors{end+1} = sprintf('创建AliasType失败 %s: %s', typeName, ME.message);
                     end
@@ -813,8 +1361,8 @@ set(fig, 'UserData', appData);
                     busMap(busName) = curStruct;
                 end
                 busNames = busMap.keys;
-                for i = 1:length(busNames)
-                    busName = busNames{i};
+                for busIdx = 1:length(busNames)
+                    busName = busNames{busIdx};
                     busInfo = busMap(busName);
                     elements = busInfo.elements;
                     if all(isfield(elements, 'idx'))
@@ -911,9 +1459,9 @@ set(fig, 'UserData', appData);
                         signalLines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', signalName, signalName);
                         signalLines{end+1} = '';
                         recordScriptLine(signalName, signalLines);
-                        fprintf('   ? 创建总线成员信号: %s (所属总线: %s)\n', signalName, busName);
+                        fprintf('   [OK] 创建总线成员信号: %s (所属总线: %s)\n', signalName, busName);
                     end
-                    fprintf('   ? 创建总线对象: %s (包含 %d 个元素)\n', busName, length(elements));
+                    fprintf('   [OK] 创建总线对象: %s (包含 %d 个元素)\n', busName, length(elements));
                 end
             catch ME
                 if ~strcmp(ME.identifier, 'MATLAB:xlsread:SheetNotFound')
@@ -925,8 +1473,8 @@ set(fig, 'UserData', appData);
         function [varNames, errors, warnings] = processInterfaceFile(excelFile)
             varNames = {}; errors = {}; warnings = {};
             sheets = {'CAL', 'NVV', 'IN', 'OUT', 'MP'};
-            for i = 1:length(sheets)
-                sheetName = sheets{i};
+            for sheetIdx = 1:length(sheets)
+                sheetName = sheets{sheetIdx};
                 try
                     [numData, ~, rawData] = xlsread(excelFile, sheetName);
                     if isempty(rawData) || size(rawData, 1) < 2
@@ -952,9 +1500,9 @@ set(fig, 'UserData', appData);
                 return;
             end
             headers = rawData(1, :);
-            for i = 1:length(headers)
-                if isnumeric(headers{i}) && isnan(headers{i})
-                    headers{i} = '';
+            for numericHeaderIdx = 1:length(headers)
+                if isnumeric(headers{numericHeaderIdx}) && isnan(headers{numericHeaderIdx})
+                    headers{numericHeaderIdx} = '';
                 end
             end
             nameCol = findColumnIndex(headers, {'Name'});
@@ -1050,7 +1598,6 @@ set(fig, 'UserData', appData);
                         if ~isempty(description)
                             param.Description = description;
                         end
-                        enumValue = [];
                         if isnumeric(defaultValue)
                             members = enumeration(enumClassName);
                             if ~isempty(members)
@@ -1107,7 +1654,7 @@ set(fig, 'UserData', appData);
                         lines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', varName, varName);
                         lines{end+1} = '';
                         recordScriptLine(varName, lines);
-                        fprintf('   ? 创建枚举参数: %s\n', varName);
+                        fprintf('   [OK] 创建枚举参数: %s\n', varName);
                     catch ME
                         errors{end+1} = sprintf('创建枚举参数失败 %s: %s', varName, ME.message);
                     end
@@ -1147,7 +1694,7 @@ set(fig, 'UserData', appData);
                         lines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', varName, varName);
                         lines{end+1} = '';
                         recordScriptLine(varName, lines);
-                        fprintf('   ? 创建参数: %s\n', varName);
+                        fprintf('   [OK] 创建参数: %s\n', varName);
                     catch ME
                         errors{end+1} = sprintf('创建参数失败 %s: %s', varName, ME.message);
                     end
@@ -1161,9 +1708,9 @@ set(fig, 'UserData', appData);
                 return;
             end
             headers = rawData(1, :);
-            for i = 1:length(headers)
-                if isnumeric(headers{i}) && isnan(headers{i})
-                    headers{i} = '';
+            for signalHeaderIdx = 1:length(headers)
+                if isnumeric(headers{signalHeaderIdx}) && isnan(headers{signalHeaderIdx})
+                    headers{signalHeaderIdx} = '';
                 end
             end
             nameCol = findColumnIndex(headers, {'Name'});
@@ -1251,7 +1798,7 @@ set(fig, 'UserData', appData);
                     lines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', sigName, sigName);
                     lines{end+1} = '';
                     recordScriptLine(sigName, lines);
-                    fprintf('   ? 创建 Simulink.Signal: %s\n', sigName);
+                    fprintf('   [OK] 创建 Simulink.Signal: %s\n', sigName);
                 catch ME
                     errors{end+1} = sprintf('创建信号失败 %s: %s', sigName, ME.message);
                 end
@@ -1293,48 +1840,85 @@ set(fig, 'UserData', appData);
             if ismember(lower(dataType), builtinTypes), return; end
             if startsWith(dataType, 'Enum:', 'IgnoreCase', true)
                 enumName = strtrim(dataType(6:end));
-                if exist(enumName, 'class'), return;
-                else valid = false; errMsg = sprintf('枚举类 %s 不存在', enumName); return; end
+                if exist(enumName, 'class')
+                    return;
+                else
+                    valid = false;
+                    errMsg = sprintf('枚举类 %s 不存在', enumName);
+                    return;
+                end
             end
             if startsWith(dataType, 'Bus:', 'IgnoreCase', true)
                 busName = strtrim(dataType(5:end));
-                if evalin('base', sprintf('exist(''%s'', ''var'')', busName)) && evalin('base', sprintf('isa(%s, ''Simulink.Bus'')', busName)), return;
-                else valid = false; errMsg = sprintf('Bus对象 %s 不存在', busName); return; end
+                if evalin('base', sprintf('exist(''%s'', ''var'')', busName)) && evalin('base', sprintf('isa(%s, ''Simulink.Bus'')', busName))
+                    return;
+                else
+                    valid = false;
+                    errMsg = sprintf('Bus对象 %s 不存在', busName);
+                    return;
+                end
             end
-            if evalin('base', sprintf('exist(''%s'', ''var'')', dataType)) && evalin('base', sprintf('isa(%s, ''Simulink.AliasType'')', dataType)), return;
-            else valid = false; errMsg = sprintf('数据类型 %s 不是内置类型、枚举、Bus或已定义的AliasType', dataType); end
+            if evalin('base', sprintf('exist(''%s'', ''var'')', dataType)) && evalin('base', sprintf('isa(%s, ''Simulink.AliasType'')', dataType))
+                return;
+            else
+                valid = false;
+                errMsg = sprintf('数据类型 %s 不是内置类型、枚举、Bus或已定义的AliasType', dataType);
+            end
         end
     end
 
-    function mergeLoadScript(scriptPath, scriptMap, scriptOrder, generatedVars)
-        newScriptLines = {};
-        for i = 1:length(scriptOrder)
-            varName = scriptOrder{i};
-            if startsWith(varName, '__header__')
-                lines = scriptMap(varName);
-                if iscell(lines), newScriptLines = [newScriptLines; lines(:)]; else newScriptLines{end+1} = lines; end
+    function mergeLoadScript(scriptPath, scriptMap, scriptOrder, generatedVars, extraScriptLines)
+        generatedMarker = '%% ========== 以下为新生成的内容 ==========';
+        mergedMarker = '%% ========== 以下为合并的其他脚本内容 ==========';
+        generatedScriptLines = {};
+        for scriptIdx = 1:length(scriptOrder)
+            varName = scriptOrder{scriptIdx};
+            lines = scriptMap(varName);
+            if iscell(lines)
+                generatedScriptLines = [generatedScriptLines; lines(:)];
             else
-                lines = scriptMap(varName);
-                if iscell(lines), newScriptLines = [newScriptLines; lines(:)]; else newScriptLines{end+1} = lines; end
+                generatedScriptLines{end+1} = lines;
             end
+        end
+
+        newVarSet = unique([generatedVars, extractAssignedVarNames(extraScriptLines)]);
+
+        if isempty(newVarSet) && exist(scriptPath, 'file')
+            fprintf('[OK] 未检测到新的变量或附加脚本，保持现有加载脚本不变: %s\n', scriptPath);
+            return;
         end
 
         if ~exist(scriptPath, 'file')
             fid = fopen(scriptPath, 'w');
             if fid == -1, error('无法创建脚本文件'); end
-            for i = 1:length(newScriptLines), fprintf(fid, '%s\n', newScriptLines{i}); end
+            fprintf(fid, '%s\n', generatedMarker);
+            for i = 1:length(generatedScriptLines), fprintf(fid, '%s\n', generatedScriptLines{i}); end
+            if ~isempty(extraScriptLines)
+                fprintf(fid, '%s\n', mergedMarker);
+                for i = 1:length(extraScriptLines), fprintf(fid, '%s\n', extraScriptLines{i}); end
+            end
             fclose(fid);
-            fprintf('? 已生成加载脚本: %s\n', scriptPath);
+            fprintf('[OK] 已生成加载脚本: %s\n', scriptPath);
             return;
         end
 
         oldContent = fileread(scriptPath);
-        lines = strsplit(oldContent, '\n');
-        newVarSet = unique(generatedVars);
-        keepLines = {};
+        lines = regexp(oldContent, '\r\n|\n|\r', 'split');
+        keepGeneratedLines = {};
+        keepMergedLines = {};
+        inMergedSection = false;
         i = 1;
         while i <= length(lines)
             line = lines{i};
+            if strcmp(line, generatedMarker)
+                i = i + 1;
+                continue;
+            end
+            if strcmp(line, mergedMarker)
+                inMergedSection = true;
+                i = i + 1;
+                continue;
+            end
             tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens');
             if ~isempty(tokens)
                 varName = tokens{1}{1};
@@ -1342,33 +1926,75 @@ set(fig, 'UserData', appData);
                     i = i + 1;
                     while i <= length(lines)
                         nextLine = lines{i};
+                        if strcmp(nextLine, generatedMarker) || strcmp(nextLine, mergedMarker), break; end
                         if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
                         i = i + 1;
                     end
                     continue;
                 else
-                    keepLines{end+1} = line;
+                    if inMergedSection
+                        keepMergedLines{end+1} = line;
+                    else
+                        keepGeneratedLines{end+1} = line;
+                    end
                     i = i + 1;
                     while i <= length(lines)
                         nextLine = lines{i};
+                        if strcmp(nextLine, generatedMarker) || strcmp(nextLine, mergedMarker), break; end
                         if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
-                        keepLines{end+1} = nextLine;
+                        if inMergedSection
+                            keepMergedLines{end+1} = nextLine;
+                        else
+                            keepGeneratedLines{end+1} = nextLine;
+                        end
                         i = i + 1;
                     end
                 end
             else
-                keepLines{end+1} = line;
+                if inMergedSection
+                    keepMergedLines{end+1} = line;
+                else
+                    keepGeneratedLines{end+1} = line;
+                end
                 i = i + 1;
             end
         end
 
         fid = fopen(scriptPath, 'w');
         if fid == -1, error('无法写入脚本文件'); end
-        for i = 1:length(keepLines), fprintf(fid, '%s\n', keepLines{i}); end
-        fprintf(fid, '\n%% ========== 以下为新生成的内容 ==========\n');
-        for i = 1:length(newScriptLines), fprintf(fid, '%s\n', newScriptLines{i}); end
+        for i = 1:length(keepGeneratedLines), fprintf(fid, '%s\n', keepGeneratedLines{i}); end
+        if ~isempty(keepGeneratedLines)
+            fprintf(fid, '\n');
+        end
+        fprintf(fid, '%s\n', generatedMarker);
+        for i = 1:length(generatedScriptLines), fprintf(fid, '%s\n', generatedScriptLines{i}); end
+        finalMergedLines = [keepMergedLines(:); extraScriptLines(:)];
+        if ~isempty(finalMergedLines)
+            fprintf(fid, '%s\n', mergedMarker);
+            for i = 1:length(finalMergedLines), fprintf(fid, '%s\n', finalMergedLines{i}); end
+        end
         fclose(fid);
-        fprintf('? 已合并生成加载脚本: %s\n', scriptPath);
+        fprintf('[OK] 已合并生成加载脚本: %s\n', scriptPath);
+    end
+
+    function varNames = extractAssignedVarNames(lines)
+        varNames = {};
+        if isempty(lines)
+            return;
+        end
+        for lineIdx = 1:length(lines)
+            line = lines{lineIdx};
+            if ~ischar(line)
+                continue;
+            end
+            tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens', 'once');
+            if ~isempty(tokens)
+                varNames{end+1} = tokens{1};
+            end
+        end
+        if ~isempty(varNames)
+            varNames = unique(varNames, 'stable');
+        end
     end
 
 % 兼容模式布局计算（嵌套函数，供 else 分支调用）
