@@ -1,18 +1,18 @@
 function sl_customization(cm)
-    % æ³¨å†Œåˆ°å³é”®èœå•
-    cm.addCustomMenuFcn('Simulink:ContextMenu', @getMyItems);
+% ×¢²áµ½ÓÒ¼ü²Ëµ¥
+cm.addCustomMenuFcn('Simulink:ContextMenu', @getMyItems);
 end
 
 function renderItems = getMyItems(callbackInfo)
-    % ç›´æ¥è¿”å›å…ƒèƒæ•°ç»„
-    renderItems = {@getInspectorSchema};
+% Ö±½Ó·µ»ØÔª°ûÊı×é
+renderItems = {@getInspectorSchema};
 end
 
 function schema = getInspectorSchema(callbackInfo)
-    schema = sl_action_schema;
-    schema.label = 'å¿«é€Ÿæ ‡å®šå·¥å…·'; 
-    schema.tag = 'SimulinkInspector:Launch';
-    
-    % å›è°ƒå‡½æ•°
-    schema.callback = @(callbackInfo) SimulinkInspector.launch(gcbh);
+schema = sl_action_schema;
+schema.label = '¿ìËÙ±ê¶¨¹¤¾ß';
+schema.tag = 'SimulinkInspector:Launch';
+
+% »Øµ÷º¯Êı
+schema.callback = @(callbackInfo) SimulinkInspector.launch(gcbh);
 end

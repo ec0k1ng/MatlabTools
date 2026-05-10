@@ -6,48 +6,49 @@ classdef SimulinkInspector < handle
         IsEnum = false
         EnumClass = ''
         EnumMembers = {}
-        % å†…éƒ¨UIç»„ä»¶å¼•ç”¨
+        % ÄÚ²¿UI×é¼şÒıÓÃ
         BtnSave, BtnCancel, TitleLabel, AxisXLabel, AxisYLabel
-        % --- æ–°å¢ç»„ä»¶ ---
+        % --- ĞÂÔö×é¼ş ---
         BtnInterpX, BtnInterpY
-        % --- ä¿å­˜åˆ°æ–‡ä»¶ç»„ä»¶ ---
+        % --- ±£´æµ½ÎÄ¼ş×é¼ş ---
         BtnSaveFile, FileNameEdit
-        % --- å•è°ƒæ€§çŠ¶æ€æ ‡ç­¾ ---
+        % --- µ¥µ÷ĞÔ×´Ì¬±êÇ© ---
         MonotonicityLabel
-        % --- å½“å‰é€‰æ‹©è·Ÿè¸ª ---
+        % --- µ±Ç°Ñ¡Ôñ¸ú×Ù ---
         CurrentSelection = [1, 1]
-        % æ³¨æ„ï¼šBtnPaste å·²åˆ é™¤ï¼ˆç²˜è´´é€šè¿‡å¿«æ·é”®å®ç°ï¼‰
+        UseLegacyUI = false
+        % ×¢Òâ£ºBtnPaste ÒÑÉ¾³ı£¨Õ³ÌùÍ¨¹ı¿ì½İ¼üÊµÏÖ£©
     end
-    
+
     methods (Static)
         function launch(hBlock)
             if nargin < 1, hBlock = gcbh; end
             if isempty(hBlock) || hBlock == -1, return; end
 
-            % å•å®ä¾‹æ§åˆ¶ï¼šå¦‚æœå·²ç»å­˜åœ¨å®ä¾‹ï¼Œå…ˆå…³é—­å®ƒ
+            % µ¥ÊµÀı¿ØÖÆ£ºÈç¹ûÒÑ¾­´æÔÚÊµÀı£¬ÏÈ¹Ø±ÕËü
             persistent existingInstance;
             if ~isempty(existingInstance) && isvalid(existingInstance)
                 delete(existingInstance.Fig);
             end
 
-            % åˆ›å»ºæ–°å®ä¾‹
+            % ´´½¨ĞÂÊµÀı
             newInstance = SimulinkInspector(hBlock);
             existingInstance = newInstance;
         end
     end
-    
+
     methods
         function obj = SimulinkInspector(hBlock)
             obj.BlockHandle = hBlock;
             obj.parseAndShow();
         end
-        
+
         function parseAndShow(obj)
             bType = get_param(obj.BlockHandle, 'BlockType');
             obj.Mode = 'Standard'; obj.XVar = ''; obj.YVar = '';
-            
+
             try
-                % 1. æå–å˜é‡åé€»è¾‘
+                % 1. ÌáÈ¡±äÁ¿ÃûÂß¼­
                 if ismember(bType, {'Lookup_n-D', 'Lookup'})
                     obj.TableVar = get_param(obj.BlockHandle, 'Table');
                     if strcmp(bType, 'Lookup_n-D')
@@ -70,26 +71,26 @@ classdef SimulinkInspector < handle
                         if lH ~= -1, obj.TableVar = get_param(lH, 'Name'); end
                     end
                 end
-                
-                % å®‰å…¨æ€§æ£€æŸ¥
-                if isempty(obj.TableVar) || ~isvarname(obj.TableVar)
-                    errordlg('è¯¥æ¨¡å—æœªå…³è”æœ‰æ•ˆå˜é‡ï¼ˆå¯èƒ½ç›´æ¥å†™äº†æ•°å€¼æˆ–è¡¨è¾¾å¼ï¼‰ã€‚', 'è§£æå¤±è´¥');
-                    return; 
-                end
 
-                % æ£€æŸ¥å˜é‡æ˜¯å¦å­˜åœ¨äºå·¥ä½œåŒº
-                if ~evalin('base', sprintf('exist(''%s'', ''var'')', obj.TableVar))
-                    errordlg(sprintf('å·¥ä½œåŒºä¸­æœªæ‰¾åˆ°å˜é‡: "%s"ã€‚\nè¯·ç¡®è®¤è¯¥å˜é‡æ˜¯å¦å·²åœ¨å·¥ä½œåŒºå®šä¹‰ã€‚', obj.TableVar), 'å˜é‡æœªå®šä¹‰');
+                % °²È«ĞÔ¼ì²é
+                if isempty(obj.TableVar) || ~isvarname(obj.TableVar)
+                    errordlg('¸ÃÄ£¿éÎ´¹ØÁªÓĞĞ§±äÁ¿£¨¿ÉÄÜÖ±½ÓĞ´ÁËÊıÖµ»ò±í´ïÊ½£©¡£', '½âÎöÊ§°Ü');
                     return;
                 end
-                
+
+                % ¼ì²é±äÁ¿ÊÇ·ñ´æÔÚÓÚ¹¤×÷Çø
+                if ~evalin('base', sprintf('exist(''%s'', ''var'')', obj.TableVar))
+                    errordlg(sprintf('¹¤×÷ÇøÖĞÎ´ÕÒµ½±äÁ¿: "%s"¡£\nÇëÈ·ÈÏ¸Ã±äÁ¿ÊÇ·ñÒÑÔÚ¹¤×÷Çø¶¨Òå¡£', obj.TableVar), '±äÁ¿Î´¶¨Òå');
+                    return;
+                end
+
                 obj.checkEnumStatus();
                 obj.createUI();
             catch ME
-                errordlg(['å·¥å…·è¿è¡Œå‡ºé”™: ', ME.message]);
+                errordlg(['¹¤¾ßÔËĞĞ³ö´í: ', ME.message]);
             end
         end
-        
+
         function checkEnumStatus(obj)
             v = evalin('base', obj.TableVar);
             className = '';
@@ -110,54 +111,65 @@ classdef SimulinkInspector < handle
                 end
             end
         end
-        
+
         function createUI(obj)
             data = obj.prepareData();
             [numRows, numCols] = size(data);
-            
-            % --- è®¡ç®—åˆå§‹åŠ¨æ€å°ºå¯¸ ---
+
+            % --- ¼ÆËã³õÊ¼¶¯Ì¬³ß´ç ---
             screen = get(0, 'ScreenSize');
-            rowH = 22; colW = 85; 
-            descH = 45; 
+            rowH = 22; colW = 85;
+            descH = 45;
             axisH = 0; if ~strcmp(obj.Mode, 'Standard'), axisH = 22; if strcmp(obj.Mode, '2D'), axisH = 44; end; end
-            
-            % åˆå§‹å®½åº¦ï¼šæ ¹æ®åˆ—æ•°è®¡ç®—ï¼Œæœ€å°600ï¼Œæœ€å¤§å±å¹•80%
+
+            % ³õÊ¼¿í¶È£º¸ù¾İÁĞÊı¼ÆËã£¬×îĞ¡600£¬×î´óÆÁÄ»80%
             initW = min(max(numCols * colW + 40, 600), screen(3)*0.8);
-            % åˆå§‹é«˜åº¦ï¼šæ ¹æ®è¡Œæ•°è®¡ç®—ï¼Œæœ€å°400ï¼Œæœ€å¤§å±å¹•70%
+            % ³õÊ¼¸ß¶È£º¸ù¾İĞĞÊı¼ÆËã£¬×îĞ¡400£¬×î´óÆÁÄ»70%
             initH = min(max(numRows * rowH + descH + axisH + 150, 400), screen(4)*0.7);
 
-            % åˆ›å»º Figure å¹¶å…³é—­è‡ªåŠ¨ç¼©æ”¾ä»¥å…è®¸è‡ªå®šä¹‰ SizeChangedFcn
-            obj.Fig = uifigure('Name', ['å¿«é€Ÿç¼–è¾‘: ', obj.TableVar], ...
+            obj.UseLegacyUI = obj.shouldUseLegacyUI();
+
+            if obj.UseLegacyUI
+                obj.createLegacyUI(data, numCols, initW, initH);
+            else
+                obj.createModernUI(data, numCols, initW, initH);
+            end
+
+            obj.onResize();
+        end
+
+        function createModernUI(obj, data, numCols, initW, initH)
+            % ´´½¨ Figure ²¢¹Ø±Õ×Ô¶¯Ëõ·ÅÒÔÔÊĞí×Ô¶¨Òå SizeChangedFcn
+            obj.Fig = uifigure('Name', ['¿ìËÙ±à¼­: ', obj.TableVar], ...
                 'Position', [100 100 initW initH], ...
                 'Resize', 'on', ...
                 'AutoResizeChildren', 'off');
             movegui(obj.Fig, 'center');
 
-            % --- ä¿å­˜åˆ°æ–‡ä»¶æ§ä»¶ - æ”¾åœ¨å³ä¸Šè§’ï¼Œé«˜äºæ ‡é¢˜ ---
-            obj.FileNameEdit = uieditfield(obj.Fig, 'Value', 'ManCal.m', 'Tooltip', 'è¾“å…¥è¦ä¿å­˜çš„æ–‡ä»¶å');
-            obj.BtnSaveFile = uibutton(obj.Fig, 'Text', 'ä¿å­˜å˜é‡è‡³æ–‡ä»¶', 'BackgroundColor', [0.2 0.4 0.7], 'FontColor', 'w', 'FontWeight', 'bold', 'ButtonPushedFcn', @(src,e) obj.saveToFile());
+            % --- ±£´æµ½ÎÄ¼ş¿Ø¼ş ---
+            obj.FileNameEdit = uieditfield(obj.Fig, 'Value', obj.getPreferredFileName(), 'Tooltip', 'ÊäÈëÒª±£´æµÄÎÄ¼şÃû');
+            obj.BtnSaveFile = uibutton(obj.Fig, 'Text', '±£´æÖÁÎÄ¼ş', 'BackgroundColor', [0.2 0.4 0.7], 'FontColor', 'w', 'FontWeight', 'bold', 'ButtonPushedFcn', @(src,e) obj.saveToFile());
 
-            % æ ‡é¢˜
-            obj.TitleLabel = uilabel(obj.Fig, 'Text', obj.TableVar, 'FontWeight', 'bold', 'FontSize', 12);
-            
-            % æè¿°åŒº
+            % ±êÌâ
+            obj.TitleLabel = uilabel(obj.Fig, 'Text', obj.TableVar, 'FontWeight', 'bold', 'FontSize', 12, 'HorizontalAlignment', 'left');
+
+            % ÃèÊöÇø
             vObj = evalin('base', obj.TableVar);
             vDesc = ''; if isprop(vObj, 'Description'), vDesc = vObj.Description; end
             obj.DescArea = uitextarea(obj.Fig, 'Value', vDesc, 'Editable', 'off', 'BackgroundColor', [0.96 0.96 0.96], 'FontSize', 11);
-            
-            % è½´ä¿¡æ¯æ ‡ç­¾
+
+            % ÖáĞÅÏ¢±êÇ©
             if ~strcmp(obj.Mode, 'Standard')
-                obj.AxisXLabel = uilabel(obj.Fig, 'Text', obj.getSingleVarInfo(obj.XVar, 'Xè½´'), 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 11);
+                obj.AxisXLabel = uilabel(obj.Fig, 'Text', obj.getSingleVarInfo(obj.XVar, 'XÖá'), 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 11);
                 if strcmp(obj.Mode, '2D')
-                    obj.AxisYLabel = uilabel(obj.Fig, 'Text', obj.getSingleVarInfo(obj.YVar, 'Yè½´'), 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 11);
+                    obj.AxisYLabel = uilabel(obj.Fig, 'Text', obj.getSingleVarInfo(obj.YVar, 'YÖá'), 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 11);
                 end
-                % æ·»åŠ å•è°ƒæ€§çŠ¶æ€æ ‡ç­¾ï¼ˆåˆå§‹éšè—ï¼‰
                 obj.MonotonicityLabel = uilabel(obj.Fig, 'Text', '', 'HorizontalAlignment', 'left', 'FontWeight', 'bold', 'FontSize', 11, 'FontColor', 'red', 'Visible', 'off');
             end
-            
-            % è¡¨æ ¼é…ç½®
+
+            % ±í¸ñÅäÖÃ
             colFmt = cell(1, numCols);
-            colEditable = true(1, numCols);  % é»˜è®¤æ‰€æœ‰åˆ—éƒ½å¯ç¼–è¾‘
+            colEditable = true(1, numCols);
 
             if obj.IsEnum
                 startC = 1; if strcmp(obj.Mode, '2D'), startC = 2; end
@@ -166,115 +178,184 @@ classdef SimulinkInspector < handle
 
             obj.DataTable = uitable(obj.Fig, 'Data', data, 'ColumnEditable', colEditable, 'RowName', {}, 'ColumnName', {}, 'ColumnFormat', colFmt, 'FontSize', 11, 'CellEditCallback', @(src, e) obj.onCellEdit(e), 'Enable', 'on', 'CellSelectionCallback', @(src, e) obj.onCellSelection(e));
 
-            % 2Dæ¨¡å¼ä¸‹è®¾ç½®å·¦ä¸Šè§’å•å…ƒæ ¼ä¸ºä¸å¯ç¼–è¾‘çŠ¶æ€ï¼ˆè§†è§‰æç¤ºï¼‰
             if strcmp(obj.Mode, '2D')
-                % ä¸ºå·¦ä¸Šè§’å•å…ƒæ ¼æ·»åŠ ç‰¹æ®Šæ ·å¼ï¼Œè¡¨æ˜ä¸å¯ç¼–è¾‘
                 nonEditableStyle = uistyle('FontColor', [0.5 0.5 0.5], 'BackgroundColor', [0.9 0.9 0.9], 'FontWeight', 'bold');
                 addStyle(obj.DataTable, nonEditableStyle, 'cell', [1, 1]);
             end
 
-            % ä¸å†è®¾ç½®å¿«æ·é”®ç²˜è´´ï¼ˆç”±KeyPressFcnç»Ÿä¸€å¤„ç†ï¼‰
             addStyle(obj.DataTable, uistyle('HorizontalAlignment', 'center'));
             if ~strcmp(obj.Mode, 'Standard')
-                % æ£€æŸ¥åæ ‡è½´å•è°ƒæ€§å¹¶è®¾ç½®æ ·å¼
                 obj.checkAxisMonotonicity();
             end
-            
-            % æŒ‰é’®
-            obj.BtnSave = uibutton(obj.Fig, 'Text', 'ç¡®å®šä¿å­˜', 'BackgroundColor', [0.15 0.45 0.15], 'FontColor', 'w', 'FontWeight', 'bold', 'ButtonPushedFcn', @(src,e) obj.saveData());
-            obj.BtnCancel = uibutton(obj.Fig, 'Text', 'å–æ¶ˆ', 'ButtonPushedFcn', @(src,e) delete(obj.Fig));
 
-            % --- æ–°å¢æ’å€¼æŒ‰é’® ---
+            obj.BtnSave = uibutton(obj.Fig, 'Text', 'ÁÙÊ±±£´æ', 'BackgroundColor', [0.15 0.45 0.15], 'FontColor', 'w', 'FontWeight', 'bold', 'ButtonPushedFcn', @(src,e) obj.saveData());
+            obj.BtnCancel = uibutton(obj.Fig, 'Text', 'È¡Ïû', 'ButtonPushedFcn', @(src,e) delete(obj.Fig));
+
             if ~strcmp(obj.Mode, 'Standard') && ~obj.IsEnum
-                obj.BtnInterpX = uibutton(obj.Fig, 'Text', 'â†” æ¨ªå‘çº¿æ€§æ’å€¼', 'Tooltip', 'é€‰ä¸­ä¸€è¡ŒåŒºåŸŸï¼Œæ ¹æ®é¦–å°¾è‡ªåŠ¨å¡«å……ä¸­é—´å€¼', 'ButtonPushedFcn', @(src,e) obj.doInterpolate('X'));
+                obj.BtnInterpX = uibutton(obj.Fig, 'Text', '[X] ºáÏòÏßĞÔ²åÖµ', 'Tooltip', 'Ñ¡ÖĞÒ»ĞĞÇøÓò£¬¸ù¾İÊ×Î²×Ô¶¯Ìî³äÖĞ¼äÖµ', 'ButtonPushedFcn', @(src,e) obj.doInterpolate('X'));
                 if strcmp(obj.Mode, '2D')
-                    obj.BtnInterpY = uibutton(obj.Fig, 'Text', 'â†• çºµå‘çº¿æ€§æ’å€¼', 'Tooltip', 'é€‰ä¸­ä¸€åˆ—åŒºåŸŸï¼Œæ ¹æ®é¦–å°¾è‡ªåŠ¨å¡«å……ä¸­é—´å€¼', 'ButtonPushedFcn', @(src,e) obj.doInterpolate('Y'));
+                    obj.BtnInterpY = uibutton(obj.Fig, 'Text', '[Y] ×İÏòÏßĞÔ²åÖµ', 'Tooltip', 'Ñ¡ÖĞÒ»ÁĞÇøÓò£¬¸ù¾İÊ×Î²×Ô¶¯Ìî³äÖĞ¼äÖµ', 'ButtonPushedFcn', @(src,e) obj.doInterpolate('Y'));
                 end
             end
 
-            % è®¾ç½®ç¼©æ”¾å›è°ƒå¹¶æ‰§è¡Œä¸€æ¬¡åˆå§‹åŒ–
             obj.Fig.SizeChangedFcn = @(src, e) obj.onResize();
-            obj.onResize();
-
-            % --- æ–°å¢ï¼šç»‘å®šé”®ç›˜å¿«æ·é”®æ”¯æŒï¼ˆå…¼å®¹R2020ï¼‰---
             obj.DataTable.KeyPressFcn = @(src, event) obj.handleKeyPress(event);
-            obj.Fig.KeyPressFcn = @(src, event) obj.handleKeyPress(event); % å¤‡ç”¨ï¼Œç¡®ä¿ç„¦ç‚¹åœ¨è¡¨æ ¼å¤–ä¹Ÿèƒ½å“åº”
+            obj.Fig.KeyPressFcn = @(src, event) obj.handleKeyPress(event);
         end
-        
-        function onResize(obj)
-            % æ‰‹åŠ¨å¤„ç†å¸ƒå±€è‡ªé€‚åº”é€»è¾‘
-            figPos = obj.Fig.Position;
-            w = figPos(3); h = figPos(4);
-            
-            % 1. ä¿å­˜æ§ä»¶æ”¾åœ¨å³ä¸Šè§’ï¼Œç•™å‡ºé€‚å½“è¾¹è·
-            obj.FileNameEdit.Position = [w-260 h-45 120 25];
-            obj.BtnSaveFile.Position = [w-125 h-45 120 32];
 
-            % 2. å•è°ƒæ€§æç¤ºæ ‡ç­¾å±…ä¸­æ˜¾ç¤ºï¼ˆé¿å¼€æ”¹åæ¡†ï¼‰
-            if isprop(obj, 'MonotonicityLabel') && ~isempty(obj.MonotonicityLabel)
-                labelWidth = min(w-300, 200);  % ç•™å‡ºæ”¹åæ¡†ç©ºé—´ï¼Œæœ€å¤§200
-                labelX = max(15, (w-labelWidth-260)/2);  % å±…ä¸­ï¼Œä½†è‡³å°‘ç•™15åƒç´ å·¦è¾¹è·
-                obj.MonotonicityLabel.Position = [labelX h-45 labelWidth 32];  % è°ƒæ•´ä½ç½®å’Œé«˜åº¦
-                obj.MonotonicityLabel.HorizontalAlignment = 'center';   % å±…ä¸­
-                obj.MonotonicityLabel.FontSize = 12;                    % åŠ å¤§å­—ä½“
-                obj.MonotonicityLabel.FontWeight = 'bold';              % åŠ ç²—
+        function createLegacyUI(obj, data, numCols, initW, initH)
+            bgColor = get(0, 'DefaultUicontrolBackgroundColor');
+            obj.Fig = figure('Name', ['¿ìËÙ±à¼­: ', obj.TableVar], ...
+                'NumberTitle', 'off', ...
+                'Position', [100 100 initW initH], ...
+                'Resize', 'on', ...
+                'MenuBar', 'none', ...
+                'ToolBar', 'none', ...
+                'Color', bgColor, ...
+                'KeyPressFcn', @(src, event) obj.handleKeyPress(event));
+            movegui(obj.Fig, 'center');
+
+            obj.FileNameEdit = uicontrol(obj.Fig, 'Style', 'edit', 'String', obj.getPreferredFileName(), 'TooltipString', 'ÊäÈëÒª±£´æµÄÎÄ¼şÃû', 'BackgroundColor', 'white');
+            obj.BtnSaveFile = uicontrol(obj.Fig, 'Style', 'pushbutton', 'String', '±£´æÖÁÎÄ¼ş', 'BackgroundColor', [0.2 0.4 0.7], 'ForegroundColor', 'white', 'FontWeight', 'bold', 'Callback', @(src, e) obj.saveToFile());
+
+            obj.TitleLabel = uicontrol(obj.Fig, 'Style', 'text', 'String', obj.TableVar, 'FontWeight', 'bold', 'FontSize', 12, 'HorizontalAlignment', 'left', 'BackgroundColor', bgColor);
+
+            vObj = evalin('base', obj.TableVar);
+            vDesc = ''; if isprop(vObj, 'Description'), vDesc = vObj.Description; end
+            obj.DescArea = uicontrol(obj.Fig, 'Style', 'edit', 'String', vDesc, 'Enable', 'inactive', 'Max', 2, 'HorizontalAlignment', 'left', 'BackgroundColor', [0.96 0.96 0.96], 'FontSize', 11);
+
+            if ~strcmp(obj.Mode, 'Standard')
+                obj.AxisXLabel = uicontrol(obj.Fig, 'Style', 'text', 'String', obj.getSingleVarInfo(obj.XVar, 'XÖá'), 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 11, 'BackgroundColor', bgColor);
+                if strcmp(obj.Mode, '2D')
+                    obj.AxisYLabel = uicontrol(obj.Fig, 'Style', 'text', 'String', obj.getSingleVarInfo(obj.YVar, 'YÖá'), 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 11, 'BackgroundColor', bgColor);
+                end
+                obj.MonotonicityLabel = uicontrol(obj.Fig, 'Style', 'text', 'String', '', 'HorizontalAlignment', 'center', 'FontWeight', 'bold', 'FontSize', 11, 'ForegroundColor', 'red', 'BackgroundColor', bgColor, 'Visible', 'off');
             end
 
-            % 3. é¡¶éƒ¨æ ‡é¢˜å’Œæè¿°
-            obj.TitleLabel.Position = [15 h-60 w-30 25];
-            obj.DescArea.Position = [15 h-110 w-30 45];
-            
-            yPtr = h - 115;
-            % 3. åæ ‡è½´ä¿¡æ¯
+            colFmt = cell(1, numCols);
+            colEditable = true(1, numCols);
+            if obj.IsEnum
+                startC = 1; if strcmp(obj.Mode, '2D'), startC = 2; end
+                for c = startC:numCols, colFmt{c} = obj.EnumMembers; end
+            end
+
+            obj.DataTable = uitable('Parent', obj.Fig, 'Data', data, 'ColumnEditable', colEditable, 'RowName', {}, 'ColumnName', {}, 'ColumnFormat', colFmt, 'FontSize', 11, 'CellEditCallback', @(src, e) obj.onCellEdit(e), 'CellSelectionCallback', @(src, e) obj.onCellSelection(e));
+
+            obj.BtnSave = uicontrol(obj.Fig, 'Style', 'pushbutton', 'String', 'ÁÙÊ±±£´æ', 'BackgroundColor', [0.15 0.45 0.15], 'ForegroundColor', 'white', 'FontWeight', 'bold', 'Callback', @(src, e) obj.saveData());
+            obj.BtnCancel = uicontrol(obj.Fig, 'Style', 'pushbutton', 'String', 'È¡Ïû', 'Callback', @(src, e) delete(obj.Fig));
+
+            obj.BtnInterpX = [];
+            obj.BtnInterpY = [];
+
+            if ~strcmp(obj.Mode, 'Standard')
+                obj.updateMonotonicityWarning();
+            end
+
+            set(obj.Fig, 'ResizeFcn', @(src, event) obj.onResize(src));
+            obj.onResize(obj.Fig);
+        end
+
+        function tf = shouldUseLegacyUI(~)
+            tf = verLessThan('matlab', '9.8');
+        end
+
+        function onResize(obj, varargin)
+            % ÊÖ¶¯´¦Àí²¼¾Ö×ÔÊÊÓ¦Âß¼­
+            figHandle = obj.Fig;
+            if nargin >= 2 && ~isempty(varargin{1})
+                figHandle = varargin{1};
+            end
+
+            if isempty(figHandle) || ~ishandle(figHandle)
+                return;
+            end
+
+            figPos = obj.getUIPosition(figHandle);
+            if isempty(figPos) || numel(figPos) < 4
+                return;
+            end
+
+            if isempty(obj.FileNameEdit) || isempty(obj.BtnSaveFile) || isempty(obj.TitleLabel) || isempty(obj.DescArea) || isempty(obj.DataTable) || isempty(obj.BtnSave) || isempty(obj.BtnCancel)
+                return;
+            end
+
+            w = figPos(3); h = figPos(4);
+
+            topControlY = h - 42;
+            titleY = topControlY + 3;
+            descY = h - 92;
+            bottomButtonY = 48;
+            bottomFileY = 12;
+
+            % 1. ¶¥²¿½ö±£Áô±êÌâºÍ×´Ì¬ÌáÊ¾
+
+            % 2. µ¥µ÷ĞÔÌáÊ¾±êÇ©¾ÓÖĞÏÔÊ¾£¨±Ü¿ª¸ÄÃû¿ò£©
+            if isprop(obj, 'MonotonicityLabel') && ~isempty(obj.MonotonicityLabel)
+                labelWidth = max(min(w-220, 260), 120);
+                labelX = max(15, floor((w - labelWidth) / 2));
+                obj.setUIPosition(obj.MonotonicityLabel, [labelX topControlY labelWidth 32]);
+                obj.setUIProperty(obj.MonotonicityLabel, 'HorizontalAlignment', 'center');
+                obj.setUIProperty(obj.MonotonicityLabel, 'FontSize', 12);
+                obj.setUIProperty(obj.MonotonicityLabel, 'FontWeight', 'bold');
+            end
+
+            % 3. ¶¥²¿±êÌâºÍÃèÊö
+            obj.setUIPosition(obj.TitleLabel, [15 titleY max(w-345, 140) 24]);
+            obj.setUIPosition(obj.DescArea, [15 descY w-30 48]);
+
+            yPtr = descY - 6;
+            % 3. ×ø±êÖáĞÅÏ¢
             if ~isempty(obj.AxisXLabel)
-                obj.AxisXLabel.Position = [15 yPtr-22 w-30 22];
+                obj.setUIPosition(obj.AxisXLabel, [15 yPtr-22 w-30 22]);
                 yPtr = yPtr - 22;
             end
             if ~isempty(obj.AxisYLabel)
-                obj.AxisYLabel.Position = [15 yPtr-22 w-30 22];
+                obj.setUIPosition(obj.AxisYLabel, [15 yPtr-22 w-30 22]);
                 yPtr = yPtr - 22;
             end
-            
-            % 3. è¡¨æ ¼é«˜åº¦è‡ªé€‚åº”ï¼ˆå æ®ä¸­é—´æ‰€æœ‰å‰©ä½™ç©ºé—´ï¼‰
-            tableBottom = 60; 
+
+            % 3. ±í¸ñ¸ß¶È×ÔÊÊÓ¦£¨Õ¼¾İÖĞ¼äËùÓĞÊ£Óà¿Õ¼ä£©
+            tableBottom = 98;
             tableHeight = yPtr - tableBottom - 10;
-            obj.DataTable.Position = [15 tableBottom w-30 max(tableHeight, 50)];
-            
-            % 4. æŒ‰é’®å›ºå®šåœ¨åº•éƒ¨
-            obj.BtnSave.Position = [w-115 12 100 32];
-            obj.BtnCancel.Position = [w-205 12 80 32];
+            obj.setUIPosition(obj.DataTable, [15 tableBottom w-30 max(tableHeight, 50)]);
+
+            % 4. °´Å¥¹Ì¶¨ÔÚµ×²¿ÓÒ²à£¬±£´æÖÁÎÄ¼şÎ»ÓÚÁÙÊ±±£´æÏÂ·½
+            obj.setUIPosition(obj.BtnSave, [w-115 bottomButtonY 100 32]);
+            obj.setUIPosition(obj.BtnCancel, [w-205 bottomButtonY 80 32]);
+            obj.setUIPosition(obj.FileNameEdit, [w-310 bottomFileY 145 26]);
+            obj.setUIPosition(obj.BtnSaveFile, [w-155 bottomFileY 140 32]);
 
             if ~isempty(obj.BtnInterpX)
-                obj.BtnInterpX.Position = [15 12 120 32];
+                obj.setUIPosition(obj.BtnInterpX, [15 12 120 32]);
             end
             if ~isempty(obj.BtnInterpY)
-                obj.BtnInterpY.Position = [140 12 120 32];
+                obj.setUIPosition(obj.BtnInterpY, [140 12 120 32]);
             end
-            % æ³¨æ„ï¼šBtnPaste ç›¸å…³å¸ƒå±€ä»£ç å·²åˆ é™¤
+            % ×¢Òâ£ºBtnPaste Ïà¹Ø²¼¾Ö´úÂëÒÑÉ¾³ı
         end
 
         function doInterpolate(obj, direction)
-            sel = obj.DataTable.Selection; % uifigure è¿”å›çš„æ˜¯ Nx2 çš„å•å…ƒæ ¼åæ ‡åˆ—è¡¨
+            sel = obj.getTableSelection();
             if isempty(sel), return; end
 
-            % è®¡ç®—é€‰ä¸­åŒºåŸŸçš„è¾¹ç•Œ [r1, c1, r2, c2]
+            % ¼ÆËãÑ¡ÖĞÇøÓòµÄ±ß½ç [r1, c1, r2, c2]
             r1 = min(sel(:,1)); r2 = max(sel(:,1));
             c1 = min(sel(:,2)); c2 = max(sel(:,2));
 
             data = obj.DataTable.Data;
-            % æ•°æ®èµ·å§‹è¡Œåˆ—ï¼ˆé¿å¼€åæ ‡è½´æ ‡ç­¾ï¼‰
+            % Êı¾İÆğÊ¼ĞĞÁĞ£¨±Ü¿ª×ø±êÖá±êÇ©£©
             dataStartR = 1; dataStartC = 1;
-            if strcmp(obj.Mode, '2D'), dataStartR = 2; dataStartC = 2; 
+            if strcmp(obj.Mode, '2D'), dataStartR = 2; dataStartC = 2;
             elseif strcmp(obj.Mode, '1D'), dataStartR = 2; end
 
             if strcmp(direction, 'X')
-                % --- åŸºäº X è½´å€¼çš„çº¿æ€§æ’å€¼ ---
+                % --- »ùÓÚ X ÖáÖµµÄÏßĞÔ²åÖµ ---
                 if strcmp(obj.Mode, '2D')
                     xAxis = nan(1, size(data,2)-1);
                     for jj = 2:size(data,2)
                         xAxis(jj-1) = str2double(data{1, jj});
                     end
-                    colOffset = 1; % data åˆ—ç´¢å¼• - colOffset å¯¹åº” xAxis ç´¢å¼•
+                    colOffset = 1; % data ÁĞË÷Òı - colOffset ¶ÔÓ¦ xAxis Ë÷Òı
                 else
                     xAxis = nan(1, size(data,2));
                     for jj = 1:size(data,2)
@@ -295,7 +376,7 @@ classdef SimulinkInspector < handle
                     x2 = xAxis(idx2 - colOffset);
 
                     if isnan(x1) || isnan(x2) || x2 == x1
-                        % é€€å›åˆ°åŸºäºç´¢å¼•çš„å‡åŒ€æ’å€¼ï¼ˆæ— æ³•ä½¿ç”¨åæ ‡è½´ä¿¡æ¯ï¼‰
+                        % ÍË»Øµ½»ùÓÚË÷ÒıµÄ¾ùÔÈ²åÖµ£¨ÎŞ·¨Ê¹ÓÃ×ø±êÖáĞÅÏ¢£©
                         vals = linspace(vStart, vEnd, idx2 - idx1 + 1);
                     else
                         vals = zeros(1, idx2 - idx1 + 1);
@@ -311,7 +392,7 @@ classdef SimulinkInspector < handle
                     end
                 end
             else
-                % --- åŸºäº Y è½´å€¼çš„çº¿æ€§æ’å€¼ ---
+                % --- »ùÓÚ Y ÖáÖµµÄÏßĞÔ²åÖµ ---
                 if strcmp(obj.Mode, '2D')
                     yAxis = nan(size(data,1)-1, 1);
                     for ii = 2:size(data,1)
@@ -355,69 +436,97 @@ classdef SimulinkInspector < handle
             end
             obj.DataTable.Data = data;
         end
-        
+
         function data = prepareData(obj)
             T = obj.getWValue(obj.TableVar);
             X = obj.getWValue(obj.XVar); Y = obj.getWValue(obj.YVar);
             if strcmp(obj.Mode, '2D')
-                data = cell(length(Y)+1, length(X)+1); data{1, 1} = 'Y \ X'; 
-                for j=1:length(X), data{1, j+1} = num2str(X(j)); end
-                for i=1:length(Y), data{i+1, 1} = num2str(Y(i)); end
-                for i=1:length(Y), for j=1:length(X)
-                    val = T(i,j); if obj.IsEnum, data{i+1, j+1} = char(val); else, data{i+1, j+1} = num2str(val); end
-                end; end
+                data = cell(length(Y)+1, length(X)+1);
+                data{1, 1} = 'Y \ X';
+                for j = 1:length(X)
+                    data{1, j+1} = num2str(X(j));
+                end
+                for i = 1:length(Y)
+                    data{i+1, 1} = num2str(Y(i));
+                end
+                for i = 1:length(Y)
+                    for j = 1:length(X)
+                        val = T(i, j);
+                        if obj.IsEnum
+                            data{i+1, j+1} = char(val);
+                        else
+                            data{i+1, j+1} = num2str(val);
+                        end
+                    end
+                end
             elseif strcmp(obj.Mode, '1D')
                 data = cell(2, length(X));
-                for j=1:length(X), data{1, j} = num2str(X(j)); end
-                for j=1:length(X)
-                    val = T(j); if obj.IsEnum, data{2, j} = char(val); else, data{2, j} = num2str(val); end
+                for j = 1:length(X)
+                    data{1, j} = num2str(X(j));
+                end
+                for j = 1:length(X)
+                    val = T(j);
+                    if obj.IsEnum
+                        data{2, j} = char(val);
+                    else
+                        data{2, j} = num2str(val);
+                    end
                 end
             else
                 if obj.IsEnum, data = {char(T)}; else, data = cellstr(string(T)); end
             end
         end
-        
+
         function saveData(obj)
             try
-                raw = obj.DataTable.Data; [R, C] = size(raw);
-                if strcmp(obj.Mode, '2D')
-                    newX = zeros(1, C-1); for j=2:C, newX(j-1) = str2double(raw{1,j}); end
-                    newY = zeros(R-1, 1); for i=2:R, newY(i-1) = str2double(raw{i,1}); end
-                    newT = obj.castToType(raw(2:end, 2:end));
-                    obj.setWValue(obj.XVar, newX); obj.setWValue(obj.YVar, newY); obj.setWValue(obj.TableVar, newT);
-                elseif strcmp(obj.Mode, '1D')
-                    newX = zeros(1, C); for j=1:C, newX(j) = str2double(raw{1,j}); end
-                    newT = obj.castToType(raw(2, :));
-                    obj.setWValue(obj.XVar, newX); obj.setWValue(obj.TableVar, newT);
-                else
-                    obj.setWValue(obj.TableVar, obj.castToType(raw));
-                end
-                delete(obj.Fig); disp('âœ… ä¿å­˜æˆåŠŸ');
+                obj.applyTableDataToWorkspace();
+                delete(obj.Fig); disp('[OK] ±£´æ³É¹¦');
             catch ME
-                errordlg(['ä¿å­˜å¤±è´¥: ', ME.message]);
+                errordlg(['±£´æÊ§°Ü: ', ME.message]);
             end
         end
 
         function saveDataSilent(obj)
             try
-                raw = obj.DataTable.Data; [R, C] = size(raw);
-                if strcmp(obj.Mode, '2D')
-                    newX = zeros(1, C-1); for j=2:C, newX(j-1) = str2double(raw{1,j}); end
-                    newY = zeros(R-1, 1); for i=2:R, newY(i-1) = str2double(raw{i,1}); end
-                    newT = obj.castToType(raw(2:end, 2:end));
-                    obj.setWValue(obj.XVar, newX); obj.setWValue(obj.YVar, newY); obj.setWValue(obj.TableVar, newT);
-                elseif strcmp(obj.Mode, '1D')
-                    newX = zeros(1, C); for j=1:C, newX(j) = str2double(raw{1,j}); end
-                    newT = obj.castToType(raw(2, :));
-                    obj.setWValue(obj.XVar, newX); obj.setWValue(obj.TableVar, newT);
-                else
-                    obj.setWValue(obj.TableVar, obj.castToType(raw));
-                end
+                obj.applyTableDataToWorkspace();
             catch
-                % é™é»˜æ¨¡å¼ï¼Œä¸æ˜¾ç¤ºé”™è¯¯
+                % ¾²Ä¬Ä£Ê½£¬²»ÏÔÊ¾´íÎó
             end
         end
-        
+
+        function applyTableDataToWorkspace(obj)
+            raw = obj.DataTable.Data;
+            [R, C] = size(raw);
+
+            if strcmp(obj.Mode, '2D')
+                newX = zeros(1, C-1);
+                for j = 2:C
+                    newX(j-1) = str2double(raw{1, j});
+                end
+
+                newY = zeros(R-1, 1);
+                for i = 2:R
+                    newY(i-1) = str2double(raw{i, 1});
+                end
+
+                newT = obj.castToType(raw(2:end, 2:end));
+                obj.setWValue(obj.XVar, newX);
+                obj.setWValue(obj.YVar, newY);
+                obj.setWValue(obj.TableVar, newT);
+            elseif strcmp(obj.Mode, '1D')
+                newX = zeros(1, C);
+                for j = 1:C
+                    newX(j) = str2double(raw{1, j});
+                end
+
+                newT = obj.castToType(raw(2, :));
+                obj.setWValue(obj.XVar, newX);
+                obj.setWValue(obj.TableVar, newT);
+            else
+                obj.setWValue(obj.TableVar, obj.castToType(raw));
+            end
+        end
+
         function out = castToType(obj, cellData)
             [R, C] = size(cellData);
             if obj.IsEnum
@@ -429,27 +538,38 @@ classdef SimulinkInspector < handle
                 for i=1:R, for j=1:C, v = str2double(cellData{i,j}); if isnan(v), v=0; end; out(i,j) = v; end; end
             end
         end
-        
-        function val = getWValue(obj, varName)
+
+        function val = getWValue(~, varName)
             if isempty(varName), val=[]; return; end
             v = evalin('base', varName);
-            if isa(v, 'Simulink.Parameter'), val = v.Value;
-            elseif isa(v, 'Simulink.Signal'), sVal = v.InitialValue; val = str2num(sVal); if isempty(val), val = sVal; end
-            else, val = v; end
+            if isa(v, 'Simulink.Parameter')
+                val = v.Value;
+            elseif isa(v, 'Simulink.Signal')
+                sVal = v.InitialValue;
+                val = str2num(sVal);
+                if isempty(val)
+                    val = sVal;
+                end
+            else
+                val = v;
+            end
         end
-        
-        function setWValue(obj, varName, newVal)
+
+        function setWValue(~, varName, newVal)
             v = evalin('base', varName);
-            if isa(v, 'Simulink.Parameter'), v.Value = newVal;
-            elseif isa(v, 'Simulink.Signal'), v.InitialValue = mat2str(newVal);
-            else, v = newVal; 
+            if isa(v, 'Simulink.Parameter')
+                v.Value = newVal;
+            elseif isa(v, 'Simulink.Signal')
+                v.InitialValue = mat2str(newVal);
+            else
+                v = newVal;
             end
             assignin('base', varName, v);
         end
-        
-        function str = getSingleVarInfo(obj, varName, label)
+
+        function str = getSingleVarInfo(~, varName, label)
             if isempty(varName), str=''; return; end
-            if ~evalin('base', sprintf('exist(''%s'', ''var'')', varName)), str = [label, ': ', varName, ' (æœªå®šä¹‰)']; return; end
+            if ~evalin('base', sprintf('exist(''%s'', ''var'')', varName)), str = [label, ': ', varName, ' (Î´¶¨Òå)']; return; end
             vObj = evalin('base', varName);
             desc = ''; if isprop(vObj, 'Description'), desc = vObj.Description; end
             str = sprintf('%s: %s (%s)', label, varName, desc);
@@ -457,87 +577,111 @@ classdef SimulinkInspector < handle
 
         function saveToFile(obj)
             try
-                % é¦–å…ˆæ‰§è¡Œç¡®å®šä¿å­˜åŠŸèƒ½ï¼ˆä¿å­˜å½“å‰å·¥ä½œåŒºçš„å€¼ï¼‰
+                % Ê×ÏÈÖ´ĞĞÈ·¶¨±£´æ¹¦ÄÜ£¨±£´æµ±Ç°¹¤×÷ÇøµÄÖµ£©
                 obj.saveDataSilent();
 
-                filename = obj.FileNameEdit.Value;
+                filename = obj.getFileNameInputValue();
                 if isempty(filename)
-                    errordlg('è¯·è¾“å…¥æ–‡ä»¶å', 'æ–‡ä»¶åä¸ºç©º');
+                    errordlg('ÇëÊäÈëÎÄ¼şÃû', 'ÎÄ¼şÃûÎª¿Õ');
                     return;
                 end
 
-                % ç¡®ä¿æ–‡ä»¶æ‰©å±•åæ˜¯.m
+                % È·±£ÎÄ¼şÀ©Õ¹ÃûÊÇ.m
                 if ~endsWith(filename, '.m')
                     filename = [filename, '.m'];
                 end
 
-                % è·å–æ‰€æœ‰éœ€è¦ä¿å­˜çš„å˜é‡
-                variables = struct();
+                obj.rememberPreferredFileName(filename);
 
-                % ä¸»è¡¨å˜é‡
-                mainVar = obj.getWValue(obj.TableVar);
-                variables.(obj.TableVar) = struct('value', mainVar, 'description', obj.getVarDescription(obj.TableVar), 'dataType', obj.getVarDataType(obj.TableVar), 'isEnum', obj.IsEnum);
+                variables = obj.collectVariablesForExport();
 
-                % å¦‚æœæ˜¯æŸ¥è¡¨æ¨¡å¼ï¼Œè¿˜éœ€è¦ä¿å­˜åæ ‡è½´å˜é‡
-                if ~strcmp(obj.Mode, 'Standard')
-                    if ~isempty(obj.XVar)
-                        xVar = obj.getWValue(obj.XVar);
-                        variables.(obj.XVar) = struct('value', xVar, 'description', obj.getVarDescription(obj.XVar), 'dataType', obj.getVarDataType(obj.XVar), 'isEnum', false);
-                    end
-                    if ~isempty(obj.YVar) && strcmp(obj.Mode, '2D')
-                        yVar = obj.getWValue(obj.YVar);
-                        variables.(obj.YVar) = struct('value', yVar, 'description', obj.getVarDescription(obj.YVar), 'dataType', obj.getVarDataType(obj.YVar), 'isEnum', false);
-                    end
-                end
-
-                % ä¿å­˜åˆ°æ–‡ä»¶ï¼ˆé‡‡ç”¨åˆå¹¶æ–¹å¼ï¼‰
+                % ±£´æµ½ÎÄ¼ş£¨²ÉÓÃºÏ²¢·½Ê½£©
                 obj.writeVariablesToFile(filename, variables);
 
-                % è‡ªåŠ¨å…³é—­UIï¼ˆä¸éœ€è¦æç¤ºï¼‰
+                % ×Ô¶¯¹Ø±ÕUI£¨²»ĞèÒªÌáÊ¾£©
                 delete(obj.Fig);
             catch ME
-                errordlg(['ä¿å­˜æ–‡ä»¶å¤±è´¥: ', ME.message], 'ä¿å­˜å¤±è´¥');
+                errordlg(['±£´æÎÄ¼şÊ§°Ü: ', ME.message], '±£´æÊ§°Ü');
             end
         end
 
-        function desc = getVarDescription(obj, varName)
-            if isempty(varName), desc = ''; return; end
+        function variables = collectVariablesForExport(obj)
+            variables = struct();
+            variables.(obj.TableVar) = obj.buildVariableEntry(obj.TableVar, obj.IsEnum);
+
+            if strcmp(obj.Mode, 'Standard')
+                return;
+            end
+
+            if ~isempty(obj.XVar)
+                variables.(obj.XVar) = obj.buildVariableEntry(obj.XVar, false);
+            end
+            if strcmp(obj.Mode, '2D') && ~isempty(obj.YVar)
+                variables.(obj.YVar) = obj.buildVariableEntry(obj.YVar, false);
+            end
+        end
+
+        function filename = getPreferredFileName(~)
+            prefGroup = 'SimulinkInspector';
+            prefName = 'LastSaveFileName';
+            defaultName = 'ManCal.m';
+
+            if ispref(prefGroup, prefName)
+                filename = getpref(prefGroup, prefName);
+                if isempty(filename) || ~ischar(filename)
+                    filename = defaultName;
+                end
+            else
+                filename = defaultName;
+            end
+        end
+
+        function rememberPreferredFileName(~, filename)
+            if isempty(filename) || ~ischar(filename)
+                return;
+            end
+
+            setpref('SimulinkInspector', 'LastSaveFileName', filename);
+        end
+
+        function entry = buildVariableEntry(obj, varName, isEnum)
+            [description, dataType] = obj.getVarMetadata(varName);
+            entry = struct( ...
+                'value', obj.getWValue(varName), ...
+                'description', description, ...
+                'dataType', dataType, ...
+                'isEnum', isEnum);
+        end
+
+        function [desc, dataType] = getVarMetadata(~, varName)
+            desc = '';
+            dataType = 'single';
+            if isempty(varName)
+                return;
+            end
+
             try
                 vObj = evalin('base', varName);
                 if isprop(vObj, 'Description')
                     desc = vObj.Description;
-                else
-                    desc = '';
+                end
+                if isa(vObj, 'Simulink.Parameter')
+                    dataType = vObj.DataType;
                 end
             catch
                 desc = '';
-            end
-        end
-
-        function dataType = getVarDataType(obj, varName)
-            if isempty(varName), dataType = 'single'; return; end
-            try
-                vObj = evalin('base', varName);
-                if isa(vObj, 'Simulink.Parameter')
-                    dataType = vObj.DataType;
-                elseif isa(vObj, 'Simulink.Signal')
-                    dataType = 'single';
-                else
-                    dataType = 'single';
-                end
-            catch
                 dataType = 'single';
             end
         end
 
         function writeVariablesToFile(obj, filename, variables)
-            % --- ä¿®å¤è·¯å¾„é—®é¢˜ï¼šå§‹ç»ˆä½¿ç”¨å½“å‰å·¥ä½œç›®å½•ä¸‹çš„å®Œæ•´è·¯å¾„ ---
-            % æ„é€ å½“å‰ç›®å½•ä¸‹çš„å®Œæ•´æ–‡ä»¶è·¯å¾„ï¼ˆå¿½ç•¥ MATLAB æœç´¢è·¯å¾„ï¼‰
+            % --- ĞŞ¸´Â·¾¶ÎÊÌâ£ºÊ¼ÖÕÊ¹ÓÃµ±Ç°¹¤×÷Ä¿Â¼ÏÂµÄÍêÕûÂ·¾¶ ---
+            % ¹¹Ôìµ±Ç°Ä¿Â¼ÏÂµÄÍêÕûÎÄ¼şÂ·¾¶£¨ºöÂÔ MATLAB ËÑË÷Â·¾¶£©
             fullPath = fullfile(pwd, filename);
 
-            % è¯»å–ç°æœ‰æ–‡ä»¶å†…å®¹ï¼ˆä»…æ£€æŸ¥å½“å‰ç›®å½•ï¼‰
+            % ¶ÁÈ¡ÏÖÓĞÎÄ¼şÄÚÈİ£¨½ö¼ì²éµ±Ç°Ä¿Â¼£©
             existingContent = '';
-            if exist(fullPath, 'file') == 2   % 2 è¡¨ç¤ºæ–‡ä»¶å­˜åœ¨
+            if exist(fullPath, 'file') == 2   % 2 ±íÊ¾ÎÄ¼ş´æÔÚ
                 fid_read = fopen(fullPath, 'r');
                 if fid_read ~= -1
                     existingContent = fread(fid_read, '*char')';
@@ -545,61 +689,23 @@ classdef SimulinkInspector < handle
                 end
             end
 
-            % è§£æç°æœ‰æ–‡ä»¶ä¸­çš„å˜é‡å®šä¹‰ - ä½¿ç”¨é€è¡Œè§£æ
-            existingVars = struct();
-            if ~isempty(existingContent)
-                lines = strsplit(existingContent, '\n');
-                i = 1;
-                while i <= length(lines)
-                    line = strtrim(lines{i});
-                    % æ”¯æŒä¸¤ç§æ³¨é‡Šæ ¼å¼ï¼š"% å‚æ•°:" å’Œ "% æšä¸¾å‚æ•°:"
-                    if startsWith(line, '% å‚æ•°:') || startsWith(line, '% æšä¸¾å‚æ•°:')
-                        % æå–å˜é‡å
-                        % æå–å˜é‡åï¼Œæ ¼å¼ä¸º "% å‚æ•°: VAR_NAME" æˆ– "% æšä¸¾å‚æ•°: VAR_NAME"
-                        parts = strsplit(line, ':');
-                        if length(parts) >= 2
-                            varName = strtrim(parts{2});
-                        else
-                            varName = '';
-                        end
-                        % æ”¶é›†è¿™ä¸ªå˜é‡çš„æ‰€æœ‰è¡Œç›´åˆ°assigninè¯­å¥
-                        varLines = {lines{i}}; % å¼€å§‹äº%å‚æ•°è¡Œ
-                        i = i + 1;
-                        foundAssignin = false;
-                        while i <= length(lines) && ~foundAssignin
-                            currentLine = lines{i};
-                            varLines{end+1} = currentLine;
+            existingVars = obj.parseExistingVariableBlocks(existingContent);
 
-                            % æ£€æŸ¥æ˜¯å¦æ‰¾åˆ°äº†å½“å‰å˜é‡çš„assigninè¯­å¥
-                            if contains(currentLine, ['assignin(''base'', ''' varName ''','])
-                                foundAssignin = true;
-                            end
-                            i = i + 1;
-                        end
-                        if foundAssignin
-                            existingVars.(varName) = strjoin(varLines, '\n');
-                        end
-                    else
-                        i = i + 1;
-                    end
-                end
-            end
-
-            % å†™å…¥æ–‡ä»¶ï¼ˆä½¿ç”¨åŒä¸€ä¸ª fullPathï¼‰
+            % Ğ´ÈëÎÄ¼ş£¨Ê¹ÓÃÍ¬Ò»¸ö fullPath£©
             fid = fopen(fullPath, 'w');
             if fid == -1
-                error('æ— æ³•åˆ›å»ºæ–‡ä»¶: %s', fullPath);
+                error('ÎŞ·¨´´½¨ÎÄ¼ş: %s', fullPath);
             end
 
-            % å†™å…¥æ–‡ä»¶å¤´
-            fprintf(fid, '%% è‡ªåŠ¨ç”Ÿæˆçš„å‚æ•°æ–‡ä»¶\n');
-            fprintf(fid, '%% ç”Ÿæˆæ—¶é—´: %s\n\n', datestr(now, 'yyyy-mm-dd HH:MM:SS'));
+            % Ğ´ÈëÎÄ¼şÍ·
+            fprintf(fid, '%% ×Ô¶¯Éú³ÉµÄ²ÎÊıÎÄ¼ş\n');
+            fprintf(fid, '%% Éú³ÉÊ±¼ä: %s\n\n', datestr(now, 'yyyy-mm-dd HH:MM:SS'));
 
-            % è·å–å˜é‡ååˆ—è¡¨
+            % »ñÈ¡±äÁ¿ÃûÁĞ±í
             existingVarNames = fieldnames(existingVars);
             currentVarNames = fieldnames(variables);
 
-            % é¦–å…ˆå†™å…¥ç°æœ‰æ–‡ä»¶ä¸­ä¿ç•™çš„å˜é‡ï¼ˆä¸åœ¨å½“å‰variablesä¸­çš„ï¼‰
+            % Ê×ÏÈĞ´ÈëÏÖÓĞÎÄ¼şÖĞ±£ÁôµÄ±äÁ¿£¨²»ÔÚµ±Ç°variablesÖĞµÄ£©
             for i = 1:length(existingVarNames)
                 varName = existingVarNames{i};
                 if ~ismember(varName, currentVarNames)
@@ -607,38 +713,38 @@ classdef SimulinkInspector < handle
                 end
             end
 
-            % ç„¶åå†™å…¥å½“å‰å˜é‡ï¼ˆæ›´æ–°ç°æœ‰æˆ–æ·»åŠ æ–°çš„ï¼‰
+            % È»ºóĞ´Èëµ±Ç°±äÁ¿£¨¸üĞÂÏÖÓĞ»òÌí¼ÓĞÂµÄ£©
             for i = 1:length(currentVarNames)
                 varName = currentVarNames{i};
                 varInfo = variables.(varName);
 
-                % å†™å…¥å˜é‡æ³¨é‡Š
+                % Ğ´Èë±äÁ¿×¢ÊÍ
                 if isfield(varInfo, 'isEnum') && varInfo.isEnum && isprop(obj, 'IsEnum') && obj.IsEnum
-                    fprintf(fid, '%% æšä¸¾å‚æ•°: %s\n', varName);
+                    fprintf(fid, '%% Ã¶¾Ù²ÎÊı: %s\n', varName);
                 else
-                    fprintf(fid, '%% å‚æ•°: %s\n', varName);
+                    fprintf(fid, '%% ²ÎÊı: %s\n', varName);
                 end
 
-                % åˆ›å»ºSimulink.Parameterå¯¹è±¡
+                % ´´½¨Simulink.Parameter¶ÔÏó
                 fprintf(fid, '%s = Simulink.Parameter;\n', varName);
 
-                % è®¾ç½®æ•°æ®ç±»å‹
+                % ÉèÖÃÊı¾İÀàĞÍ
                 fprintf(fid, '%s.DataType = ''%s'';\n', varName, varInfo.dataType);
 
-                % è®¾ç½®æè¿°
+                % ÉèÖÃÃèÊö
                 if ~isempty(varInfo.description)
                     fprintf(fid, '%s.Description = ''%s'';\n', varName, varInfo.description);
                 end
 
-                % è®¾ç½®å€¼
+                % ÉèÖÃÖµ
                 if isfield(varInfo, 'isEnum') && varInfo.isEnum && isprop(obj, 'IsEnum') && obj.IsEnum
-                    % æšä¸¾ç±»å‹ç‰¹æ®Šå¤„ç†
+                    % Ã¶¾ÙÀàĞÍÌØÊâ´¦Àí
                     enumValue = varInfo.value;
                     enumClass = class(enumValue);
                     enumMember = char(enumValue);
                     fprintf(fid, '%s.Value = %s.%s;\n', varName, enumClass, enumMember);
                 else
-                    % æ•°å€¼ç±»å‹
+                    % ÊıÖµÀàĞÍ
                     val = varInfo.value;
                     if isscalar(val)
                         fprintf(fid, '%s.Value = %g;\n', varName, val);
@@ -648,75 +754,70 @@ classdef SimulinkInspector < handle
                     end
                 end
 
-                % assigninè¯­å¥
+                % assigninÓï¾ä
                 fprintf(fid, 'assignin(''base'', ''%s'', %s);\n\n', varName, varName);
             end
 
             fclose(fid);
         end
 
+        function existingVars = parseExistingVariableBlocks(~, existingContent)
+            existingVars = struct();
+            if isempty(existingContent)
+                return;
+            end
+
+            lines = regexp(existingContent, '\r\n|\n|\r', 'split');
+            assigninPattern = 'assignin\(''base'',\s*''([^'']+)''\s*,';
+
+            for i = 1:length(lines)
+                tokens = regexp(lines{i}, assigninPattern, 'tokens', 'once');
+                if isempty(tokens)
+                    continue;
+                end
+
+                varName = strtrim(tokens{1});
+                if isempty(varName) || ~isvarname(varName)
+                    continue;
+                end
+
+                startIdx = i;
+                while startIdx > 1 && ~isempty(strtrim(lines{startIdx-1}))
+                    startIdx = startIdx - 1;
+                end
+
+                blockText = strjoin(lines(startIdx:i), newline);
+                existingVars.(varName) = blockText;
+            end
+        end
+
         function checkAxisMonotonicity(obj)
-            % æ£€æŸ¥åæ ‡è½´å•è°ƒæ€§å¹¶è®¾ç½®ç›¸åº”çš„æ ·å¼
+            % ¼ì²é×ø±êÖáµ¥µ÷ĞÔ²¢ÉèÖÃÏàÓ¦µÄÑùÊ½
             if strcmp(obj.Mode, 'Standard')
                 return;
             end
 
-            % æ£€æŸ¥æ‰€æœ‰åæ ‡è½´çš„å•è°ƒæ€§
-            isAnyAxisNonMonotonic = false;
-
-            if strcmp(obj.Mode, '2D')
-                % 2Dæ¨¡å¼ï¼šæ£€æŸ¥Xè½´å’ŒYè½´
-                xData = obj.getWValue(obj.XVar);
-                yData = obj.getWValue(obj.YVar);
-
-                if ~obj.isMonotonicIncreasing(xData) || ~obj.isMonotonicIncreasing(yData)
-                    isAnyAxisNonMonotonic = true;
-                end
-
-                % åº”ç”¨é¢œè‰²åˆ°åæ ‡è½´
-                obj.applyAxisColors('X', xData);
-                obj.applyAxisColors('Y', yData);
-
-            elseif strcmp(obj.Mode, '1D')
-                % 1Dæ¨¡å¼ï¼šæ£€æŸ¥Xè½´
-                xData = obj.getWValue(obj.XVar);
-
-                if ~obj.isMonotonicIncreasing(xData)
-                    isAnyAxisNonMonotonic = true;
-                end
-
-                % åº”ç”¨é¢œè‰²åˆ°åæ ‡è½´
-                obj.applyAxisColors('X', xData);
-            end
-
-            % æ›´æ–°é¡¶éƒ¨è­¦å‘Šæ ‡ç­¾
-            if isAnyAxisNonMonotonic
-                obj.MonotonicityLabel.Text = 'åæ ‡è½´æœªå•è°ƒé€’å¢ï¼';
-                obj.MonotonicityLabel.Visible = 'on';
-            else
-                obj.MonotonicityLabel.Text = '';
-                obj.MonotonicityLabel.Visible = 'off';
-            end
+            obj.refreshAxesDisplay(obj.getAvailableAxisTypes(), false);
         end
 
         function applyAxisColors(obj, axisType, axisData)
-            % åº”ç”¨é¢œè‰²åˆ°æŒ‡å®šåæ ‡è½´ - ä¼˜åŒ–ç®—æ³•ï¼šæ¯ä¸ªç‚¹ä¸åé¢æ‰€æœ‰å€¼æ¯”è¾ƒ
-            if isempty(axisData) || length(axisData) <= 1
+            % Ó¦ÓÃÑÕÉ«µ½Ö¸¶¨×ø±êÖá - ÓÅ»¯Ëã·¨£ºÃ¿¸öµãÓëºóÃæËùÓĞÖµ±È½Ï
+            if obj.UseLegacyUI || isempty(axisData) || length(axisData) <= 1
                 return;
             end
 
             data = obj.DataTable.Data;
 
             if strcmp(axisType, 'X')
-                % Xè½´ç€è‰²
+                % XÖá×ÅÉ«
                 if strcmp(obj.Mode, '2D')
-                    % 2Dæ¨¡å¼ï¼šXè½´åœ¨ç¬¬ä¸€è¡Œï¼Œç¬¬2åˆ—å¼€å§‹
+                    % 2DÄ£Ê½£ºXÖáÔÚµÚÒ»ĞĞ£¬µÚ2ÁĞ¿ªÊ¼
                     for j = 2:size(data, 2)
                         if j-1 <= length(axisData)
                             val = axisData(j-1);
-                            % æ£€æŸ¥å½“å‰å€¼æ˜¯å¦å¤§äºç­‰äºåé¢ä»»æ„å€¼ï¼ˆå­˜åœ¨éå•è°ƒï¼‰
+                            % ¼ì²éµ±Ç°ÖµÊÇ·ñ´óÓÚµÈÓÚºóÃæÈÎÒâÖµ£¨´æÔÚ·Çµ¥µ÷£©
                             isRed = false;
-                            for k = j:length(axisData)  % ä¸åé¢æ‰€æœ‰ç‚¹æ¯”è¾ƒ
+                            for k = j:length(axisData)  % ÓëºóÃæËùÓĞµã±È½Ï
                                 if val >= axisData(k)
                                     isRed = true;
                                     break;
@@ -732,16 +833,16 @@ classdef SimulinkInspector < handle
                             addStyle(obj.DataTable, cellStyle, 'cell', [1, j]);
                         end
                     end
-                    % å·¦ä¸Šè§’ä¿æŒç°è‰²
+                    % ×óÉÏ½Ç±£³Ö»ÒÉ«
                     addStyle(obj.DataTable, uistyle('BackgroundColor', [0.8 0.8 0.8]), 'cell', [1,1]);
                 else
-                    % 1Dæ¨¡å¼ï¼šXè½´åœ¨ç¬¬ä¸€è¡Œ
+                    % 1DÄ£Ê½£ºXÖáÔÚµÚÒ»ĞĞ
                     for j = 1:size(data, 2)
                         if j <= length(axisData)
                             val = axisData(j);
-                            % æ£€æŸ¥å½“å‰å€¼æ˜¯å¦å¤§äºç­‰äºåé¢ä»»æ„å€¼ï¼ˆå­˜åœ¨éå•è°ƒï¼‰
+                            % ¼ì²éµ±Ç°ÖµÊÇ·ñ´óÓÚµÈÓÚºóÃæÈÎÒâÖµ£¨´æÔÚ·Çµ¥µ÷£©
                             isRed = false;
-                            for k = j+1:length(axisData)  % ä¸åé¢æ‰€æœ‰ç‚¹æ¯”è¾ƒ
+                            for k = j+1:length(axisData)  % ÓëºóÃæËùÓĞµã±È½Ï
                                 if val >= axisData(k)
                                     isRed = true;
                                     break;
@@ -759,14 +860,14 @@ classdef SimulinkInspector < handle
                     end
                 end
 
-            else % Yè½´
-                % Yè½´ç€è‰²ï¼šYè½´åœ¨ç¬¬ä¸€åˆ—ï¼Œç¬¬2è¡Œå¼€å§‹
+            else % YÖá
+                % YÖá×ÅÉ«£ºYÖáÔÚµÚÒ»ÁĞ£¬µÚ2ĞĞ¿ªÊ¼
                 for i = 2:size(data, 1)
                     if i-1 <= length(axisData)
                         val = axisData(i-1);
-                        % æ£€æŸ¥å½“å‰å€¼æ˜¯å¦å¤§äºç­‰äºåé¢ä»»æ„å€¼ï¼ˆå­˜åœ¨éå•è°ƒï¼‰
+                        % ¼ì²éµ±Ç°ÖµÊÇ·ñ´óÓÚµÈÓÚºóÃæÈÎÒâÖµ£¨´æÔÚ·Çµ¥µ÷£©
                         isRed = false;
-                        for k = i:length(axisData)  % ä¸åé¢æ‰€æœ‰ç‚¹æ¯”è¾ƒ
+                        for k = i:length(axisData)  % ÓëºóÃæËùÓĞµã±È½Ï
                             if val >= axisData(k)
                                 isRed = true;
                                 break;
@@ -785,57 +886,8 @@ classdef SimulinkInspector < handle
             end
         end
 
-        function checkSingleAxisMonotonicity(obj, axisType)
-            % æ£€æŸ¥å•ä¸ªåæ ‡è½´çš„å•è°ƒæ€§
-            if strcmp(axisType, 'X')
-                axisVar = obj.XVar;
-                dataIdx = 1; % Xè½´æ•°æ®åœ¨ç¬¬ä¸€è¡Œ
-                isRow = true;
-            else
-                axisVar = obj.YVar;
-                dataIdx = 1; % Yè½´æ•°æ®åœ¨ç¬¬ä¸€åˆ—
-                isRow = false;
-            end
-
-            if isempty(axisVar)
-                return;
-            end
-
-            % è·å–åæ ‡è½´æ•°æ®
-            axisData = obj.getWValue(axisVar);
-            if isempty(axisData) || length(axisData) <= 1
-                return;
-            end
-
-            % æ£€æŸ¥å•è°ƒæ€§
-            isMonotonic = obj.isMonotonicIncreasing(axisData);
-
-            % è®¾ç½®æ ·å¼
-            if isMonotonic
-                % å•è°ƒé€’å¢ï¼šæ·±è“è‰²èƒŒæ™¯
-                axisStyle = uistyle('BackgroundColor', [0.13 0.35 0.58], 'FontColor', 'white', 'FontWeight', 'bold');
-            else
-                % éå•è°ƒï¼šçº¢è‰²èƒŒæ™¯æç¤º
-                axisStyle = uistyle('BackgroundColor', [0.8 0.2 0.2], 'FontColor', 'white', 'FontWeight', 'bold');
-            end
-
-            % åº”ç”¨æ ·å¼åˆ°è¡¨æ ¼
-            if strcmp(obj.Mode, '2D')
-                if strcmp(axisType, 'X')
-                    addStyle(obj.DataTable, axisStyle, 'row', 1);
-                    addStyle(obj.DataTable, uistyle('BackgroundColor', [0.8 0.8 0.8]), 'cell', [1,1]);
-                else
-                    addStyle(obj.DataTable, axisStyle, 'column', 1);
-                end
-            else
-                if strcmp(axisType, 'X')
-                    addStyle(obj.DataTable, axisStyle, 'row', 1);
-                end
-            end
-        end
-
-        function isMonotonic = isMonotonicIncreasing(obj, data)
-            % æ£€æŸ¥æ•°æ®æ˜¯å¦å•è°ƒé€’å¢
+        function isMonotonic = isMonotonicIncreasing(~, data)
+            % ¼ì²éÊı¾İÊÇ·ñµ¥µ÷µİÔö
             if length(data) <= 1
                 isMonotonic = true;
                 return;
@@ -845,14 +897,14 @@ classdef SimulinkInspector < handle
         end
 
         function onCellSelection(obj, event)
-            % å¤„ç†å•å…ƒæ ¼é€‰æ‹©äº‹ä»¶ï¼Œæ›´æ–°é€‰æ‹©èŒƒå›´
+            % ´¦Àíµ¥Ôª¸ñÑ¡ÔñÊÂ¼ş£¬¸üĞÂÑ¡Ôñ·¶Î§
             if ~isempty(event.Indices)
                 obj.CurrentSelection = event.Indices;
             end
         end
 
         function onCellEdit(obj, event)
-            % å¤„ç†å•å…ƒæ ¼ç¼–è¾‘äº‹ä»¶
+            % ´¦Àíµ¥Ôª¸ñ±à¼­ÊÂ¼ş
             if isempty(event.EditData) || isempty(event.Indices)
                 return;
             end
@@ -860,87 +912,86 @@ classdef SimulinkInspector < handle
             row = event.Indices(1);
             col = event.Indices(2);
 
-            % 2Dæ¨¡å¼ä¸‹ç¦æ­¢ç¼–è¾‘å·¦ä¸Šè§’å•å…ƒæ ¼ï¼ˆç¬¬1è¡Œç¬¬1åˆ—ï¼‰
+            % 2DÄ£Ê½ÏÂ½ûÖ¹±à¼­×óÉÏ½Çµ¥Ôª¸ñ£¨µÚ1ĞĞµÚ1ÁĞ£©
             if strcmp(obj.Mode, '2D') && row == 1 && col == 1
-                % ç«‹å³æ¢å¤åŸå§‹å€¼ï¼Œä¸å…è®¸ç¼–è¾‘
+                % Á¢¼´»Ö¸´Ô­Ê¼Öµ£¬²»ÔÊĞí±à¼­
                 data = obj.DataTable.Data;
-                originalValue = data{row, col};
-                % å¼ºåˆ¶åˆ·æ–°è¡¨æ ¼ä»¥å–æ¶ˆç¼–è¾‘çŠ¶æ€
+                % Ç¿ÖÆË¢ĞÂ±í¸ñÒÔÈ¡Ïû±à¼­×´Ì¬
                 obj.DataTable.Data = data;
                 return;
             end
 
             try
-                % æ£€æŸ¥æ˜¯å¦ä¸ºæ‰¹é‡ç¼–è¾‘ï¼ˆå¤šå•å…ƒæ ¼é€‰æ‹©ï¼‰
-                selectedCells = obj.DataTable.Selection;
+                % ¼ì²éÊÇ·ñÎªÅúÁ¿±à¼­£¨¶àµ¥Ôª¸ñÑ¡Ôñ£©
+                selectedCells = obj.getTableSelection();
                 if ~isempty(selectedCells) && size(selectedCells, 1) > 1
-                    % æ‰¹é‡ç¼–è¾‘æ¨¡å¼
+                    % ÅúÁ¿±à¼­Ä£Ê½
                     obj.handleBatchEdit(event, selectedCells);
                     return;
                 end
 
-                % å•ä¸ªå•å…ƒæ ¼ç¼–è¾‘
+                % µ¥¸öµ¥Ôª¸ñ±à¼­
                 newValue = str2double(event.EditData);
                 if isnan(newValue)
-                    % æ£€æŸ¥æ˜¯å¦ä¸ºè¿ç®—è¡¨è¾¾å¼ï¼Œå¦‚æœæ˜¯åˆ™å¿½ç•¥ï¼ˆåº”è¯¥ç”±æ‰¹é‡ç¼–è¾‘å¤„ç†ï¼‰
+                    % ¼ì²éÊÇ·ñÎªÔËËã±í´ïÊ½£¬Èç¹ûÊÇÔòºöÂÔ£¨Ó¦¸ÃÓÉÅúÁ¿±à¼­´¦Àí£©
                     if startsWith(event.EditData, {'+', '-', '*', '/', '^'})
-                        return; % è¿ç®—è¡¨è¾¾å¼åº”è¯¥ç”±æ‰¹é‡ç¼–è¾‘å¤„ç†ï¼Œè¿™é‡Œå¿½ç•¥
+                        return; % ÔËËã±í´ïÊ½Ó¦¸ÃÓÉÅúÁ¿±à¼­´¦Àí£¬ÕâÀïºöÂÔ
                     end
-                    return; % å…¶ä»–æ— æ•ˆè¾“å…¥ï¼Œå¿½ç•¥
+                    return; % ÆäËûÎŞĞ§ÊäÈë£¬ºöÂÔ
                 end
 
-                % åº”ç”¨æ–°å€¼åˆ°è¡¨æ ¼
+                % Ó¦ÓÃĞÂÖµµ½±í¸ñ
                 data = obj.DataTable.Data;
                 data{row, col} = num2str(newValue);
                 obj.DataTable.Data = data;
 
-                % å®æ—¶æ›´æ–°åæ ‡è½´é¢œè‰²å’Œå•è°ƒæ€§æ£€æŸ¥
+                % ÊµÊ±¸üĞÂ×ø±êÖáÑÕÉ«ºÍµ¥µ÷ĞÔ¼ì²é
                 obj.updateRealTimeMonotonicity(row, col, newValue);
 
             catch ME
-                % ç¼–è¾‘å‡ºé”™ï¼Œæ˜¾ç¤ºé”™è¯¯ä¿¡æ¯
-                errordlg(['ç¼–è¾‘å¤±è´¥: ', ME.message], 'ç¼–è¾‘é”™è¯¯');
+                % ±à¼­³ö´í£¬ÏÔÊ¾´íÎóĞÅÏ¢
+                errordlg(['±à¼­Ê§°Ü: ', ME.message], '±à¼­´íÎó');
             end
         end
 
         function handleBatchEdit(obj, event, selectedCells)
-            % å¤„ç†æ‰¹é‡ç¼–è¾‘ï¼Œæ”¯æŒè¿ç®—
+            % ´¦ÀíÅúÁ¿±à¼­£¬Ö§³ÖÔËËã
             editData = event.EditData;
             if isempty(editData)
                 return;
             end
 
-            % ä¸´æ—¶ç¦ç”¨å•å…ƒæ ¼ç¼–è¾‘å›è°ƒï¼Œé˜²æ­¢å†²çª
+            % ÁÙÊ±½ûÓÃµ¥Ôª¸ñ±à¼­»Øµ÷£¬·ÀÖ¹³åÍ»
             originalCallback = obj.DataTable.CellEditCallback;
             obj.DataTable.CellEditCallback = [];
 
             try
-                % è·å–ç¼–è¾‘å‘ç”Ÿçš„ä½ç½®å’ŒåŸå§‹å€¼
+                % »ñÈ¡±à¼­·¢ÉúµÄÎ»ÖÃºÍÔ­Ê¼Öµ
                 editRow = event.Indices(1);
                 editCol = event.Indices(2);
-                previousData = event.PreviousData;   % ç¼–è¾‘å‰çš„åŸå§‹å€¼
+                previousData = event.PreviousData;   % ±à¼­Ç°µÄÔ­Ê¼Öµ
 
-                % è§£æè¾“å…¥ï¼Œæ”¯æŒè¿ç®—è¡¨è¾¾å¼
+                % ½âÎöÊäÈë£¬Ö§³ÖÔËËã±í´ïÊ½
                 if startsWith(editData, {'+', '-', '*', '/', '^'})
-                    % è¿ç®—è¡¨è¾¾å¼ï¼Œå¦‚ *2, +5, /3 ç­‰
+                    % ÔËËã±í´ïÊ½£¬Èç *2, +5, /3 µÈ
                     obj.applyOperationToSelectedCells(selectedCells, editData, editRow, editCol, previousData);
                 else
-                    % æ™®é€šæ•°å€¼ï¼Œç›´æ¥åº”ç”¨
+                    % ÆÕÍ¨ÊıÖµ£¬Ö±½ÓÓ¦ÓÃ
                     newValue = str2double(editData);
                     if ~isnan(newValue)
                         obj.applyValueToSelectedCells(selectedCells, num2str(newValue), editRow, editCol, previousData);
                     end
                 end
             catch ME
-                errordlg(['æ‰¹é‡ç¼–è¾‘å¤±è´¥: ', ME.message], 'æ‰¹é‡ç¼–è¾‘é”™è¯¯');
+                errordlg(['ÅúÁ¿±à¼­Ê§°Ü: ', ME.message], 'ÅúÁ¿±à¼­´íÎó');
             end
 
-            % æ¢å¤å•å…ƒæ ¼ç¼–è¾‘å›è°ƒ
+            % »Ö¸´µ¥Ôª¸ñ±à¼­»Øµ÷
             obj.DataTable.CellEditCallback = originalCallback;
         end
 
-        function applyValueToSelectedCells(obj, selectedCells, valueStr, editRow, editCol, previousData)
-            % å°†å›ºå®šå€¼åº”ç”¨åˆ°é€‰ä¸­çš„æ‰€æœ‰å•å…ƒæ ¼
+        function applyValueToSelectedCells(obj, selectedCells, valueStr, ~, ~, ~)
+            % ½«¹Ì¶¨ÖµÓ¦ÓÃµ½Ñ¡ÖĞµÄËùÓĞµ¥Ôª¸ñ
             data = obj.DataTable.Data;
             updatedAxes = {};
 
@@ -948,18 +999,18 @@ classdef SimulinkInspector < handle
                 row = selectedCells(i, 1);
                 col = selectedCells(i, 2);
 
-                % è·³è¿‡å·¦ä¸Šè§’å•å…ƒæ ¼
+                % Ìø¹ı×óÉÏ½Çµ¥Ôª¸ñ
                 if strcmp(obj.Mode, '2D') && row == 1 && col == 1
                     continue;
                 end
 
-                % å¯¹äºè¢«ç¼–è¾‘çš„å•å…ƒæ ¼ï¼Œç¡®ä¿å³ä½¿æ–°å€¼ä¸åŸå§‹å€¼ç›¸åŒä¹Ÿèƒ½æ­£ç¡®åˆ·æ–°
+                % ¶ÔÓÚ±»±à¼­µÄµ¥Ôª¸ñ£¬È·±£¼´Ê¹ĞÂÖµÓëÔ­Ê¼ÖµÏàÍ¬Ò²ÄÜÕıÈ·Ë¢ĞÂ
                 data{row, col} = valueStr;
 
-                obj.recordUpdatedAxis(row, col, updatedAxes);
+                updatedAxes = obj.recordUpdatedAxis(row, col, updatedAxes);
             end
 
-            % å¼ºåˆ¶åˆ·æ–°è¡¨æ ¼ä»¥æ˜¾ç¤ºç›¸åŒå€¼çš„æƒ…å†µ
+            % Ç¿ÖÆË¢ĞÂ±í¸ñÒÔÏÔÊ¾ÏàÍ¬ÖµµÄÇé¿ö
             obj.DataTable.Enable = 'off';
             obj.DataTable.Data = data;
             obj.DataTable.Enable = 'on';
@@ -969,17 +1020,17 @@ classdef SimulinkInspector < handle
         end
 
         function applyOperationToSelectedCells(obj, selectedCells, operationStr, editRow, editCol, previousData)
-            % å¯¹é€‰ä¸­çš„å•å…ƒæ ¼åº”ç”¨è¿ç®—
+            % ¶ÔÑ¡ÖĞµÄµ¥Ôª¸ñÓ¦ÓÃÔËËã
             data = obj.DataTable.Data;
             updatedAxes = {};
 
-            % è§£æè¿ç®—
+            % ½âÎöÔËËã
             operation = operationStr(1);
             operandStr = operationStr(2:end);
             operand = str2double(operandStr);
 
             if isnan(operand)
-                errordlg('æ— æ•ˆçš„è¿ç®—è¡¨è¾¾å¼', 'è¿ç®—é”™è¯¯');
+                errordlg('ÎŞĞ§µÄÔËËã±í´ïÊ½', 'ÔËËã´íÎó');
                 return;
             end
 
@@ -987,12 +1038,12 @@ classdef SimulinkInspector < handle
                 row = selectedCells(i, 1);
                 col = selectedCells(i, 2);
 
-                % è·³è¿‡å·¦ä¸Šè§’å•å…ƒæ ¼
+                % Ìø¹ı×óÉÏ½Çµ¥Ôª¸ñ
                 if strcmp(obj.Mode, '2D') && row == 1 && col == 1
                     continue;
                 end
 
-                % è·å–å½“å‰å€¼ï¼šå¦‚æœæ˜¯è¢«ç¼–è¾‘çš„å•å…ƒæ ¼ï¼Œä½¿ç”¨ç¼–è¾‘å‰çš„åŸå§‹å€¼ï¼›å¦åˆ™ä½¿ç”¨è¡¨æ ¼ä¸­çš„å½“å‰å€¼
+                % »ñÈ¡µ±Ç°Öµ£ºÈç¹ûÊÇ±»±à¼­µÄµ¥Ôª¸ñ£¬Ê¹ÓÃ±à¼­Ç°µÄÔ­Ê¼Öµ£»·ñÔòÊ¹ÓÃ±í¸ñÖĞµÄµ±Ç°Öµ
                 if row == editRow && col == editCol
                     currentValueStr = previousData;
                 else
@@ -1001,15 +1052,15 @@ classdef SimulinkInspector < handle
 
                 currentValue = str2double(currentValueStr);
                 if isnan(currentValue)
-                    continue;   % éæ•°å€¼å•å…ƒæ ¼è·³è¿‡
+                    continue;   % ·ÇÊıÖµµ¥Ôª¸ñÌø¹ı
                 end
 
-                % åº”ç”¨è¿ç®—
+                % Ó¦ÓÃÔËËã
                 newValue = obj.calculateOperation(currentValue, operation, operand);
                 data{row, col} = num2str(newValue);
 
-                % è®°å½•æ›´æ–°çš„åæ ‡è½´
-                obj.recordUpdatedAxis(row, col, updatedAxes);
+                % ¼ÇÂ¼¸üĞÂµÄ×ø±êÖá
+                updatedAxes = obj.recordUpdatedAxis(row, col, updatedAxes);
             end
 
             obj.DataTable.Data = data;
@@ -1018,7 +1069,7 @@ classdef SimulinkInspector < handle
         end
 
         function newValue = calculateOperation(~, currentValue, operation, operand)
-            % æ‰§è¡Œæ•°å­¦è¿ç®—
+            % Ö´ĞĞÊıÑ§ÔËËã
             switch operation
                 case '+'
                     newValue = currentValue + operand;
@@ -1028,18 +1079,18 @@ classdef SimulinkInspector < handle
                     newValue = currentValue * operand;
                 case '/'
                     if operand == 0
-                        error('é™¤æ•°ä¸èƒ½ä¸ºé›¶');
+                        error('³ıÊı²»ÄÜÎªÁã');
                     end
                     newValue = currentValue / operand;
                 case '^'
                     newValue = currentValue ^ operand;
                 otherwise
-                    error('ä¸æ”¯æŒçš„è¿ç®—ç¬¦: %s', operation);
+                    error('²»Ö§³ÖµÄÔËËã·û: %s', operation);
             end
         end
 
-        function recordUpdatedAxis(obj, row, col, updatedAxes)
-            % è®°å½•å“ªäº›åæ ‡è½´è¢«æ›´æ–°äº†
+        function updatedAxes = recordUpdatedAxis(obj, row, col, updatedAxes)
+            % ¼ÇÂ¼ÄÄĞ©×ø±êÖá±»¸üĞÂÁË
             if strcmp(obj.Mode, '2D')
                 if row == 1 && col > 1
                     updatedAxes{end+1} = 'X';
@@ -1052,120 +1103,49 @@ classdef SimulinkInspector < handle
         end
 
         function updateAxesAfterBatchEdit(obj, updatedAxes)
-            % æ‰¹é‡ç¼–è¾‘åæ›´æ–°åæ ‡è½´
+            % ÅúÁ¿±à¼­ºó¸üĞÂ×ø±êÖá
             if ~strcmp(obj.Mode, 'Standard') && ~isempty(updatedAxes)
-                uniqueAxes = unique(updatedAxes);
-                for k = 1:length(uniqueAxes)
-                    axisType = uniqueAxes{k};
-                    % æ›´æ–°å·¥ä½œåŒºæ•°æ®
-                    obj.updateAxisDataInWorkspace(axisType);
-                    % æ›´æ–°é¢œè‰²
-                    if strcmp(axisType, 'X')
-                        axisData = obj.getWValue(obj.XVar);
-                        obj.applyAxisColors('X', axisData);
-                    else
-                        axisData = obj.getWValue(obj.YVar);
-                        obj.applyAxisColors('Y', axisData);
-                    end
-                end
-                % æ›´æ–°è­¦å‘Šæ ‡ç­¾
-                obj.updateMonotonicityWarning();
+                obj.refreshAxesDisplay(unique(updatedAxes), false);
             end
         end
 
-        function validateAxisEdit(obj, row, col, newValue)
-            % éªŒè¯åæ ‡è½´ç¼–è¾‘æ˜¯å¦ç¬¦åˆå•è°ƒæ€§è¦æ±‚
+        function updateRealTimeMonotonicity(obj, row, col, ~)
+            % ÊµÊ±¸üĞÂµ¥µ÷ĞÔ¼ì²é¡¢ÑÕÉ«ºÍÌáÊ¾£¨²»µ¯¿ò£©
             if strcmp(obj.Mode, 'Standard')
-                return; % æ ‡å‡†æ¨¡å¼ä¸æ£€æŸ¥
+                return; % ±ê×¼Ä£Ê½²»¼ì²é
             end
 
-            % 2Dæ¨¡å¼ä¸‹ç¦æ­¢ç¼–è¾‘å·¦ä¸Šè§’å•å…ƒæ ¼
-            if strcmp(obj.Mode, '2D') && row == 1 && col == 1
-                return;
-            end
-
-            % ç¡®å®šç¼–è¾‘çš„æ˜¯å“ªä¸ªåæ ‡è½´
-            axisType = '';
-            if strcmp(obj.Mode, '2D')
-                if row == 1 && col > 1
-                    axisType = 'X';
-                    axisCol = col;
-                    axisRow = 0;
-                elseif col == 1 && row > 1
-                    axisType = 'Y';
-                    axisCol = 0;
-                    axisRow = row;
-                end
-            elseif strcmp(obj.Mode, '1D') && row == 1
-                axisType = 'X';
-                axisCol = col;
-                axisRow = 0;
-            end
-
-            if isempty(axisType)
-                return; % ä¸æ˜¯åæ ‡è½´ç¼–è¾‘
-            end
-
-            % åº”ç”¨æ–°å€¼åˆ°è¡¨æ ¼
-            data = obj.DataTable.Data;
-            data{row, col} = num2str(newValue);
-            obj.DataTable.Data = data;
-
-            % æ›´æ–°å®æ—¶é¢œè‰²åé¦ˆ
-            obj.updateAxisColorFeedback(axisType, axisRow, axisCol, newValue);
-        end
-
-        function updateRealTimeMonotonicity(obj, row, col, newValue)
-            % å®æ—¶æ›´æ–°å•è°ƒæ€§æ£€æŸ¥ã€é¢œè‰²å’Œæç¤ºï¼ˆä¸å¼¹æ¡†ï¼‰
-            if strcmp(obj.Mode, 'Standard')
-                return; % æ ‡å‡†æ¨¡å¼ä¸æ£€æŸ¥
-            end
-
-            % ç¡®å®šç¼–è¾‘çš„æ˜¯å“ªä¸ªåæ ‡è½´
-            axisType = '';
+            % È·¶¨±à¼­µÄÊÇÄÄ¸ö×ø±êÖá
             if strcmp(obj.Mode, '2D')
                 if row == 1 && col > 1
                     axisType = 'X';
                 elseif col == 1 && row > 1
                     axisType = 'Y';
                 else
-                    return; % ä¸æ˜¯åæ ‡è½´ç¼–è¾‘
+                    return; % ²»ÊÇ×ø±êÖá±à¼­
                 end
             elseif strcmp(obj.Mode, '1D') && row == 1
                 axisType = 'X';
             else
-                return; % ä¸æ˜¯åæ ‡è½´ç¼–è¾‘
+                return; % ²»ÊÇ×ø±êÖá±à¼­
             end
 
-            % æ›´æ–°å·¥ä½œåŒºå˜é‡å€¼
-            obj.updateAxisDataInWorkspace(axisType);
-
-            % é‡æ–°åº”ç”¨é¢œè‰²åˆ°æ•´ä¸ªåæ ‡è½´
-            if strcmp(axisType, 'X')
-                axisData = obj.getWValue(obj.XVar);
-                obj.applyAxisColors('X', axisData);
-            else
-                axisData = obj.getWValue(obj.YVar);
-                obj.applyAxisColors('Y', axisData);
-            end
-
-            % æ£€æŸ¥å•è°ƒæ€§å¹¶æ˜¾ç¤º/éšè—é¡¶éƒ¨è­¦å‘Šæ ‡ç­¾ï¼ˆä¸å†å¼¹æ¡†ï¼‰
-            obj.updateMonotonicityWarning();
+            obj.refreshAxesDisplay({axisType}, false);
         end
 
         function updateAxisDataInWorkspace(obj, axisType)
-            % ä»è¡¨æ ¼æ•°æ®æ›´æ–°å·¥ä½œåŒºä¸­çš„åæ ‡è½´æ•°æ®
+            % ´Ó±í¸ñÊı¾İ¸üĞÂ¹¤×÷ÇøÖĞµÄ×ø±êÖáÊı¾İ
             data = obj.DataTable.Data;
 
             if strcmp(axisType, 'X')
                 if strcmp(obj.Mode, '2D')
-                    % 2Dæ¨¡å¼ï¼šXè½´åœ¨ç¬¬ä¸€è¡Œï¼Œç¬¬2åˆ—å¼€å§‹
+                    % 2DÄ£Ê½£ºXÖáÔÚµÚÒ»ĞĞ£¬µÚ2ÁĞ¿ªÊ¼
                     newData = zeros(1, size(data, 2) - 1);
                     for j = 2:size(data, 2)
                         newData(j-1) = str2double(data{1, j});
                     end
                 else
-                    % 1Dæ¨¡å¼ï¼šXè½´åœ¨ç¬¬ä¸€è¡Œ
+                    % 1DÄ£Ê½£ºXÖáÔÚµÚÒ»ĞĞ
                     newData = zeros(1, size(data, 2));
                     for j = 1:size(data, 2)
                         newData(j) = str2double(data{1, j});
@@ -1173,7 +1153,7 @@ classdef SimulinkInspector < handle
                 end
                 obj.setWValue(obj.XVar, newData);
             else
-                % Yè½´
+                % YÖá
                 newData = zeros(size(data, 1) - 1, 1);
                 for i = 2:size(data, 1)
                     newData(i-1) = str2double(data{i, 1});
@@ -1183,12 +1163,8 @@ classdef SimulinkInspector < handle
         end
 
         function isMonotonic = isAxisMonotonic(obj, axisType)
-            % æ£€æŸ¥æŒ‡å®šåæ ‡è½´æ˜¯å¦å•è°ƒé€’å¢
-            if strcmp(axisType, 'X')
-                axisData = obj.getWValue(obj.XVar);
-            else
-                axisData = obj.getWValue(obj.YVar);
-            end
+            % ¼ì²éÖ¸¶¨×ø±êÖáÊÇ·ñµ¥µ÷µİÔö
+            axisData = obj.getAxisDataFromTable(axisType);
 
             if isempty(axisData) || length(axisData) <= 1
                 isMonotonic = true;
@@ -1198,148 +1174,83 @@ classdef SimulinkInspector < handle
             isMonotonic = all(diff(axisData) > 0);
         end
 
-        function updateAxisColorFeedback(obj, axisType)
-            % å®æ—¶æ›´æ–°åæ ‡è½´é¢œè‰²åé¦ˆ - ä½¿ç”¨applyAxisColorsæ–¹æ³•
-            if strcmp(axisType, 'X')
-                axisData = obj.getWValue(obj.XVar);
-                obj.applyAxisColors('X', axisData);
-                obj.checkMonotonicityViolation('X');
-            else
-                axisData = obj.getWValue(obj.YVar);
-                obj.applyAxisColors('Y', axisData);
-                obj.checkMonotonicityViolation('Y');
-            end
-
-            % æ›´æ–°é¡¶éƒ¨è­¦å‘Šæ ‡ç­¾
-            obj.updateMonotonicityWarning();
-        end
-
         function updateMonotonicityWarning(obj)
-            % æ›´æ–°é¡¶éƒ¨å•è°ƒæ€§è­¦å‘Šæ ‡ç­¾
+            % ¸üĞÂ¶¥²¿µ¥µ÷ĞÔ¾¯¸æ±êÇ©
             if strcmp(obj.Mode, 'Standard')
                 return;
             end
 
             isAnyAxisNonMonotonic = false;
-
-            if strcmp(obj.Mode, '2D')
-                % æ£€æŸ¥Xè½´å’ŒYè½´çš„å•è°ƒæ€§
-                xMonotonic = obj.isAxisMonotonic('X');
-                yMonotonic = obj.isAxisMonotonic('Y');
-
-                if ~xMonotonic || ~yMonotonic
+            axisTypes = obj.getAvailableAxisTypes();
+            for k = 1:length(axisTypes)
+                if ~obj.isAxisMonotonic(axisTypes{k})
                     isAnyAxisNonMonotonic = true;
-                end
-            elseif strcmp(obj.Mode, '1D')
-                % æ£€æŸ¥Xè½´çš„å•è°ƒæ€§
-                xMonotonic = obj.isAxisMonotonic('X');
-                if ~xMonotonic
-                    isAnyAxisNonMonotonic = true;
+                    break;
                 end
             end
 
-            % åŠ¨æ€æ˜¾ç¤º/éšè—è­¦å‘Šæ ‡ç­¾
+            % ¶¯Ì¬ÏÔÊ¾/Òş²Ø¾¯¸æ±êÇ©
             if isAnyAxisNonMonotonic
-                obj.MonotonicityLabel.Text = 'åæ ‡è½´æœªå•è°ƒé€’å¢ï¼';
-                obj.MonotonicityLabel.Visible = 'on';
+                obj.setMonotonicityLabelState('×ø±êÖáÎ´µ¥µ÷µİÔö£¡', 'on');
             else
-                obj.MonotonicityLabel.Text = '';
-                obj.MonotonicityLabel.Visible = 'off';
+                obj.setMonotonicityLabelState('', 'off');
             end
         end
 
-        function checkMonotonicityViolation(obj, axisType)
-            % æ£€æŸ¥æ˜¯å¦ç ´åäº†åŸæœ‰çš„å•è°ƒæ€§ï¼ˆä¸å¼¹æ¡†ï¼Œä»…ä½œå†…éƒ¨ä½¿ç”¨ï¼‰
-            if strcmp(axisType, 'X')
-                originalData = obj.getWValue(obj.XVar);
-            else
-                originalData = obj.getWValue(obj.YVar);
-            end
-
-            % åªæœ‰å½“åŸå§‹æ•°æ®æ˜¯å•è°ƒçš„æ—¶å€™æ‰æ£€æŸ¥æ˜¯å¦è¢«ç ´å
-            if ~isempty(originalData) && length(originalData) > 1 && obj.isMonotonicIncreasing(originalData)
-                % è·å–å½“å‰æ•°æ®
-                currentData = originalData;
-                if strcmp(axisType, 'X')
-                    data = obj.DataTable.Data;
-                    if strcmp(obj.Mode, '2D')
-                        currentData = zeros(1, size(data,2)-1);
-                        for j = 2:size(data,2)
-                            currentData(j-1) = str2double(data{1, j});
-                        end
-                    else
-                        currentData = zeros(1, size(data,2));
-                        for j = 1:size(data,2)
-                            currentData(j) = str2double(data{1, j});
-                        end
-                    end
-                else
-                    data = obj.DataTable.Data;
-                    currentData = zeros(size(data,1)-1, 1);
-                    for i = 2:size(data,1)
-                        currentData(i-1) = str2double(data{i, 1});
-                    end
-                end
-
-                % ä¸å†å¼¹æ¡†ï¼Œé¡¶éƒ¨æ ‡ç­¾å·²è¶³å¤Ÿæç¤º
+        function axisTypes = getAvailableAxisTypes(obj)
+            axisTypes = {};
+            if strcmp(obj.Mode, '2D')
+                axisTypes = {'X', 'Y'};
+            elseif strcmp(obj.Mode, '1D')
+                axisTypes = {'X'};
             end
         end
 
-        function isLocalMonotonic = checkLocalMonotonicity(~, data, index)
-            % æ£€æŸ¥æŒ‡å®šä½ç½®çš„å±€éƒ¨å•è°ƒæ€§
-            % è§„åˆ™ï¼šå½“å‰ç‚¹æ¯”åé¢æ‰€æœ‰ç‚¹éƒ½å°ï¼Œä¸”æ¯”å‰é¢æ‰€æœ‰ç‚¹éƒ½å¤§
-            isLocalMonotonic = true;
+        function refreshAxesDisplay(obj, axisTypes, syncWorkspace)
+            if nargin < 3
+                syncWorkspace = true;
+            end
 
-            if length(data) <= 1
+            if strcmp(obj.Mode, 'Standard') || isempty(axisTypes)
                 return;
             end
 
-            currentValue = data(index);
-
-            % æ£€æŸ¥æ˜¯å¦æ¯”å‰é¢æ‰€æœ‰ç‚¹éƒ½å¤§ï¼ˆå¦‚æœæœ‰å‰é¢çš„ç‚¹ï¼‰
-            if index > 1
-                for i = 1:index-1
-                    if data(i) >= currentValue
-                        isLocalMonotonic = false;
-                        return;
-                    end
+            for k = 1:length(axisTypes)
+                axisType = axisTypes{k};
+                if syncWorkspace
+                    obj.updateAxisDataInWorkspace(axisType);
                 end
+
+                axisData = obj.getAxisDataFromTable(axisType);
+                obj.applyAxisColors(axisType, axisData);
             end
 
-            % æ£€æŸ¥æ˜¯å¦æ¯”åé¢æ‰€æœ‰ç‚¹éƒ½å°ï¼ˆå¦‚æœæœ‰åé¢çš„ç‚¹ï¼‰
-            if index < length(data)
-                for i = index+1:length(data)
-                    if currentValue >= data(i)
-                        isLocalMonotonic = false;
-                        return;
-                    end
-                end
-            end
+            obj.updateMonotonicityWarning();
         end
 
         function handlePasteOperation(obj)
-            % å¤„ç†ç²˜è´´æ“ä½œï¼ˆé€šè¿‡æŒ‰é’®æˆ–å¿«æ·é”®è°ƒç”¨ï¼‰
+            % ´¦ÀíÕ³Ìù²Ù×÷£¨Í¨¹ı°´Å¥»ò¿ì½İ¼üµ÷ÓÃ£©
             try
-                % è·å–å‰ªè´´æ¿å†…å®¹
+                % »ñÈ¡¼ôÌù°åÄÚÈİ
                 clipboardText = clipboard('paste');
                 if isempty(clipboardText)
-                    warndlg('å‰ªè´´æ¿ä¸ºç©ºæˆ–æ— æ³•è®¿é—®', 'ç²˜è´´å¤±è´¥');
+                    warndlg('¼ôÌù°åÎª¿Õ»òÎŞ·¨·ÃÎÊ', 'Õ³ÌùÊ§°Ü');
                     return;
                 end
 
-                % è§£æå‰ªè´´æ¿å†…å®¹ï¼ˆæ”¯æŒåˆ¶è¡¨ç¬¦åˆ†éš”çš„æ–‡æœ¬ï¼‰
+                % ½âÎö¼ôÌù°åÄÚÈİ£¨Ö§³ÖÖÆ±í·û·Ö¸ôµÄÎÄ±¾£©
                 lines = strsplit(clipboardText, '\n');
                 if isempty(lines)
-                    warndlg('æ— æ³•è§£æå‰ªè´´æ¿å†…å®¹', 'ç²˜è´´å¤±è´¥');
+                    warndlg('ÎŞ·¨½âÎö¼ôÌù°åÄÚÈİ', 'Õ³ÌùÊ§°Ü');
                     return;
                 end
 
-                % è§£ææ•°æ®
+                % ½âÎöÊı¾İ
                 pasteData = {};
                 for i = 1:length(lines)
                     line = strtrim(lines{i});
                     if ~isempty(line)
-                        % æŒ‰åˆ¶è¡¨ç¬¦æˆ–ç©ºæ ¼åˆ†å‰²
+                        % °´ÖÆ±í·û»ò¿Õ¸ñ·Ö¸î
                         values = strsplit(line, {'\t', ' '});
                         rowData = {};
                         for j = 1:length(values)
@@ -1360,38 +1271,35 @@ classdef SimulinkInspector < handle
                 end
 
                 if isempty(pasteData)
-                    warndlg('æ²¡æœ‰æœ‰æ•ˆçš„æ•°æ®å¯ä»¥ç²˜è´´', 'ç²˜è´´å¤±è´¥');
+                    warndlg('Ã»ÓĞÓĞĞ§µÄÊı¾İ¿ÉÒÔÕ³Ìù', 'Õ³ÌùÊ§°Ü');
                     return;
                 end
 
-                % è·å–å½“å‰é€‰æ‹©èŒƒå›´
-                selectedCells = obj.DataTable.Selection;
-                if isempty(selectedCells) && ~isempty(obj.CurrentSelection)
-                    selectedCells = obj.CurrentSelection;
-                end
+                % »ñÈ¡µ±Ç°Ñ¡Ôñ·¶Î§
+                selectedCells = obj.getTableSelection();
 
                 if isempty(selectedCells)
-                    % å¦‚æœæ²¡æœ‰é€‰æ‹©ï¼Œé»˜è®¤ä»(1,1)å¼€å§‹ï¼ˆè·³è¿‡å·¦ä¸Šè§’å¦‚æœæ˜¯2Dæ¨¡å¼ï¼‰
+                    % Èç¹ûÃ»ÓĞÑ¡Ôñ£¬Ä¬ÈÏ´Ó(1,1)¿ªÊ¼£¨Ìø¹ı×óÉÏ½ÇÈç¹ûÊÇ2DÄ£Ê½£©
                     startRow = 1;
                     startCol = 1;
                     if strcmp(obj.Mode, '2D')
-                        startCol = 2;  % 2Dæ¨¡å¼è·³è¿‡ç¬¬ä¸€åˆ—
+                        startCol = 2;  % 2DÄ£Ê½Ìø¹ıµÚÒ»ÁĞ
                     end
                 else
-                    % ä½¿ç”¨ç¬¬ä¸€ä¸ªé€‰ä¸­çš„å•å…ƒæ ¼ä½œä¸ºèµ·å§‹ä½ç½®
+                    % Ê¹ÓÃµÚÒ»¸öÑ¡ÖĞµÄµ¥Ôª¸ñ×÷ÎªÆğÊ¼Î»ÖÃ
                     startRow = selectedCells(1, 1);
                     startCol = selectedCells(1, 2);
                 end
 
-                % éªŒè¯èµ·å§‹ä½ç½®
+                % ÑéÖ¤ÆğÊ¼Î»ÖÃ
                 data = obj.DataTable.Data;
                 if startRow > size(data, 1) || startCol > size(data, 2)
-                    warndlg('é€‰æ‹©çš„ä½ç½®è¶…å‡ºè¡¨æ ¼èŒƒå›´', 'ç²˜è´´å¤±è´¥');
+                    warndlg('Ñ¡ÔñµÄÎ»ÖÃ³¬³ö±í¸ñ·¶Î§', 'Õ³ÌùÊ§°Ü');
                     return;
                 end
 
-                % åº”ç”¨ç²˜è´´æ•°æ®å¹¶è®°å½•ç²˜è´´åŒºåŸŸçš„è¡Œåˆ—èŒƒå›´
-                updatedAxes = {};  % è®°å½•å“ªäº›åæ ‡è½´è¢«æ›´æ–°äº†
+                % Ó¦ÓÃÕ³ÌùÊı¾İ²¢¼ÇÂ¼Õ³ÌùÇøÓòµÄĞĞÁĞ·¶Î§
+                updatedAxes = {};  % ¼ÇÂ¼ÄÄĞ©×ø±êÖá±»¸üĞÂÁË
                 minPasteRow = startRow;
                 maxPasteRow = startRow;
                 minPasteCol = startCol;
@@ -1402,7 +1310,7 @@ classdef SimulinkInspector < handle
                     targetRow = startRow + i - 1;
 
                     if targetRow > size(data, 1)
-                        break; % è¶…å‡ºèŒƒå›´
+                        break; % ³¬³ö·¶Î§
                     end
                     maxPasteRow = max(maxPasteRow, targetRow);
 
@@ -1410,16 +1318,16 @@ classdef SimulinkInspector < handle
                         targetCol = startCol + j - 1;
 
                         if targetCol > size(data, 2)
-                            break; % è¶…å‡ºèŒƒå›´
+                            break; % ³¬³ö·¶Î§
                         end
                         maxPasteCol = max(maxPasteCol, targetCol);
 
-                        % 2Dæ¨¡å¼ä¸‹ç¦æ­¢ç¼–è¾‘å·¦ä¸Šè§’å•å…ƒæ ¼
+                        % 2DÄ£Ê½ÏÂ½ûÖ¹±à¼­×óÉÏ½Çµ¥Ôª¸ñ
                         if strcmp(obj.Mode, '2D') && targetRow == 1 && targetCol == 1
-                            continue; % è·³è¿‡å·¦ä¸Šè§’å•å…ƒæ ¼çš„ç¼–è¾‘
+                            continue; % Ìø¹ı×óÉÏ½Çµ¥Ôª¸ñµÄ±à¼­
                         end
 
-                        % æ£€æŸ¥æ˜¯å¦æ˜¯åæ ‡è½´ç¼–è¾‘
+                        % ¼ì²éÊÇ·ñÊÇ×ø±êÖá±à¼­
                         if strcmp(obj.Mode, '2D')
                             if targetRow == 1 && targetCol > 1
                                 updatedAxes{end+1} = 'X';
@@ -1430,7 +1338,7 @@ classdef SimulinkInspector < handle
                             updatedAxes{end+1} = 'X';
                         end
 
-                        % åº”ç”¨å€¼
+                        % Ó¦ÓÃÖµ
                         if isnumeric(rowData{j})
                             data{targetRow, targetCol} = num2str(rowData{j});
                         else
@@ -1439,49 +1347,33 @@ classdef SimulinkInspector < handle
                     end
                 end
 
-                % æ›´æ–°è¡¨æ ¼æ•°æ®
+                % ¸üĞÂ±í¸ñÊı¾İ
                 obj.DataTable.Data = data;
 
-                % å°†ç²˜è´´å½±å“çš„åŒºåŸŸè®¾ç½®ä¸ºå½“å‰é€‰ä¸­ï¼ˆé«˜äº®æ˜¾ç¤ºï¼‰
+                % ½«Õ³ÌùÓ°ÏìµÄÇøÓòÉèÖÃÎªµ±Ç°Ñ¡ÖĞ£¨¸ßÁÁÏÔÊ¾£©
                 if maxPasteRow >= minPasteRow && maxPasteCol >= minPasteCol
-                    % ç”Ÿæˆé€‰ä¸­åŒºåŸŸçš„è¡Œåˆ—ç´¢å¼•çŸ©é˜µ
+                    % Éú³ÉÑ¡ÖĞÇøÓòµÄĞĞÁĞË÷Òı¾ØÕó
                     [rr, cc] = meshgrid(minPasteRow:maxPasteRow, minPasteCol:maxPasteCol);
                     newSelection = [rr(:), cc(:)];
-                    obj.DataTable.Selection = newSelection;
-                    obj.CurrentSelection = newSelection;
+                    obj.setTableSelection(newSelection);
                 end
 
-                % å®æ—¶æ›´æ–°åæ ‡è½´æ•°æ®å’Œé¢œè‰²
+                % ÊµÊ±¸üĞÂ×ø±êÖáÊı¾İºÍÑÕÉ«
                 if ~strcmp(obj.Mode, 'Standard')
-                    uniqueAxes = unique(updatedAxes);
-                    for k = 1:length(uniqueAxes)
-                        axisType = uniqueAxes{k};
-                        % æ›´æ–°å·¥ä½œåŒºæ•°æ®
-                        obj.updateAxisDataInWorkspace(axisType);
-                        % æ›´æ–°é¢œè‰²
-                        if strcmp(axisType, 'X')
-                            axisData = obj.getWValue(obj.XVar);
-                            obj.applyAxisColors('X', axisData);
-                        else
-                            axisData = obj.getWValue(obj.YVar);
-                            obj.applyAxisColors('Y', axisData);
-                        end
-                    end
-                    % æ›´æ–°è­¦å‘Šæ ‡ç­¾
-                    obj.updateMonotonicityWarning();
+                    obj.refreshAxesDisplay(unique(updatedAxes), false);
                 end
 
-                % ç²˜è´´æˆåŠŸä¸å†å¼¹æ¡†ï¼Œç”¨æˆ·å¯é€šè¿‡é«˜äº®ç¡®è®¤
+                % Õ³Ìù³É¹¦²»ÔÙµ¯¿ò£¬ÓÃ»§¿ÉÍ¨¹ı¸ßÁÁÈ·ÈÏ
 
             catch ME
-                % ç²˜è´´å¤±è´¥ï¼Œæ˜¾ç¤ºé”™è¯¯ä¿¡æ¯
-                errordlg(['ç²˜è´´æ“ä½œå¤±è´¥: ', ME.message], 'ç²˜è´´é”™è¯¯');
+                % Õ³ÌùÊ§°Ü£¬ÏÔÊ¾´íÎóĞÅÏ¢
+                errordlg(['Õ³Ìù²Ù×÷Ê§°Ü: ', ME.message], 'Õ³Ìù´íÎó');
             end
         end
 
-        % --- æ–°å¢ï¼šé”®ç›˜å¿«æ·é”®å¤„ç†ï¼ˆå…¼å®¹R2020ï¼‰---
+        % --- ĞÂÔö£º¼üÅÌ¿ì½İ¼ü´¦Àí£¨¼æÈİR2020£©---
         function handleKeyPress(obj, event)
-            % å¤„ç†é”®ç›˜å¿«æ·é”®ï¼šCtrl+C å¤åˆ¶ï¼ŒCtrl+V ç²˜è´´
+            % ´¦Àí¼üÅÌ¿ì½İ¼ü£ºCtrl+C ¸´ÖÆ£¬Ctrl+V Õ³Ìù
             if isequal(event.Modifier, {'control'})
                 switch lower(event.Key)
                     case 'c'
@@ -1493,32 +1385,159 @@ classdef SimulinkInspector < handle
         end
 
         function copySelectedCells(obj)
-            % å°†è¡¨æ ¼ä¸­é€‰ä¸­çš„å•å…ƒæ ¼å†…å®¹å¤åˆ¶åˆ°ç³»ç»Ÿå‰ªè´´æ¿
-            sel = obj.DataTable.Selection;
+            % ½«±í¸ñÖĞÑ¡ÖĞµÄµ¥Ôª¸ñÄÚÈİ¸´ÖÆµ½ÏµÍ³¼ôÌù°å
+            sel = obj.getTableSelection();
             if isempty(sel)
                 return;
             end
 
             data = obj.DataTable.Data;
-            % è·å–é€‰ä¸­çš„è¡Œåˆ—èŒƒå›´
+            % »ñÈ¡Ñ¡ÖĞµÄĞĞÁĞ·¶Î§
             rows = unique(sel(:,1));
             cols = unique(sel(:,2));
 
-            % æå–é€‰ä¸­åŒºåŸŸæ•°æ®
+            % ÌáÈ¡Ñ¡ÖĞÇøÓòÊı¾İ
             selectedData = data(rows, cols);
 
-            % å°†å…ƒèƒæ•°ç»„è½¬æ¢ä¸ºåˆ¶è¡¨ç¬¦åˆ†éš”çš„å­—ç¬¦ä¸²ï¼ˆExcelå¯è¯†åˆ«æ ¼å¼ï¼‰
+            % ½«Ôª°ûÊı×é×ª»»ÎªÖÆ±í·û·Ö¸ôµÄ×Ö·û´®£¨Excel¿ÉÊ¶±ğ¸ñÊ½£©
             strLines = cell(size(selectedData, 1), 1);
             for i = 1:size(selectedData, 1)
                 rowVals = selectedData(i, :);
-                % å°†æ¯ä¸ªå•å…ƒæ ¼è½¬æ¢ä¸ºå­—ç¬¦ä¸²
+                % ½«Ã¿¸öµ¥Ôª¸ñ×ª»»Îª×Ö·û´®
                 strVals = cellfun(@(x) num2str(x), rowVals, 'UniformOutput', false);
-                strLines{i} = strjoin(strVals, char(9));  % åˆ¶è¡¨ç¬¦åˆ†éš”
+                strLines{i} = strjoin(strVals, char(9));  % ÖÆ±í·û·Ö¸ô
             end
-            clipboardText = strjoin(strLines, char(10));   % æ¢è¡Œåˆ†éš”
+            clipboardText = strjoin(strLines, char(10));   % »»ĞĞ·Ö¸ô
 
-            % å†™å…¥å‰ªè´´æ¿
+            % Ğ´Èë¼ôÌù°å
             clipboard('copy', clipboardText);
+        end
+
+        function filename = getFileNameInputValue(obj)
+            if obj.UseLegacyUI
+                filename = obj.FileNameEdit.String;
+            else
+                filename = obj.FileNameEdit.Value;
+            end
+        end
+
+        function sel = getTableSelection(obj)
+            sel = [];
+            if ~isempty(obj.CurrentSelection)
+                sel = obj.CurrentSelection;
+            end
+
+            if obj.UseLegacyUI || isempty(obj.DataTable) || ~ishandle(obj.DataTable)
+                return;
+            end
+
+            try
+                liveSelection = obj.DataTable.Selection;
+                if ~isempty(liveSelection)
+                    sel = liveSelection;
+                end
+            catch
+            end
+        end
+
+        function setTableSelection(obj, newSelection)
+            obj.CurrentSelection = newSelection;
+            if obj.UseLegacyUI || isempty(obj.DataTable) || ~ishandle(obj.DataTable)
+                return;
+            end
+
+            try
+                obj.DataTable.Selection = newSelection;
+            catch
+            end
+        end
+
+        function setMonotonicityLabelState(obj, textValue, visibleValue)
+            if isempty(obj.MonotonicityLabel) || ~ishandle(obj.MonotonicityLabel)
+                return;
+            end
+
+            if obj.UseLegacyUI
+                obj.MonotonicityLabel.String = textValue;
+                obj.MonotonicityLabel.Visible = visibleValue;
+            else
+                obj.MonotonicityLabel.Text = textValue;
+                obj.MonotonicityLabel.Visible = visibleValue;
+            end
+        end
+
+        function axisData = getAxisDataFromTable(obj, axisType)
+            axisData = [];
+            if isempty(obj.DataTable) || ~ishandle(obj.DataTable)
+                return;
+            end
+
+            data = obj.DataTable.Data;
+            if isempty(data)
+                return;
+            end
+
+            if strcmp(axisType, 'X')
+                if strcmp(obj.Mode, '2D')
+                    if size(data, 2) <= 1
+                        return;
+                    end
+                    axisCells = data(1, 2:end);
+                else
+                    axisCells = data(1, :);
+                end
+            else
+                if ~strcmp(obj.Mode, '2D') || size(data, 1) <= 1
+                    return;
+                end
+                axisCells = data(2:end, 1);
+            end
+
+            axisData = zeros(numel(axisCells), 1);
+            for idx = 1:numel(axisCells)
+                cellValue = axisCells{idx};
+                if isnumeric(cellValue)
+                    axisData(idx) = cellValue;
+                else
+                    axisData(idx) = str2double(cellValue);
+                end
+            end
+
+            if strcmp(axisType, 'X')
+                axisData = axisData(:)';
+            end
+        end
+
+        function pos = getUIPosition(obj, handleRef)
+            if obj.UseLegacyUI
+                pos = get(handleRef, 'Position');
+            else
+                pos = handleRef.Position;
+            end
+        end
+
+        function setUIPosition(obj, handleRef, pos)
+            if isempty(handleRef) || ~ishandle(handleRef)
+                return;
+            end
+
+            if obj.UseLegacyUI
+                set(handleRef, 'Position', pos);
+            else
+                handleRef.Position = pos;
+            end
+        end
+
+        function setUIProperty(obj, handleRef, propName, propValue)
+            if isempty(handleRef) || ~ishandle(handleRef)
+                return;
+            end
+
+            if obj.UseLegacyUI
+                set(handleRef, propName, propValue);
+            else
+                handleRef.(propName) = propValue;
+            end
         end
     end
 end

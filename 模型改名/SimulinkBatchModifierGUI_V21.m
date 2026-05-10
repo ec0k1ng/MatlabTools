@@ -1,757 +1,757 @@
 function SimulinkBatchModifierGUI_V21()
-% --- Simulinkæ‰¹é‡ä¿®æ”¹å·¥å…· V20.2.21 (â€œç»ˆæç‰ˆâ€) ---
+% --- SimulinkÅúÁ¿ĞŞ¸Ä¹¤¾ß V20.2.21 (¡°ÖÕ¼«°æ¡±) ---
 % =========================================================================
-% â˜…â˜…â˜…â˜…â˜…ã€ä½¿ ç”¨ å¿… è¯»ã€‘â˜…â˜…â˜…â˜…â˜…
-% 1. åœ¨è¿è¡Œæ­¤è„šæœ¬å‰ï¼Œè¯·åŠ¡å¿…å…ˆæ‰‹åŠ¨ã€å®Œæ•´åœ°åˆå§‹åŒ–æ‚¨çš„Simulinké¡¹ç›®ç¯å¢ƒã€‚
+% ¡ï¡ï¡ï¡ï¡ï¡¾Ê¹ ÓÃ ±Ø ¶Á¡¿¡ï¡ï¡ï¡ï¡ï
+% 1. ÔÚÔËĞĞ´Ë½Å±¾Ç°£¬ÇëÎñ±ØÏÈÊÖ¶¯¡¢ÍêÕûµØ³õÊ¼»¯ÄúµÄSimulinkÏîÄ¿»·¾³¡£
 % =========================================================================
-% V20.2.20 (Bus Safety Fix) æ›´æ–°æ—¥å¿—:
-% - [æ ¸å¿ƒå®‰å…¨ä¿®å¤] æ–°å¢äº†å¯¹æ€»çº¿ï¼ˆBusï¼‰ä¿¡å·çº¿çš„æ£€æµ‹é€»è¾‘ã€‚è„šæœ¬ç°åœ¨ä¼šè‡ªåŠ¨
-%   è¯†åˆ«å¹¶è·³è¿‡æ‰€æœ‰ç›´æ¥è¿æ¥åˆ° Bus Selector æˆ– Bus Creator æ¨¡å—çš„ä¿¡å·çº¿ï¼Œ
-%   å½»åº•è§£å†³äº†å› å°è¯•ä¿®æ”¹å—æ§æ€»çº¿ä¿¡å·åè€Œå¯¼è‡´çš„ç¨‹åºå´©æºƒé—®é¢˜ã€‚
+% V20.2.20 (Bus Safety Fix) ¸üĞÂÈÕÖ¾:
+% - [ºËĞÄ°²È«ĞŞ¸´] ĞÂÔöÁË¶Ô×ÜÏß£¨Bus£©ĞÅºÅÏßµÄ¼ì²âÂß¼­¡£½Å±¾ÏÖÔÚ»á×Ô¶¯
+%   Ê¶±ğ²¢Ìø¹ıËùÓĞÖ±½ÓÁ¬½Óµ½ Bus Selector »ò Bus Creator Ä£¿éµÄĞÅºÅÏß£¬
+%   ³¹µ×½â¾öÁËÒò³¢ÊÔĞŞ¸ÄÊÜ¿Ø×ÜÏßĞÅºÅÃû¶øµ¼ÖÂµÄ³ÌĞò±ÀÀ£ÎÊÌâ¡£
 %
-% V20.2.19 (Final Bug Fix) æ›´æ–°æ—¥å¿—:
-% - [å…¼å®¹æ€§/Bugä¿®å¤] ä¿®å¤äº†ClearæŒ‰é’®åœ¨æ—§ç‰ˆMATLABä¸­å› UIç»„ä»¶bugå¯¼è‡´çš„å´©æºƒé—®é¢˜ã€‚
+% V20.2.19 (Final Bug Fix) ¸üĞÂÈÕÖ¾:
+% - [¼æÈİĞÔ/BugĞŞ¸´] ĞŞ¸´ÁËClear°´Å¥ÔÚ¾É°æMATLABÖĞÒòUI×é¼şbugµ¼ÖÂµÄ±ÀÀ£ÎÊÌâ¡£
 % =========================================================================
-% æ–°å¢åŠŸèƒ½ï¼šæ‰¹é‡æ¨¡å¼
-% - åœ¨åŠŸèƒ½1é¢æ¿ä¸­å¯ç”¨â€œæ‰¹é‡æ¨¡å¼â€åï¼Œå¯åŠ è½½ä¸€ä¸ªExcelæ–‡ä»¶ï¼ˆç¬¬ä¸€åˆ—åŸå­—ç¬¦ä¸²ï¼Œç¬¬äºŒåˆ—æ–°å­—ç¬¦ä¸²ï¼‰ï¼Œ
-%   ç¨‹åºå°†æŒ‰é¡ºåºåº”ç”¨æ‰€æœ‰æ›¿æ¢è§„åˆ™ã€‚
+% ĞÂÔö¹¦ÄÜ£ºÅúÁ¿Ä£Ê½
+% - ÔÚ¹¦ÄÜ1Ãæ°åÖĞÆôÓÃ¡°ÅúÁ¿Ä£Ê½¡±ºó£¬¿É¼ÓÔØÒ»¸öExcelÎÄ¼ş£¨µÚÒ»ÁĞÔ­×Ö·û´®£¬µÚ¶şÁĞĞÂ×Ö·û´®£©£¬
+%   ³ÌĞò½«°´Ë³ĞòÓ¦ÓÃËùÓĞÌæ»»¹æÔò¡£
 
-% --- åˆå§‹åŒ–ä¸»çª—å£å’Œæ•°æ®ç»“æ„ ---
+% --- ³õÊ¼»¯Ö÷´°¿ÚºÍÊı¾İ½á¹¹ ---
 app = struct();
-app.UIFigure = uifigure('Name', 'Simulink æ‰¹é‡ä¿®æ”¹ä¸æ¥å£å·¥å…· V20.2.20 (ç»ˆæç‰ˆ)', ...
-'Position', [100 100 1000, 650], ...
-'Visible', 'off');
+app.UIFigure = uifigure('Name', 'Simulink ÅúÁ¿ĞŞ¸ÄÓë½Ó¿Ú¹¤¾ß V20.2.20 (ÖÕ¼«°æ)', ...
+    'Position', [100 100 1000, 650], ...
+    'Visible', 'off');
 createComponents();
 app.UIFigure.Visible = 'on';
 
-%% %%%%%%%%%%%%%%%%%%%%% UIç»„ä»¶åˆ›å»ºå‡½æ•° (å†…åµŒ) %%%%%%%%%%%%%%%%%%%%%%%%%%
-function createComponents()
-    uibutton(app.UIFigure, 'push', 'Text', 'é€‰æ‹©æ¨¡å‹æ–‡ä»¶...', 'Position', [20, 600, 120, 30], 'ButtonPushedFcn', @SelectModelButtonPushed);
-    app.ModelPathField = uieditfield(app.UIFigure, 'text', 'Editable', 'off', 'Position', [150, 600, 650, 30]);
-    
-    % --- åŠŸèƒ½1é¢æ¿ï¼Œå¢åŠ æ‰¹é‡æ¨¡å¼æ§ä»¶ ---
-    app.Function1Panel = uipanel(app.UIFigure, 'Title', 'åŠŸèƒ½1: åç§°æ‰¹é‡ä¿®æ”¹ (ä¸åŒºåˆ†å¤§å°å†™)', 'Position', [20, 420, 380, 170]);
-    app.EnableF1CheckBox = uicheckbox(app.Function1Panel, 'Text', 'å¯ç”¨æ­¤åŠŸèƒ½', 'Position', [15, 124, 100, 22], 'Value', true);
-    
-    % æ‰¹é‡æ¨¡å¼å¼€å…³
-    app.BatchModeCheckBox = uicheckbox(app.Function1Panel, 'Text', 'æ‰¹é‡æ¨¡å¼ (ä»ExcelåŠ è½½å¤šç»„è§„åˆ™)', ...
-        'Position', [120, 124, 250, 22], 'Value', false, 'ValueChangedFcn', @BatchModeToggled);
-    
-    modePanel = uipanel(app.Function1Panel, 'Title', 'ä¿®æ”¹æ¨¡å¼', 'Position', [15, 65, 350, 60]);
-    bg = uibuttongroup(modePanel, 'Position', [1, 1, 348, 58]);
-    app.PrefixModeButton = uiradiobutton(bg, 'Text', 'â‘  å‰ç¼€ä¿®æ”¹', 'Position', [10, 10, 120, 22], 'Value', true);
-    app.KeywordModeButton = uiradiobutton(bg, 'Text', 'â‘¡ å…³é”®è¯ä¿®æ”¹', 'Position', [220, 10, 120, 22]);
-    
-    % å•æ¡æ¨¡å¼è¾“å…¥æ¡†
-    app.SingleOldLabel = uilabel(app.Function1Panel, 'Text', 'åŸå‰ç¼€/å…³é”®è¯', 'Position', [15, 30, 90, 22]);
-    app.OldStringField = uieditfield(app.Function1Panel, 'text', 'Position', [110, 30, 255, 22]);
-    app.SingleNewLabel = uilabel(app.Function1Panel, 'Text', 'æ–°å‰ç¼€/å…³é”®è¯', 'Position', [15, 5, 90, 22]);
-    app.NewStringField = uieditfield(app.Function1Panel, 'text', 'Position', [110, 5, 255, 22]);
-    
-    % æ‰¹é‡æ¨¡å¼æ§ä»¶ (åˆå§‹éšè—)
-    app.BatchFileButton = uibutton(app.Function1Panel, 'push', 'Text', 'é€‰æ‹©æ‰¹é‡Excel...', ...
-        'Position', [15, 30, 120, 22], 'ButtonPushedFcn', @SelectBatchExcelButtonPushed, 'Visible', 'off');
-    app.BatchFilePathField = uieditfield(app.Function1Panel, 'text', 'Editable', 'off', ...
-        'Position', [140, 30, 225, 22], 'Visible', 'off');
-    app.BatchRuleCountLabel = uilabel(app.Function1Panel, 'Text', 'å·²åŠ è½½ 0 æ¡è§„åˆ™', ...
-        'Position', [15, 5, 200, 22], 'Visible', 'off', 'FontColor', [0 0.5 0]);
-    
-    % åˆå§‹åŒ–æ‰¹é‡æ•°æ®ç»“æ„
-    app.BatchMode = false;
-    app.BatchRenameRules = {};  % cell of struct('old','new')
-    
-    % --- å…¶ä½™é¢æ¿ä¿æŒä¸å˜ ---
-    app.Function2Panel = uipanel(app.UIFigure, 'Title', 'åŠŸèƒ½2: åç§°è§„èŒƒæ£€æŸ¥åŠä¿®æ­£', 'Position', [20, 255, 380, 155]);
-    app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', 'å¯ç”¨æ­¤åŠŸèƒ½ (åç§°è§„èŒƒåŒ–)', 'Position', [15, 110, 350, 22], 'Value', true);
-    uilabel(app.Function2Panel, 'Text', 'è¯´æ˜:è¯¥åŠŸèƒ½åªä¼šå¯¹æ‰§è¡ŒåŠŸèƒ½1çš„åç§°è¿›è¡Œè§„èŒƒåŒ–æ£€æŸ¥åŠä¿®æ­£', 'Position', [25, 85, 340, 18], 'FontColor', [0.6 0.6 0.6]);
-    uilabel(app.Function2Panel, 'Text', 'Â· ä¿¡å·åç§°é¦–æ®µå¤§å†™ï¼Œæ¬¡æ®µé¦–å­—æ¯å¤§å†™ï¼Œå…¶ä½™å°å†™', 'Position', [25, 60, 340, 22]);
-    uilabel(app.Function2Panel, 'Text', 'Â· æ ‡å®šé‡å…¨éƒ¨å¤§å†™', 'Position', [25, 35, 340, 22]);
-    app.EnableFamilySepCheckBox = uicheckbox(app.Function2Panel, 'Text', 'è‡ªåŠ¨æ£€ç´¢fl\fr\rl\rrï¼Œfrle\frri\rele\reriï¼Œfa\raå¹¶åˆ†ç¦»', 'Position', [25, 10, 350, 22], 'Value', true);
-    
-    app.ExcelPanel = uipanel(app.UIFigure, 'Title', 'åŠŸèƒ½3: é…å¥—Interface Excelä¿®æ”¹', 'Position', [20, 160, 380, 85]);
-    app.EnableExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'å¯ç”¨Excelä¿®æ”¹åŠŸèƒ½', 'Position', [15, 35, 350, 22], 'Enable', 'off');
-    app.ExcelStatusLabel = uilabel(app.ExcelPanel, 'Text', 'è¯·å…ˆé€‰æ‹©æ¨¡å‹æ–‡ä»¶...', 'Position', [15, 10, 350, 22], 'HorizontalAlignment', 'center', 'FontWeight', 'bold');
-    
-    app.RunButton = uibutton(app.UIFigure, 'push', 'Text', 'å¼€å§‹æ‰§è¡Œ', 'Position', [20, 110, 380, 40], 'FontSize', 14, 'FontWeight', 'bold', 'ButtonPushedFcn', @RunButtonPushed, 'Enable', 'off');
-    
-    app.LogArea = uitextarea(app.UIFigure, 'Editable', 'off', 'Position', [420, 235, 560, 395], 'Value', '');
-    learnedPanel = uipanel(app.UIFigure, 'Title', 'é¢„å¤„ç†è®°å¿†åº“', 'Position', [420, 20, 560, 205]);
-    app.LearnedArea = uitextarea(learnedPanel, 'Editable', 'off', 'Position', [10, 35, 540, 155], 'Value', '');
-    uibutton(learnedPanel, 'push', 'Text', 'Clear', 'Position', [490, 5, 60, 22], 'ButtonPushedFcn', @ClearLearnedMapButtonPushed);
-    
-    app.ProgressBar = uigauge(app.UIFigure, 'semicircular', 'Position', [20, 20, 180, 80]);
-    app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [220, 50, 160, 22], 'Text', 'è¿›åº¦: 0%');
-    app.ModelPath = ''; app.ExcelPath = ''; app.TotalSteps = 0; app.CurrentStep = 0;
-    app.DetailedLog = {};
-    app.LearnedMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
-end
+%% %%%%%%%%%%%%%%%%%%%%% UI×é¼ş´´½¨º¯Êı (ÄÚÇ¶) %%%%%%%%%%%%%%%%%%%%%%%%%%
+    function createComponents()
+        uibutton(app.UIFigure, 'push', 'Text', 'Ñ¡ÔñÄ£ĞÍÎÄ¼ş...', 'Position', [20, 600, 120, 30], 'ButtonPushedFcn', @SelectModelButtonPushed);
+        app.ModelPathField = uieditfield(app.UIFigure, 'text', 'Editable', 'off', 'Position', [150, 600, 650, 30]);
 
-% --- æ‰¹é‡æ¨¡å¼å¼€å…³å›è°ƒ ---
-function BatchModeToggled(~, ~)
-    app.BatchMode = app.BatchModeCheckBox.Value;
-    if app.BatchMode
-        app.SingleOldLabel.Visible = 'off';
-        app.OldStringField.Visible = 'off';
-        app.SingleNewLabel.Visible = 'off';
-        app.NewStringField.Visible = 'off';
-        app.BatchFileButton.Visible = 'on';
-        app.BatchFilePathField.Visible = 'on';
-        app.BatchRuleCountLabel.Visible = 'on';
-    else
-        app.SingleOldLabel.Visible = 'on';
-        app.OldStringField.Visible = 'on';
-        app.SingleNewLabel.Visible = 'on';
-        app.NewStringField.Visible = 'on';
-        app.BatchFileButton.Visible = 'off';
-        app.BatchFilePathField.Visible = 'off';
-        app.BatchRuleCountLabel.Visible = 'off';
-    end
-end
+        % --- ¹¦ÄÜ1Ãæ°å£¬Ôö¼ÓÅúÁ¿Ä£Ê½¿Ø¼ş ---
+        app.Function1Panel = uipanel(app.UIFigure, 'Title', '¹¦ÄÜ1: Ãû³ÆÅúÁ¿ĞŞ¸Ä (²»Çø·Ö´óĞ¡Ğ´)', 'Position', [20, 420, 380, 170]);
+        app.EnableF1CheckBox = uicheckbox(app.Function1Panel, 'Text', 'ÆôÓÃ´Ë¹¦ÄÜ', 'Position', [15, 124, 100, 22], 'Value', true);
 
-% --- æ‰¹é‡Excelé€‰æ‹©å›è°ƒ (å…¼å®¹æ—§ç‰ˆMATLABï¼Œæ— åˆ—åè¦æ±‚) ---
-function SelectBatchExcelButtonPushed(~, ~)
-    [file, path] = uigetfile({'*.xlsx;*.xls'}, 'é€‰æ‹©æ‰¹é‡æ›¿æ¢è§„åˆ™Excelæ–‡ä»¶');
-    if isequal(file, 0)
-        log('ç”¨æˆ·å–æ¶ˆé€‰æ‹©æ‰¹é‡Excelæ–‡ä»¶');
-        return;
+        % ÅúÁ¿Ä£Ê½¿ª¹Ø
+        app.BatchModeCheckBox = uicheckbox(app.Function1Panel, 'Text', 'ÅúÁ¿Ä£Ê½ (´ÓExcel¼ÓÔØ¶à×é¹æÔò)', ...
+            'Position', [120, 124, 250, 22], 'Value', false, 'ValueChangedFcn', @BatchModeToggled);
+
+        modePanel = uipanel(app.Function1Panel, 'Title', 'ĞŞ¸ÄÄ£Ê½', 'Position', [15, 65, 350, 60]);
+        bg = uibuttongroup(modePanel, 'Position', [1, 1, 348, 58]);
+        app.PrefixModeButton = uiradiobutton(bg, 'Text', '¢Ù Ç°×ºĞŞ¸Ä', 'Position', [10, 10, 120, 22], 'Value', true);
+        app.KeywordModeButton = uiradiobutton(bg, 'Text', '¢Ú ¹Ø¼ü´ÊĞŞ¸Ä', 'Position', [220, 10, 120, 22]);
+
+        % µ¥ÌõÄ£Ê½ÊäÈë¿ò
+        app.SingleOldLabel = uilabel(app.Function1Panel, 'Text', 'Ô­Ç°×º/¹Ø¼ü´Ê', 'Position', [15, 30, 90, 22]);
+        app.OldStringField = uieditfield(app.Function1Panel, 'text', 'Position', [110, 30, 255, 22]);
+        app.SingleNewLabel = uilabel(app.Function1Panel, 'Text', 'ĞÂÇ°×º/¹Ø¼ü´Ê', 'Position', [15, 5, 90, 22]);
+        app.NewStringField = uieditfield(app.Function1Panel, 'text', 'Position', [110, 5, 255, 22]);
+
+        % ÅúÁ¿Ä£Ê½¿Ø¼ş (³õÊ¼Òş²Ø)
+        app.BatchFileButton = uibutton(app.Function1Panel, 'push', 'Text', 'Ñ¡ÔñÅúÁ¿Excel...', ...
+            'Position', [15, 30, 120, 22], 'ButtonPushedFcn', @SelectBatchExcelButtonPushed, 'Visible', 'off');
+        app.BatchFilePathField = uieditfield(app.Function1Panel, 'text', 'Editable', 'off', ...
+            'Position', [140, 30, 225, 22], 'Visible', 'off');
+        app.BatchRuleCountLabel = uilabel(app.Function1Panel, 'Text', 'ÒÑ¼ÓÔØ 0 Ìõ¹æÔò', ...
+            'Position', [15, 5, 200, 22], 'Visible', 'off', 'FontColor', [0 0.5 0]);
+
+        % ³õÊ¼»¯ÅúÁ¿Êı¾İ½á¹¹
+        app.BatchMode = false;
+        app.BatchRenameRules = {};  % cell of struct('old','new')
+
+        % --- ÆäÓàÃæ°å±£³Ö²»±ä ---
+        app.Function2Panel = uipanel(app.UIFigure, 'Title', '¹¦ÄÜ2: Ãû³Æ¹æ·¶¼ì²é¼°ĞŞÕı', 'Position', [20, 255, 380, 155]);
+        app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', 'ÆôÓÃ´Ë¹¦ÄÜ (Ãû³Æ¹æ·¶»¯)', 'Position', [15, 110, 350, 22], 'Value', true);
+        uilabel(app.Function2Panel, 'Text', 'ËµÃ÷:¸Ã¹¦ÄÜÖ»»á¶ÔÖ´ĞĞ¹¦ÄÜ1µÄÃû³Æ½øĞĞ¹æ·¶»¯¼ì²é¼°ĞŞÕı', 'Position', [25, 85, 340, 18], 'FontColor', [0.6 0.6 0.6]);
+        uilabel(app.Function2Panel, 'Text', '¡¤ ĞÅºÅÃû³ÆÊ×¶Î´óĞ´£¬´Î¶ÎÊ××ÖÄ¸´óĞ´£¬ÆäÓàĞ¡Ğ´', 'Position', [25, 60, 340, 22]);
+        uilabel(app.Function2Panel, 'Text', '¡¤ ±ê¶¨Á¿È«²¿´óĞ´', 'Position', [25, 35, 340, 22]);
+        app.EnableFamilySepCheckBox = uicheckbox(app.Function2Panel, 'Text', '×Ô¶¯¼ìË÷fl\fr\rl\rr£¬frle\frri\rele\reri£¬fa\ra²¢·ÖÀë', 'Position', [25, 10, 350, 22], 'Value', true);
+
+        app.ExcelPanel = uipanel(app.UIFigure, 'Title', '¹¦ÄÜ3: ÅäÌ×Interface ExcelĞŞ¸Ä', 'Position', [20, 160, 380, 85]);
+        app.EnableExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'ÆôÓÃExcelĞŞ¸Ä¹¦ÄÜ', 'Position', [15, 35, 350, 22], 'Enable', 'off');
+        app.ExcelStatusLabel = uilabel(app.ExcelPanel, 'Text', 'ÇëÏÈÑ¡ÔñÄ£ĞÍÎÄ¼ş...', 'Position', [15, 10, 350, 22], 'HorizontalAlignment', 'center', 'FontWeight', 'bold');
+
+        app.RunButton = uibutton(app.UIFigure, 'push', 'Text', '¿ªÊ¼Ö´ĞĞ', 'Position', [20, 110, 380, 40], 'FontSize', 14, 'FontWeight', 'bold', 'ButtonPushedFcn', @RunButtonPushed, 'Enable', 'off');
+
+        app.LogArea = uitextarea(app.UIFigure, 'Editable', 'off', 'Position', [420, 235, 560, 395], 'Value', '');
+        learnedPanel = uipanel(app.UIFigure, 'Title', 'Ô¤´¦Àí¼ÇÒä¿â', 'Position', [420, 20, 560, 205]);
+        app.LearnedArea = uitextarea(learnedPanel, 'Editable', 'off', 'Position', [10, 35, 540, 155], 'Value', '');
+        uibutton(learnedPanel, 'push', 'Text', 'Clear', 'Position', [490, 5, 60, 22], 'ButtonPushedFcn', @ClearLearnedMapButtonPushed);
+
+        app.ProgressBar = uigauge(app.UIFigure, 'semicircular', 'Position', [20, 20, 180, 80]);
+        app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [220, 50, 160, 22], 'Text', '½ø¶È: 0%');
+        app.ModelPath = ''; app.ExcelPath = ''; app.TotalSteps = 0; app.CurrentStep = 0;
+        app.DetailedLog = {};
+        app.LearnedMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
     end
-    fullPath = fullfile(path, file);
-    app.BatchFilePathField.Value = fullPath;
-    try
-        % ä½¿ç”¨xlsreadè¯»å–æ‰€æœ‰åŸå§‹æ•°æ®ï¼ˆå…¼å®¹å„ç‰ˆæœ¬MATLABï¼‰
-        [~, ~, raw] = xlsread(fullPath);
-        if size(raw, 1) < 2
-            error('Excelæ–‡ä»¶è‡³å°‘éœ€è¦åŒ…å«ä¸€è¡Œæ•°æ®ï¼ˆè¯·ä»ç¬¬äºŒè¡Œå¼€å§‹å¡«å†™è§„åˆ™ï¼‰ã€‚');
+
+% --- ÅúÁ¿Ä£Ê½¿ª¹Ø»Øµ÷ ---
+    function BatchModeToggled(~, ~)
+        app.BatchMode = app.BatchModeCheckBox.Value;
+        if app.BatchMode
+            app.SingleOldLabel.Visible = 'off';
+            app.OldStringField.Visible = 'off';
+            app.SingleNewLabel.Visible = 'off';
+            app.NewStringField.Visible = 'off';
+            app.BatchFileButton.Visible = 'on';
+            app.BatchFilePathField.Visible = 'on';
+            app.BatchRuleCountLabel.Visible = 'on';
+        else
+            app.SingleOldLabel.Visible = 'on';
+            app.OldStringField.Visible = 'on';
+            app.SingleNewLabel.Visible = 'on';
+            app.NewStringField.Visible = 'on';
+            app.BatchFileButton.Visible = 'off';
+            app.BatchFilePathField.Visible = 'off';
+            app.BatchRuleCountLabel.Visible = 'off';
         end
-        % ä»ç¬¬äºŒè¡Œå¼€å§‹æå–ç¬¬ä¸€åˆ—å’Œç¬¬äºŒåˆ—
-        rules = {};
-        for i = 2:size(raw, 1)
-            if size(raw, 2) < 2
-                continue;   % åˆ—æ•°ä¸è¶³åˆ™è·³è¿‡è¯¥è¡Œ
+    end
+
+% --- ÅúÁ¿ExcelÑ¡Ôñ»Øµ÷ (¼æÈİ¾É°æMATLAB£¬ÎŞÁĞÃûÒªÇó) ---
+    function SelectBatchExcelButtonPushed(~, ~)
+        [file, path] = uigetfile({'*.xlsx;*.xls'}, 'Ñ¡ÔñÅúÁ¿Ìæ»»¹æÔòExcelÎÄ¼ş');
+        if isequal(file, 0)
+            log('ÓÃ»§È¡ÏûÑ¡ÔñÅúÁ¿ExcelÎÄ¼ş');
+            return;
+        end
+        fullPath = fullfile(path, file);
+        app.BatchFilePathField.Value = fullPath;
+        try
+            % Ê¹ÓÃxlsread¶ÁÈ¡ËùÓĞÔ­Ê¼Êı¾İ£¨¼æÈİ¸÷°æ±¾MATLAB£©
+            [~, ~, raw] = xlsread(fullPath);
+            if size(raw, 1) < 2
+                error('ExcelÎÄ¼şÖÁÉÙĞèÒª°üº¬Ò»ĞĞÊı¾İ£¨Çë´ÓµÚ¶şĞĞ¿ªÊ¼ÌîĞ´¹æÔò£©¡£');
             end
-            oldRaw = raw{i, 1};
-            newRaw = raw{i, 2};
-            
-            % å°†æ•°å€¼æˆ–å­—ç¬¦ä¸²ç»Ÿä¸€è½¬æ¢ä¸ºå­—ç¬¦æ•°ç»„
-            if isnumeric(oldRaw)
-                oldStr = num2str(oldRaw);
-            elseif ischar(oldRaw) || isstring(oldRaw)
-                oldStr = char(oldRaw);
-            else
-                continue;   % ä¸æ”¯æŒçš„ç±»å‹è·³è¿‡
+            % ´ÓµÚ¶şĞĞ¿ªÊ¼ÌáÈ¡µÚÒ»ÁĞºÍµÚ¶şÁĞ
+            rules = {};
+            for i = 2:size(raw, 1)
+                if size(raw, 2) < 2
+                    continue;   % ÁĞÊı²»×ãÔòÌø¹ı¸ÃĞĞ
+                end
+                oldRaw = raw{i, 1};
+                newRaw = raw{i, 2};
+
+                % ½«ÊıÖµ»ò×Ö·û´®Í³Ò»×ª»»Îª×Ö·ûÊı×é
+                if isnumeric(oldRaw)
+                    oldStr = num2str(oldRaw);
+                elseif ischar(oldRaw) || isstring(oldRaw)
+                    oldStr = char(oldRaw);
+                else
+                    continue;   % ²»Ö§³ÖµÄÀàĞÍÌø¹ı
+                end
+
+                if isnumeric(newRaw)
+                    newStr = num2str(newRaw);
+                elseif ischar(newRaw) || isstring(newRaw)
+                    newStr = char(newRaw);
+                else
+                    continue;
+                end
+
+                % È¥³ıÊ×Î²¿Õ¸ñ²¢¼ì²é·Ç¿Õ
+                oldStr = strtrim(oldStr);
+                newStr = strtrim(newStr);
+                if isempty(oldStr) || isempty(newStr)
+                    continue;
+                end
+
+                rules{end+1} = struct('old', oldStr, 'new', newStr);
             end
-            
-            if isnumeric(newRaw)
-                newStr = num2str(newRaw);
-            elseif ischar(newRaw) || isstring(newRaw)
-                newStr = char(newRaw);
-            else
-                continue;
+
+            if isempty(rules)
+                error('Î´ÕÒµ½ÓĞĞ§µÄÌæ»»¹æÔò¡£ÇëÈ·±£ExcelµÚ¶şĞĞÆğµÄµÚÒ»ÁĞºÍµÚ¶şÁĞ¾ù·Ç¿Õ¡£');
             end
-            
-            % å»é™¤é¦–å°¾ç©ºæ ¼å¹¶æ£€æŸ¥éç©º
-            oldStr = strtrim(oldStr);
-            newStr = strtrim(newStr);
-            if isempty(oldStr) || isempty(newStr)
-                continue;
+
+            app.BatchRenameRules = rules;
+            app.BatchRuleCountLabel.Text = sprintf('ÒÑ¼ÓÔØ %d Ìõ¹æÔò', length(rules));
+            log(sprintf('ÅúÁ¿¹æÔò¼ÓÔØ³É¹¦£¬¹² %d Ìõ¹æÔò¡£', length(rules)));
+        catch ME
+            errordlg(['¼ÓÔØÅúÁ¿ExcelÊ§°Ü: ' ME.message], '´íÎó');
+            log(['¼ÓÔØÅúÁ¿ExcelÊ§°Ü: ' ME.message]);
+            app.BatchRenameRules = {};
+            app.BatchRuleCountLabel.Text = 'ÒÑ¼ÓÔØ 0 Ìõ¹æÔò';
+        end
+    end
+
+%% %%%%%%%%%%%%%%%%%%%%% »Øµ÷º¯ÊıºÍ¸¨Öúº¯ÊıÇø (È«²¿ÄÚÇ¶) %%%%%%%%%%%%%%%%%%%%%%
+    function SelectModelButtonPushed(~, ~)
+        [file, path] = uigetfile({'*.slx;*.mdl'}, 'Ñ¡ÔñSimulinkÄ£ĞÍÎÄ¼ş (*.slx, *.mdl)');
+        if isequal(file, 0), log('ÓÃ»§È¡ÏûÑ¡Ôñ'); return; end
+        app.ModelPath = fullfile(path, file);
+        app.ModelPathField.Value = app.ModelPath;
+        log(['ÒÑÑ¡ÔñÄ£ĞÍ: ' app.ModelPath]);
+
+        app.RunButton.Enable = 'on';
+
+        [~, modelName, ~] = fileparts(file);
+        expectedExcelName = ['interface' modelName];
+        excelPathXlsx = fullfile(path, [expectedExcelName '.xlsx']);
+        excelPathXls = fullfile(path, [expectedExcelName '.xls']);
+
+        found = false;
+        if exist(excelPathXlsx, 'file'), app.ExcelPath = excelPathXlsx; found = true;
+        elseif exist(excelPathXls, 'file'), app.ExcelPath = excelPathXls; found = true; end
+
+        if found
+            [~, excelFile, ext] = fileparts(app.ExcelPath);
+            app.ExcelStatusLabel.Text = ['ÒÑÕÒµ½ÅäÌ×ÎÄ¼ş: ' excelFile ext];
+            app.ExcelStatusLabel.FontColor = [0, 0.5, 0];
+            app.EnableExcelCheckBox.Enable = 'on';
+            app.EnableExcelCheckBox.Value = true;
+            log(['ÒÑÕÒµ½ÅäÌ×ExcelÎÄ¼ş: ' app.ExcelPath]);
+        else
+            app.ExcelPath = '';
+            app.ExcelStatusLabel.Text = 'Î´ÕÒµ½ÅäÌ×µÄExcelÎÄ¼ş';
+            app.ExcelStatusLabel.FontColor = [1, 0, 0];
+            app.EnableExcelCheckBox.Enable = 'off';
+            app.EnableExcelCheckBox.Value = false;
+            log('ÌáÊ¾: Î´ÔÚÄ£ĞÍÄ¿Â¼ÏÂÕÒµ½ÅäÌ×µÄExcelÎÄ¼ş£¬½«½ö´¦ÀíÄ£ĞÍ¡£');
+        end
+    end
+
+    function RunButtonPushed(~, ~)
+        if isempty(app.ModelPath), errordlg('ÇëÏÈÑ¡ÔñÒ»¸öÄ£ĞÍÎÄ¼ş£¡', '´íÎó'); return; end
+        if ~app.EnableF1CheckBox.Value && ~app.EnableF2CheckBox.Value, msgbox('ÇëÖÁÉÙÆôÓÃÒ»¸ö¹¦ÄÜ£¡', 'ÌáÊ¾'); return; end
+        if app.EnableF1CheckBox.Value && app.BatchMode && isempty(app.BatchRenameRules)
+            errordlg('ÅúÁ¿Ä£Ê½ÒÑÆôÓÃµ«Î´¼ÓÔØÓĞĞ§¹æÔò£¬ÇëÏÈÑ¡ÔñÅúÁ¿ExcelÎÄ¼ş¡£', '´íÎó'); return;
+        end
+
+        app.RunButton.Enable = 'off'; app.LogArea.Value = ''; app.DetailedLog = {};
+        app.ProgressBar.Value = 0; app.ProgressLabel.Text = '½ø¶È: 0%'; app.CurrentStep = 0;
+        newModelName = '';
+
+        try
+            log('¿ªÊ¼´¦Àí...');
+
+            excelSteps = 0;
+            if app.EnableExcelCheckBox.Value && ~isempty(app.ExcelPath)
+                [excelPath_p, excelName_n, excelExt_e] = fileparts(app.ExcelPath);
+                newExcelName = [excelName_n '_modified' excelExt_e];
+                newExcelPath = fullfile(excelPath_p, newExcelName);
+                log('ÕıÔÚ´´½¨Excel¸±±¾...');
+                copyfile(app.ExcelPath, newExcelPath, 'f');
+                log(['Excel¸±±¾ÒÑ´´½¨: ' newExcelPath]);
+                excelSteps = countExcelSteps(newExcelPath);
             end
-            
-            rules{end+1} = struct('old', oldStr, 'new', newStr);
+
+            [filepath, name, ext] = fileparts(app.ModelPath);
+            newModelName = [name '_modified']; newModelPath = fullfile(filepath, [newModelName ext]);
+            if bdIsLoaded(newModelName), close_system(newModelName, 0); end
+            log('ÕıÔÚ´´½¨Ä£ĞÍ¸±±¾...');
+            copyfile(app.ModelPath, newModelPath, 'f');
+            log(['Ä£ĞÍ¸±±¾ÒÑ´´½¨: ' newModelPath]);
+            log('ÕıÔÚ¼ÓÔØÄ£ĞÍ¸±±¾...');
+            load_system(newModelPath);
+
+            log('É¨Ãè²¢ÅÅĞòSimulink¶ÔÏó...', false);
+            allBlockPaths = find_system(newModelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', 'Type', 'Block');
+            allBlockHandles = get_param(allBlockPaths, 'Handle'); if iscell(allBlockHandles); allBlockHandles = cell2mat(allBlockHandles); end
+            blockDepths = arrayfun(@(h) length(strfind(getfullname(h), '/')), allBlockHandles);
+            [~, sortedIdx] = sort(blockDepths, 'descend'); sortedBlockHandles = allBlockHandles(sortedIdx);
+            allLineHandles = find_system(newModelName, 'LookUnderMasks', 'all', 'FollowLinks', 'on', 'FindAll', 'on', 'Type', 'Line');
+            sfRoot = sfroot; machine = sfRoot.find('-isa', 'Stateflow.Machine', 'Name', newModelName);
+            allSfObjects = []; if ~isempty(machine); allSfObjects = machine.find('-isa', 'Stateflow.Object'); end
+            validSfObjects = {}; sfDepths = [];
+            for i = 1:length(allSfObjects), if isprop(allSfObjects(i), 'Path') && ~isempty(allSfObjects(i).Path), validSfObjects{end+1} = allSfObjects(i); sfDepths(end+1) = length(strfind(allSfObjects(i).Path, '/')); end, end
+            [~, sortedIdx] = sort(sfDepths, 'descend'); sortedSfObjects = validSfObjects(sortedIdx);
+
+            log('¹¹½¨·½ÏòĞÅºÅ¼Ò×åÃüÃûÓ³Éä±í (Èç¹ûÒÑÆôÓÃ)...', false);
+            directionalRenameMap = buildDirectionalRenameMap(sortedBlockHandles, allLineHandles, sortedSfObjects);
+
+            app.TotalSteps = excelSteps + length(sortedBlockHandles) + length(allLineHandles) + length(sortedSfObjects);
+            log(['Ô¤¼Æ×Ü²½Öè: ' num2str(app.TotalSteps)]);
+
+            if app.EnableExcelCheckBox.Value && ~isempty(app.ExcelPath)
+                processExcelFile(newExcelPath, directionalRenameMap);
+            end
+
+            processAllObjects(sortedBlockHandles, allLineHandles, sortedSfObjects, directionalRenameMap);
+
+            log('ËùÓĞÈÎÎñÖ´ĞĞÍê±Ï£¬ÕıÔÚ±£´æ...');
+            allLoadedModels = find_system('SearchDepth', 0, 'Type', 'block_diagram');
+            originalCallbacks = {};
+            for i = 1:length(allLoadedModels)
+                model = allLoadedModels{i};
+                if strcmp(get_param(model, 'Lock'), 'on'), continue; end
+                callbacks_row = {model, get_param(model, 'PreSaveFcn'), get_param(model, 'PostSaveFcn')};
+                originalCallbacks(end+1, :) = callbacks_row;
+                set_param(model, 'PreSaveFcn', ''); set_param(model, 'PostSaveFcn', '');
+            end
+            cleanupObj = onCleanup(@() restoreAllCallbacks(originalCallbacks));
+            try, save_system(newModelName); catch saveME, rethrow(saveME); end
+            close_system(newModelName);
+            log(['ĞÂÄ£ĞÍÒÑ±£´æÖÁ: ' newModelPath]);
+
+            writeLogToTxt(filepath, name);
+
+            msgbox('´¦ÀíÍê³É£¡', '³É¹¦');
+            if ~isempty(filepath) && exist(filepath, 'dir'), log(['ÕıÔÚ½«MATLABµ±Ç°Ä¿Â¼ÇĞ»»µ½: ' filepath]); cd(filepath); end
+        catch ME
+            errordlg(['·¢Éú´íÎó: ' ME.message], 'Ö´ĞĞÊ§°Ü');
+            log(['´íÎó: ' ME.getReport('basic')]);
+            if ~isempty(newModelName) && bdIsLoaded(newModelName), close_system(newModelName, 0); end
         end
-        
-        if isempty(rules)
-            error('æœªæ‰¾åˆ°æœ‰æ•ˆçš„æ›¿æ¢è§„åˆ™ã€‚è¯·ç¡®ä¿Excelç¬¬äºŒè¡Œèµ·çš„ç¬¬ä¸€åˆ—å’Œç¬¬äºŒåˆ—å‡éç©ºã€‚');
-        end
-        
-        app.BatchRenameRules = rules;
-        app.BatchRuleCountLabel.Text = sprintf('å·²åŠ è½½ %d æ¡è§„åˆ™', length(rules));
-        log(sprintf('æ‰¹é‡è§„åˆ™åŠ è½½æˆåŠŸï¼Œå…± %d æ¡è§„åˆ™ã€‚', length(rules)));
-    catch ME
-        errordlg(['åŠ è½½æ‰¹é‡Excelå¤±è´¥: ' ME.message], 'é”™è¯¯');
-        log(['åŠ è½½æ‰¹é‡Excelå¤±è´¥: ' ME.message]);
-        app.BatchRenameRules = {};
-        app.BatchRuleCountLabel.Text = 'å·²åŠ è½½ 0 æ¡è§„åˆ™';
+        app.RunButton.Enable = 'on';
     end
-end
-
-%% %%%%%%%%%%%%%%%%%%%%% å›è°ƒå‡½æ•°å’Œè¾…åŠ©å‡½æ•°åŒº (å…¨éƒ¨å†…åµŒ) %%%%%%%%%%%%%%%%%%%%%%
-function SelectModelButtonPushed(~, ~)
-    [file, path] = uigetfile({'*.slx;*.mdl'}, 'é€‰æ‹©Simulinkæ¨¡å‹æ–‡ä»¶ (*.slx, *.mdl)');
-    if isequal(file, 0), log('ç”¨æˆ·å–æ¶ˆé€‰æ‹©'); return; end
-    app.ModelPath = fullfile(path, file);
-    app.ModelPathField.Value = app.ModelPath;
-    log(['å·²é€‰æ‹©æ¨¡å‹: ' app.ModelPath]);
-    
-    app.RunButton.Enable = 'on';
-    
-    [~, modelName, ~] = fileparts(file);
-    expectedExcelName = ['interface' modelName];
-    excelPathXlsx = fullfile(path, [expectedExcelName '.xlsx']);
-    excelPathXls = fullfile(path, [expectedExcelName '.xls']);
-    
-    found = false;
-    if exist(excelPathXlsx, 'file'), app.ExcelPath = excelPathXlsx; found = true;
-    elseif exist(excelPathXls, 'file'), app.ExcelPath = excelPathXls; found = true; end
-    
-    if found
-        [~, excelFile, ext] = fileparts(app.ExcelPath);
-        app.ExcelStatusLabel.Text = ['å·²æ‰¾åˆ°é…å¥—æ–‡ä»¶: ' excelFile ext];
-        app.ExcelStatusLabel.FontColor = [0, 0.5, 0];
-        app.EnableExcelCheckBox.Enable = 'on';
-        app.EnableExcelCheckBox.Value = true;
-        log(['å·²æ‰¾åˆ°é…å¥—Excelæ–‡ä»¶: ' app.ExcelPath]);
-    else
-        app.ExcelPath = '';
-        app.ExcelStatusLabel.Text = 'æœªæ‰¾åˆ°é…å¥—çš„Excelæ–‡ä»¶';
-        app.ExcelStatusLabel.FontColor = [1, 0, 0];
-        app.EnableExcelCheckBox.Enable = 'off';
-        app.EnableExcelCheckBox.Value = false;
-        log('æç¤º: æœªåœ¨æ¨¡å‹ç›®å½•ä¸‹æ‰¾åˆ°é…å¥—çš„Excelæ–‡ä»¶ï¼Œå°†ä»…å¤„ç†æ¨¡å‹ã€‚');
-    end
-end
-
-function RunButtonPushed(~, ~)
-    if isempty(app.ModelPath), errordlg('è¯·å…ˆé€‰æ‹©ä¸€ä¸ªæ¨¡å‹æ–‡ä»¶ï¼', 'é”™è¯¯'); return; end
-    if ~app.EnableF1CheckBox.Value && ~app.EnableF2CheckBox.Value, msgbox('è¯·è‡³å°‘å¯ç”¨ä¸€ä¸ªåŠŸèƒ½ï¼', 'æç¤º'); return; end
-    if app.EnableF1CheckBox.Value && app.BatchMode && isempty(app.BatchRenameRules)
-        errordlg('æ‰¹é‡æ¨¡å¼å·²å¯ç”¨ä½†æœªåŠ è½½æœ‰æ•ˆè§„åˆ™ï¼Œè¯·å…ˆé€‰æ‹©æ‰¹é‡Excelæ–‡ä»¶ã€‚', 'é”™è¯¯'); return;
-    end
-    
-    app.RunButton.Enable = 'off'; app.LogArea.Value = ''; app.DetailedLog = {};
-    app.ProgressBar.Value = 0; app.ProgressLabel.Text = 'è¿›åº¦: 0%'; app.CurrentStep = 0;
-    newModelName = '';
-    
-    try
-        log('å¼€å§‹å¤„ç†...');
-        
-        excelSteps = 0;
-        if app.EnableExcelCheckBox.Value && ~isempty(app.ExcelPath)
-            [excelPath_p, excelName_n, excelExt_e] = fileparts(app.ExcelPath);
-            newExcelName = [excelName_n '_modified' excelExt_e];
-            newExcelPath = fullfile(excelPath_p, newExcelName);
-            log('æ­£åœ¨åˆ›å»ºExcelå‰¯æœ¬...');
-            copyfile(app.ExcelPath, newExcelPath, 'f');
-            log(['Excelå‰¯æœ¬å·²åˆ›å»º: ' newExcelPath]);
-            excelSteps = countExcelSteps(newExcelPath);
-        end
-        
-        [filepath, name, ext] = fileparts(app.ModelPath);
-        newModelName = [name '_modified']; newModelPath = fullfile(filepath, [newModelName ext]);
-        if bdIsLoaded(newModelName), close_system(newModelName, 0); end
-        log('æ­£åœ¨åˆ›å»ºæ¨¡å‹å‰¯æœ¬...');
-        copyfile(app.ModelPath, newModelPath, 'f');
-        log(['æ¨¡å‹å‰¯æœ¬å·²åˆ›å»º: ' newModelPath]);
-        log('æ­£åœ¨åŠ è½½æ¨¡å‹å‰¯æœ¬...');
-        load_system(newModelPath);
-
-        log('æ‰«æå¹¶æ’åºSimulinkå¯¹è±¡...', false);
-        allBlockPaths = find_system(newModelName, 'LookUnderMasks', 'all', 'FollowLinks', 'off', 'Type', 'Block');
-        allBlockHandles = get_param(allBlockPaths, 'Handle'); if iscell(allBlockHandles); allBlockHandles = cell2mat(allBlockHandles); end
-        blockDepths = arrayfun(@(h) length(strfind(getfullname(h), '/')), allBlockHandles);
-        [~, sortedIdx] = sort(blockDepths, 'descend'); sortedBlockHandles = allBlockHandles(sortedIdx);
-        allLineHandles = find_system(newModelName, 'LookUnderMasks', 'all', 'FollowLinks', 'on', 'FindAll', 'on', 'Type', 'Line');
-        sfRoot = sfroot; machine = sfRoot.find('-isa', 'Stateflow.Machine', 'Name', newModelName);
-        allSfObjects = []; if ~isempty(machine); allSfObjects = machine.find('-isa', 'Stateflow.Object'); end
-        validSfObjects = {}; sfDepths = [];
-        for i = 1:length(allSfObjects), if isprop(allSfObjects(i), 'Path') && ~isempty(allSfObjects(i).Path), validSfObjects{end+1} = allSfObjects(i); sfDepths(end+1) = length(strfind(allSfObjects(i).Path, '/')); end, end
-        [~, sortedIdx] = sort(sfDepths, 'descend'); sortedSfObjects = validSfObjects(sortedIdx);
-        
-        log('æ„å»ºæ–¹å‘ä¿¡å·å®¶æ—å‘½åæ˜ å°„è¡¨ (å¦‚æœå·²å¯ç”¨)...', false);
-        directionalRenameMap = buildDirectionalRenameMap(sortedBlockHandles, allLineHandles, sortedSfObjects);
-
-        app.TotalSteps = excelSteps + length(sortedBlockHandles) + length(allLineHandles) + length(sortedSfObjects);
-        log(['é¢„è®¡æ€»æ­¥éª¤: ' num2str(app.TotalSteps)]);
-
-        if app.EnableExcelCheckBox.Value && ~isempty(app.ExcelPath)
-            processExcelFile(newExcelPath, directionalRenameMap);
-        end
-        
-        processAllObjects(sortedBlockHandles, allLineHandles, sortedSfObjects, directionalRenameMap);
-        
-        log('æ‰€æœ‰ä»»åŠ¡æ‰§è¡Œå®Œæ¯•ï¼Œæ­£åœ¨ä¿å­˜...');
-        allLoadedModels = find_system('SearchDepth', 0, 'Type', 'block_diagram');
-        originalCallbacks = {};
-        for i = 1:length(allLoadedModels)
-            model = allLoadedModels{i};
-            if strcmp(get_param(model, 'Lock'), 'on'), continue; end
-            callbacks_row = {model, get_param(model, 'PreSaveFcn'), get_param(model, 'PostSaveFcn')};
-            originalCallbacks(end+1, :) = callbacks_row;
-            set_param(model, 'PreSaveFcn', ''); set_param(model, 'PostSaveFcn', '');
-        end
-        cleanupObj = onCleanup(@() restoreAllCallbacks(originalCallbacks));
-        try, save_system(newModelName); catch saveME, rethrow(saveME); end
-        close_system(newModelName);
-        log(['æ–°æ¨¡å‹å·²ä¿å­˜è‡³: ' newModelPath]);
-        
-        writeLogToTxt(filepath, name);
-        
-        msgbox('å¤„ç†å®Œæˆï¼', 'æˆåŠŸ');
-        if ~isempty(filepath) && exist(filepath, 'dir'), log(['æ­£åœ¨å°†MATLABå½“å‰ç›®å½•åˆ‡æ¢åˆ°: ' filepath]); cd(filepath); end
-    catch ME
-        errordlg(['å‘ç”Ÿé”™è¯¯: ' ME.message], 'æ‰§è¡Œå¤±è´¥');
-        log(['é”™è¯¯: ' ME.getReport('basic')]);
-        if ~isempty(newModelName) && bdIsLoaded(newModelName), close_system(newModelName, 0); end
-    end
-    app.RunButton.Enable = 'on';
-end
 
 % ############# START: MODIFIED FUNCTION #############
-function processAllObjects(blockHandles, lineHandles, sfObjects, directionalRenameMap)
-    log('--- å¼€å§‹å•éå¤„ç†æ‰€æœ‰Simulinkå¯¹è±¡ ---');
-    for i = 1:length(blockHandles)
-        handle = blockHandles(i); linkStatus = get_param(handle, 'LinkStatus');
-        if ~strcmpi(linkStatus, 'none'), updateProgress(); continue; end
-        blockType = get_param(handle, 'BlockType');
-        if contains(blockType, 'Lookup')
-            finalTableName = '';
-            try, originalTableParam = get_param(handle, 'Table'); if ischar(originalTableParam) && ~isempty(originalTableParam), finalTableName = calculateFinalName(originalTableParam, 'parameter', directionalRenameMap); if ~strcmp(originalTableParam, finalTableName), set_param(handle, 'Table', finalTableName); logDetail(sprintf('Block Param (Table): "%s" -> "%s"', originalTableParam, finalTableName)); end, end, catch, end
-            originalName = get_param(handle, 'Name'); if ~isempty(finalTableName) && ~strcmp(originalName, finalTableName), safeSetParam(handle, 'Name', finalTableName); end
-            otherParams = {'BreakpointsForDimension1', 'BreakpointsForDimension2', 'BreakpointsForDimension3'};
-            for p_idx = 1:length(otherParams)
-                try, originalParam = get_param(handle, otherParams{p_idx}); if ischar(originalParam) && ~isempty(originalParam), finalParam = calculateFinalName(originalParam, 'parameter', directionalRenameMap); if ~strcmp(originalParam, finalParam), set_param(handle, otherParams{p_idx}, finalParam); logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam)); end, end, catch, end
-            end
-        else
-            originalName = get_param(handle, 'Name'); finalName = calculateFinalName(originalName, 'signal', directionalRenameMap);
-            if ~strcmp(originalName, finalName), safeSetParam(handle, 'Name', finalName); end
-            paramsToModify = {}; paramType = 'parameter';
-            if strcmp(blockType, 'Constant'), paramsToModify = {'Value'};
-            elseif any(strcmp(blockType, {'Goto', 'From'})), paramsToModify = {'GotoTag'}; paramType = 'signal';
-            end
-            for p_idx = 1:length(paramsToModify)
-                try, originalParam = get_param(handle, paramsToModify{p_idx}); if ischar(originalParam) && ~isempty(originalParam), finalParam = calculateFinalName(originalParam, paramType, directionalRenameMap); if ~strcmp(originalParam, finalParam), set_param(handle, paramsToModify{p_idx}, finalParam); logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam)); end, end, catch, end
-            end
-        end
-        updateProgress();
-    end
-    
-    for i = 1:length(lineHandles)
-        handle = lineHandles(i);
-        
-        % --- å®‰å…¨ä¿®å¤: æ£€æŸ¥ä¿¡å·çº¿æ˜¯å¦è¿æ¥åˆ°æ€»çº¿æ¨¡å— ---
-        isBusLine = false;
-        try
-            srcPort = get_param(handle, 'SrcPortHandle');
-            if srcPort > 0
-                srcBlockType = get_param(get_param(srcPort, 'Parent'), 'BlockType');
-                if any(strcmpi(srcBlockType, {'BusSelector', 'BusCreator'}))
-                    isBusLine = true;
+    function processAllObjects(blockHandles, lineHandles, sfObjects, directionalRenameMap)
+        log('--- ¿ªÊ¼µ¥±é´¦ÀíËùÓĞSimulink¶ÔÏó ---');
+        for i = 1:length(blockHandles)
+            handle = blockHandles(i); linkStatus = get_param(handle, 'LinkStatus');
+            if ~strcmpi(linkStatus, 'none'), updateProgress(); continue; end
+            blockType = get_param(handle, 'BlockType');
+            if contains(blockType, 'Lookup')
+                finalTableName = '';
+                try, originalTableParam = get_param(handle, 'Table'); if ischar(originalTableParam) && ~isempty(originalTableParam), finalTableName = calculateFinalName(originalTableParam, 'parameter', directionalRenameMap); if ~strcmp(originalTableParam, finalTableName), set_param(handle, 'Table', finalTableName); logDetail(sprintf('Block Param (Table): "%s" -> "%s"', originalTableParam, finalTableName)); end, end, catch, end
+                originalName = get_param(handle, 'Name'); if ~isempty(finalTableName) && ~strcmp(originalName, finalTableName), safeSetParam(handle, 'Name', finalTableName); end
+                otherParams = {'BreakpointsForDimension1', 'BreakpointsForDimension2', 'BreakpointsForDimension3'};
+                for p_idx = 1:length(otherParams)
+                    try, originalParam = get_param(handle, otherParams{p_idx}); if ischar(originalParam) && ~isempty(originalParam), finalParam = calculateFinalName(originalParam, 'parameter', directionalRenameMap); if ~strcmp(originalParam, finalParam), set_param(handle, otherParams{p_idx}, finalParam); logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam)); end, end, catch, end
+                end
+            else
+                originalName = get_param(handle, 'Name'); finalName = calculateFinalName(originalName, 'signal', directionalRenameMap);
+                if ~strcmp(originalName, finalName), safeSetParam(handle, 'Name', finalName); end
+                paramsToModify = {}; paramType = 'parameter';
+                if strcmp(blockType, 'Constant'), paramsToModify = {'Value'};
+                elseif any(strcmp(blockType, {'Goto', 'From'})), paramsToModify = {'GotoTag'}; paramType = 'signal';
+                end
+                for p_idx = 1:length(paramsToModify)
+                    try, originalParam = get_param(handle, paramsToModify{p_idx}); if ischar(originalParam) && ~isempty(originalParam), finalParam = calculateFinalName(originalParam, paramType, directionalRenameMap); if ~strcmp(originalParam, finalParam), set_param(handle, paramsToModify{p_idx}, finalParam); logDetail(sprintf('Block Param (%s): "%s" -> "%s"', get_param(handle, 'Name'), originalParam, finalParam)); end, end, catch, end
                 end
             end
-            
-            if ~isBusLine
-                dstPorts = get_param(handle, 'DstPortHandle');
-                for j = 1:length(dstPorts)
-                    if dstPorts(j) > 0
-                        dstBlockType = get_param(get_param(dstPorts(j), 'Parent'), 'BlockType');
-                        if any(strcmpi(dstBlockType, {'BusSelector', 'BusCreator'}))
-                            isBusLine = true;
-                            break;
+            updateProgress();
+        end
+
+        for i = 1:length(lineHandles)
+            handle = lineHandles(i);
+
+            % --- °²È«ĞŞ¸´: ¼ì²éĞÅºÅÏßÊÇ·ñÁ¬½Óµ½×ÜÏßÄ£¿é ---
+            isBusLine = false;
+            try
+                srcPort = get_param(handle, 'SrcPortHandle');
+                if srcPort > 0
+                    srcBlockType = get_param(get_param(srcPort, 'Parent'), 'BlockType');
+                    if any(strcmpi(srcBlockType, {'BusSelector', 'BusCreator'}))
+                        isBusLine = true;
+                    end
+                end
+
+                if ~isBusLine
+                    dstPorts = get_param(handle, 'DstPortHandle');
+                    for j = 1:length(dstPorts)
+                        if dstPorts(j) > 0
+                            dstBlockType = get_param(get_param(dstPorts(j), 'Parent'), 'BlockType');
+                            if any(strcmpi(dstBlockType, {'BusSelector', 'BusCreator'}))
+                                isBusLine = true;
+                                break;
+                            end
                         end
                     end
                 end
+            catch
+                % ºöÂÔÔÚ¼ì²é¹ı³ÌÖĞ¿ÉÄÜ³öÏÖµÄÈÎºÎ´íÎó
+                isBusLine = false;
             end
-        catch
-            % å¿½ç•¥åœ¨æ£€æŸ¥è¿‡ç¨‹ä¸­å¯èƒ½å‡ºç°çš„ä»»ä½•é”™è¯¯
-            isBusLine = false; 
-        end
-        
-        if isBusLine
+
+            if isBusLine
+                originalName = get_param(handle, 'Name');
+                if ~isempty(originalName)
+                    log(['Ìø¹ıÁ¬½Óµ½×ÜÏßÄ£¿éµÄĞÅºÅÏß: ' originalName], false);
+                end
+                updateProgress();
+                continue;
+            end
+            % --- ĞŞ¸´½áÊø ---
+
             originalName = get_param(handle, 'Name');
             if ~isempty(originalName)
-                log(['è·³è¿‡è¿æ¥åˆ°æ€»çº¿æ¨¡å—çš„ä¿¡å·çº¿: ' originalName], false);
+                finalName = calculateFinalName(originalName, 'signal', directionalRenameMap);
+                if ~strcmp(originalName, finalName)
+                    safeSetParam(handle, 'Name', finalName);
+                end
             end
             updateProgress();
-            continue;
         end
-        % --- ä¿®å¤ç»“æŸ ---
-        
-        originalName = get_param(handle, 'Name');
-        if ~isempty(originalName)
-            finalName = calculateFinalName(originalName, 'signal', directionalRenameMap);
-            if ~strcmp(originalName, finalName)
-                safeSetParam(handle, 'Name', finalName);
-            end
+
+        for i = 1:length(sfObjects)
+            sfObj = sfObjects{i};
+            if isprop(sfObj, 'Name') && ~isempty(sfObj.Name), originalName = sfObj.Name; finalName = calculateFinalName(originalName, 'signal', directionalRenameMap); if ~strcmp(originalName, finalName), safeSetSfName(sfObj, finalName); end, end
+            if isprop(sfObj, 'LabelString') && ~isempty(sfObj.LabelString), originalContent = sfObj.LabelString; finalContent = originalContent; words = unique(regexp(originalContent, '\w+', 'match'), 'stable'); for w_idx = 1:length(words), word = words{w_idx}; finalWord = calculateFinalName(word, 'auto', directionalRenameMap); if ~strcmp(word, finalWord), finalContent = regexprep(finalContent, ['\<' word '\>'], finalWord); end, end, if ~strcmp(originalContent, finalContent), sf('set', sfObj.Id, '.labelString', finalContent); logDetail(sprintf('SF Content: "%s" -> "%s"', strrep(originalContent,newline,'\n'), strrep(finalContent,newline,'\n'))); end, end
+            updateProgress();
         end
-        updateProgress();
     end
-    
-    for i = 1:length(sfObjects)
-        sfObj = sfObjects{i};
-        if isprop(sfObj, 'Name') && ~isempty(sfObj.Name), originalName = sfObj.Name; finalName = calculateFinalName(originalName, 'signal', directionalRenameMap); if ~strcmp(originalName, finalName), safeSetSfName(sfObj, finalName); end, end
-        if isprop(sfObj, 'LabelString') && ~isempty(sfObj.LabelString), originalContent = sfObj.LabelString; finalContent = originalContent; words = unique(regexp(originalContent, '\w+', 'match'), 'stable'); for w_idx = 1:length(words), word = words{w_idx}; finalWord = calculateFinalName(word, 'auto', directionalRenameMap); if ~strcmp(word, finalWord), finalContent = regexprep(finalContent, ['\<' word '\>'], finalWord); end, end, if ~strcmp(originalContent, finalContent), sf('set', sfObj.Id, '.labelString', finalContent); logDetail(sprintf('SF Content: "%s" -> "%s"', strrep(originalContent,newline,'\n'), strrep(finalContent,newline,'\n'))); end, end
-        updateProgress();
-    end
-end
 % ############# END: MODIFIED FUNCTION #############
 
-function processExcelFile(filePath, directionalRenameMap)
-    log('--- å¼€å§‹å¤„ç†Excelæ–‡ä»¶ ---');
-    targetSheets = {'IN', 'OUT', 'MP', 'CAL', 'NVV'};
-    
-    try, [~, sheetNames] = xlsfinfo(filePath); catch ME, error('...æ— æ³•è¯»å–Excelæ–‡ä»¶ä¿¡æ¯...'); end
-    
-    for i = 1:length(targetSheets)
-        sheet = targetSheets{i};
-        if ~ismember(sheet, sheetNames), log(['Excelè­¦å‘Š: æœªæ‰¾åˆ° "' sheet '" sheet, è·³è¿‡ã€‚']); continue; end
-        
-        log(['æ­£åœ¨å¤„ç† sheet: ' sheet]);
-        T = readtable(filePath, 'Sheet', sheet);
-        
-        varNames = T.Properties.VariableNames;
-        [nameFound, nameColIdx] = ismember('name', lower(varNames));
-        
-        if ~nameFound, log(['Excelè­¦å‘Š: Sheet "' sheet '" ä¸­æœªæ‰¾åˆ° "name"åˆ—, è·³è¿‡ã€‚']); continue; end
-        actualNameCol = varNames{nameColIdx};
-        
-        originalNames = T.(actualNameCol);
-        newNames = originalNames;
-        
-        for k = 1:height(T)
-            originalName = originalNames{k};
-            if ~ischar(originalName) || isempty(originalName), updateProgress(); continue; end
-            
-            nameAfterF1 = originalName;
-            if app.EnableF1CheckBox.Value, nameAfterF1 = applyF1Rule(originalName); end
+    function processExcelFile(filePath, directionalRenameMap)
+        log('--- ¿ªÊ¼´¦ÀíExcelÎÄ¼ş ---');
+        targetSheets = {'IN', 'OUT', 'MP', 'CAL', 'NVV'};
 
-            nameWasChangedByF1 = ~strcmp(originalName, nameAfterF1);
-            finalName = nameAfterF1;
-            
-            if app.EnableF2CheckBox.Value && nameWasChangedByF1
-                nameToNormalize = nameAfterF1;
-                if isKey(app.LearnedMap, nameAfterF1)
-                    nameToNormalize = app.LearnedMap(nameAfterF1);
-                elseif app.EnableFamilySepCheckBox.Value && isKey(directionalRenameMap, nameAfterF1)
-                    nameToNormalize = directionalRenameMap(nameAfterF1);
-                end
-                
-                if any(strcmpi(sheet, {'IN', 'OUT', 'MP'}))
-                    finalName = applyF2Rule(nameToNormalize, 'signal');
-                elseif any(strcmpi(sheet, {'CAL', 'NVV'}))
-                    finalName = applyF2Rule(nameToNormalize, 'parameter');
-                end
-            end
-            
-            newNames{k} = finalName;
-            
-            if ~strcmp(originalName, finalName)
-                logDetail(sprintf('Excel (%s): "%s" -> "%s"', sheet, originalName, finalName));
-            end
-            updateProgress();
-        end
-        
-        T.(actualNameCol) = newNames;
-        writetable(T, filePath, 'Sheet', sheet);
-    end
-    log('--- Excelæ–‡ä»¶å¤„ç†å®Œæ¯• ---');
-end
+        try, [~, sheetNames] = xlsfinfo(filePath); catch ME, error('...ÎŞ·¨¶ÁÈ¡ExcelÎÄ¼şĞÅÏ¢...'); end
 
-function stepCount = countExcelSteps(filePath)
-    stepCount = 0;
-    targetSheets = {'IN', 'OUT', 'MP', 'CAL', 'NVV'};
-    try
-        [~, sheetNames] = xlsfinfo(filePath);
         for i = 1:length(targetSheets)
             sheet = targetSheets{i};
-            if ismember(sheet, sheetNames)
-                T = readtable(filePath, 'Sheet', sheet);
-                if ismember('name', lower(T.Properties.VariableNames))
-                    stepCount = stepCount + height(T);
+            if ~ismember(sheet, sheetNames), log(['Excel¾¯¸æ: Î´ÕÒµ½ "' sheet '" sheet, Ìø¹ı¡£']); continue; end
+
+            log(['ÕıÔÚ´¦Àí sheet: ' sheet]);
+            T = readtable(filePath, 'Sheet', sheet);
+
+            varNames = T.Properties.VariableNames;
+            [nameFound, nameColIdx] = ismember('name', lower(varNames));
+
+            if ~nameFound, log(['Excel¾¯¸æ: Sheet "' sheet '" ÖĞÎ´ÕÒµ½ "name"ÁĞ, Ìø¹ı¡£']); continue; end
+            actualNameCol = varNames{nameColIdx};
+
+            originalNames = T.(actualNameCol);
+            newNames = originalNames;
+
+            for k = 1:height(T)
+                originalName = originalNames{k};
+                if ~ischar(originalName) || isempty(originalName), updateProgress(); continue; end
+
+                nameAfterF1 = originalName;
+                if app.EnableF1CheckBox.Value, nameAfterF1 = applyF1Rule(originalName); end
+
+                nameWasChangedByF1 = ~strcmp(originalName, nameAfterF1);
+                finalName = nameAfterF1;
+
+                if app.EnableF2CheckBox.Value && nameWasChangedByF1
+                    nameToNormalize = nameAfterF1;
+                    if isKey(app.LearnedMap, nameAfterF1)
+                        nameToNormalize = app.LearnedMap(nameAfterF1);
+                    elseif app.EnableFamilySepCheckBox.Value && isKey(directionalRenameMap, nameAfterF1)
+                        nameToNormalize = directionalRenameMap(nameAfterF1);
+                    end
+
+                    if any(strcmpi(sheet, {'IN', 'OUT', 'MP'}))
+                        finalName = applyF2Rule(nameToNormalize, 'signal');
+                    elseif any(strcmpi(sheet, {'CAL', 'NVV'}))
+                        finalName = applyF2Rule(nameToNormalize, 'parameter');
+                    end
+                end
+
+                newNames{k} = finalName;
+
+                if ~strcmp(originalName, finalName)
+                    logDetail(sprintf('Excel (%s): "%s" -> "%s"', sheet, originalName, finalName));
+                end
+                updateProgress();
+            end
+
+            T.(actualNameCol) = newNames;
+            writetable(T, filePath, 'Sheet', sheet);
+        end
+        log('--- ExcelÎÄ¼ş´¦ÀíÍê±Ï ---');
+    end
+
+    function stepCount = countExcelSteps(filePath)
+        stepCount = 0;
+        targetSheets = {'IN', 'OUT', 'MP', 'CAL', 'NVV'};
+        try
+            [~, sheetNames] = xlsfinfo(filePath);
+            for i = 1:length(targetSheets)
+                sheet = targetSheets{i};
+                if ismember(sheet, sheetNames)
+                    T = readtable(filePath, 'Sheet', sheet);
+                    if ismember('name', lower(T.Properties.VariableNames))
+                        stepCount = stepCount + height(T);
+                    end
+                end
+            end
+        catch ME
+            log(['¾¯¸æ: Ô¤¼ÆËãExcel²½ÖèÊ±³ö´í: ' ME.message]);
+        end
+    end
+
+    function finalName = calculateFinalName(originalName, type, directionalRenameMap)
+        nameAfterF1 = originalName;
+        if app.EnableF1CheckBox.Value, nameAfterF1 = applyF1Rule(originalName); end
+
+        nameWasChangedByF1 = ~strcmp(originalName, nameAfterF1);
+        finalName = nameAfterF1;
+
+        if app.EnableF2CheckBox.Value && nameWasChangedByF1
+            nameToNormalize = nameAfterF1;
+            if isKey(app.LearnedMap, nameAfterF1)
+                nameToNormalize = app.LearnedMap(nameAfterF1);
+            elseif app.EnableFamilySepCheckBox.Value && isKey(directionalRenameMap, nameAfterF1)
+                nameToNormalize = directionalRenameMap(nameAfterF1);
+            end
+
+            finalName = applyF2Rule(nameToNormalize, type);
+        end
+
+        finalName = sanitizeName(finalName);
+    end
+
+    function renameMap = buildDirectionalRenameMap(blockHandles, lineHandles, sfObjects)
+        log('Ô¤·ÖÎö: ÕıÔÚ²éÕÒ·½ÏòĞÅºÅ¼Ò×å...', false);
+        renameMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
+
+        if ~app.EnableF2CheckBox.Value || ~app.EnableFamilySepCheckBox.Value
+            log('¼Ò×å·ÖÀë¹¦ÄÜÎ´ÆôÓÃ£¬Ìø¹ı·ÖÎö¡£', false);
+            return;
+        end
+
+        familyDefs = { {'frle', 'frri', 'rele', 'reri'}, {'fl', 'fr', 'rl', 'rr'}, {'fa', 'ra'} };
+
+        allNamesAfterF1 = {};
+
+        function processPotentialName(name)
+            if ~ischar(name) || isempty(name), return; end
+
+            nameAfterF1 = applyF1Rule(name);
+            if ~strcmp(name, nameAfterF1)
+                allNamesAfterF1{end+1} = nameAfterF1;
+            end
+        end
+
+        for i = 1:length(blockHandles)
+            handle = blockHandles(i);
+            if strcmpi(get_param(handle, 'LinkStatus'), 'none')
+                processPotentialName(get_param(handle, 'Name'));
+
+                blockType = get_param(handle, 'BlockType');
+                paramsToScan = {};
+                if contains(blockType, 'Lookup'), paramsToScan = {'Table', 'BreakpointsForDimension1', 'BreakpointsForDimension2', 'BreakpointsForDimension3'};
+                elseif strcmp(blockType, 'Constant'), paramsToScan = {'Value'};
+                elseif any(strcmp(blockType, {'Goto', 'From'})), paramsToScan = {'GotoTag'}; end
+
+                for p_idx = 1:length(paramsToScan)
+                    try, processPotentialName(get_param(handle, paramsToScan{p_idx})); catch, end
                 end
             end
         end
-    catch ME
-        log(['è­¦å‘Š: é¢„è®¡ç®—Excelæ­¥éª¤æ—¶å‡ºé”™: ' ME.message]);
-    end
-end
 
-function finalName = calculateFinalName(originalName, type, directionalRenameMap)
-    nameAfterF1 = originalName;
-    if app.EnableF1CheckBox.Value, nameAfterF1 = applyF1Rule(originalName); end
-    
-    nameWasChangedByF1 = ~strcmp(originalName, nameAfterF1);
-    finalName = nameAfterF1;
+        for i = 1:length(lineHandles), processPotentialName(get_param(lineHandles(i), 'Name')); end
+        for i = 1:length(sfObjects), if isprop(sfObjects{i}, 'Name'), processPotentialName(sfObjects{i}.Name); end, end
 
-    if app.EnableF2CheckBox.Value && nameWasChangedByF1
-        nameToNormalize = nameAfterF1;
-        if isKey(app.LearnedMap, nameAfterF1)
-            nameToNormalize = app.LearnedMap(nameAfterF1);
-        elseif app.EnableFamilySepCheckBox.Value && isKey(directionalRenameMap, nameAfterF1)
-            nameToNormalize = directionalRenameMap(nameAfterF1);
-        end
-        
-        finalName = applyF2Rule(nameToNormalize, type);
-    end
-    
-    finalName = sanitizeName(finalName);
-end
+        allNamesAfterF1 = unique(allNamesAfterF1);
 
-function renameMap = buildDirectionalRenameMap(blockHandles, lineHandles, sfObjects)
-    log('é¢„åˆ†æ: æ­£åœ¨æŸ¥æ‰¾æ–¹å‘ä¿¡å·å®¶æ—...', false);
-    renameMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
-    
-    if ~app.EnableF2CheckBox.Value || ~app.EnableFamilySepCheckBox.Value
-        log('å®¶æ—åˆ†ç¦»åŠŸèƒ½æœªå¯ç”¨ï¼Œè·³è¿‡åˆ†æã€‚', false);
-        return;
-    end
-    
-    familyDefs = { {'frle', 'frri', 'rele', 'reri'}, {'fl', 'fr', 'rl', 'rr'}, {'fa', 'ra'} };
-    
-    allNamesAfterF1 = {};
-    
-    function processPotentialName(name)
-        if ~ischar(name) || isempty(name), return; end
-        
-        nameAfterF1 = applyF1Rule(name);
-        if ~strcmp(name, nameAfterF1)
-            allNamesAfterF1{end+1} = nameAfterF1;
-        end
-    end
-    
-    for i = 1:length(blockHandles)
-        handle = blockHandles(i);
-        if strcmpi(get_param(handle, 'LinkStatus'), 'none')
-            processPotentialName(get_param(handle, 'Name'));
-            
-            blockType = get_param(handle, 'BlockType');
-            paramsToScan = {};
-            if contains(blockType, 'Lookup'), paramsToScan = {'Table', 'BreakpointsForDimension1', 'BreakpointsForDimension2', 'BreakpointsForDimension3'};
-            elseif strcmp(blockType, 'Constant'), paramsToScan = {'Value'};
-            elseif any(strcmp(blockType, {'Goto', 'From'})), paramsToScan = {'GotoTag'}; end
-            
-            for p_idx = 1:length(paramsToScan)
-                try, processPotentialName(get_param(handle, paramsToScan{p_idx})); catch, end
-            end
-        end
-    end
-    
-    for i = 1:length(lineHandles), processPotentialName(get_param(lineHandles(i), 'Name')); end
-    for i = 1:length(sfObjects), if isprop(sfObjects{i}, 'Name'), processPotentialName(sfObjects{i}.Name); end, end
-    
-    allNamesAfterF1 = unique(allNamesAfterF1);
-    
-    familyGroups = containers.Map('KeyType', 'char', 'ValueType', 'any');
-    
-    for i = 1:length(allNamesAfterF1)
-        name = allNamesAfterF1{i};
-        nameLower = lower(name);
+        familyGroups = containers.Map('KeyType', 'char', 'ValueType', 'any');
 
-        bestOverallMatch = struct('familyIdx', -1, 'matchIdx', -1, 'dir', '');
+        for i = 1:length(allNamesAfterF1)
+            name = allNamesAfterF1{i};
+            nameLower = lower(name);
 
-        for f_idx = 1:length(familyDefs)
-            directions = familyDefs{f_idx};
-            for d_idx = 1:length(directions)
-                dir = directions{d_idx};
-                match_indices = strfind(nameLower, dir);
-                
-                for k = 1:length(match_indices)
-                    match_idx = match_indices(k);
-                    end_idx = match_idx + length(dir) - 1;
-                    
-                    is_valid_boundary = false;
-                    if end_idx == length(nameLower), is_valid_boundary = true;
-                    elseif ~isletter(nameLower(end_idx + 1)), is_valid_boundary = true; end
-                    
-                    if is_valid_boundary
-                        if bestOverallMatch.familyIdx == -1
-                            bestOverallMatch.familyIdx = f_idx; bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
-                        else
-                            if f_idx < bestOverallMatch.familyIdx
+            bestOverallMatch = struct('familyIdx', -1, 'matchIdx', -1, 'dir', '');
+
+            for f_idx = 1:length(familyDefs)
+                directions = familyDefs{f_idx};
+                for d_idx = 1:length(directions)
+                    dir = directions{d_idx};
+                    match_indices = strfind(nameLower, dir);
+
+                    for k = 1:length(match_indices)
+                        match_idx = match_indices(k);
+                        end_idx = match_idx + length(dir) - 1;
+
+                        is_valid_boundary = false;
+                        if end_idx == length(nameLower), is_valid_boundary = true;
+                        elseif ~isletter(nameLower(end_idx + 1)), is_valid_boundary = true; end
+
+                        if is_valid_boundary
+                            if bestOverallMatch.familyIdx == -1
                                 bestOverallMatch.familyIdx = f_idx; bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
-                            elseif f_idx == bestOverallMatch.familyIdx
-                                if length(dir) > length(bestOverallMatch.dir)
-                                    bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
-                                elseif length(dir) == length(bestOverallMatch.dir)
-                                    if match_idx > bestOverallMatch.matchIdx, bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir; end
+                            else
+                                if f_idx < bestOverallMatch.familyIdx
+                                    bestOverallMatch.familyIdx = f_idx; bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
+                                elseif f_idx == bestOverallMatch.familyIdx
+                                    if length(dir) > length(bestOverallMatch.dir)
+                                        bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir;
+                                    elseif length(dir) == length(bestOverallMatch.dir)
+                                        if match_idx > bestOverallMatch.matchIdx, bestOverallMatch.matchIdx = match_idx; bestOverallMatch.dir = dir; end
+                                    end
                                 end
                             end
                         end
                     end
                 end
             end
-        end
-        
-        if bestOverallMatch.familyIdx > -1
-            dir = bestOverallMatch.dir; match_idx = bestOverallMatch.matchIdx; f_idx = bestOverallMatch.familyIdx;
-            prefix = nameLower(1:match_idx-1); suffix = nameLower(match_idx+length(dir):end);
-            familyKey = sprintf('%d#%s#%s', f_idx, prefix, suffix);
-            
-            if ~isKey(familyGroups, familyKey), familyGroups(familyKey) = containers.Map(); end
-            group = familyGroups(familyKey); group(dir) = name;
-        end
-    end
-    
-    familyKeys = keys(familyGroups);
-    for i = 1:length(familyKeys)
-        key = familyKeys{i}; group = familyGroups(key);
-        keyParts = strsplit(key, '#'); familyId = str2double(keyParts{1});
-        directions = familyDefs{familyId};
-        if group.Count == length(directions)
-            prefix = keyParts{2}; suffix = keyParts{3};
-            for d_idx = 1:length(directions)
-                dir = directions{d_idx}; originalFullName = group(dir);
-                originalPrefix = originalFullName(1:length(prefix)); originalSuffix = originalFullName(end-length(suffix)+1:end);
-                newFullName = [originalPrefix, '_', dir, '_', originalSuffix];
-                newFullName = strrep(newFullName, '__', '_');
-                if startsWith(newFullName, '_'), newFullName = newFullName(2:end); end
-                if endsWith(newFullName, '_'), newFullName = newFullName(1:end-1); end
-                renameMap(originalFullName) = newFullName;
-                
-                if ~isKey(app.LearnedMap, originalFullName)
-                    app.LearnedMap(originalFullName) = newFullName;
-                    updateLearnedArea();
-                end
-            end
-        end
-    end
-end
 
-% --- ä¿®æ”¹åçš„ applyF1Ruleï¼Œæ”¯æŒæ‰¹é‡æ¨¡å¼ ---
-function newName = applyF1Rule(oldName)
-    if ~app.EnableF1CheckBox.Value
-        newName = oldName;
-        return;
-    end
-    
-    if app.BatchMode && ~isempty(app.BatchRenameRules)
-        % æ‰¹é‡æ¨¡å¼ï¼šä¾æ¬¡åº”ç”¨æ‰€æœ‰è§„åˆ™
-        newName = oldName;
-        for r = 1:length(app.BatchRenameRules)
-            rule = app.BatchRenameRules{r};
-            if isempty(rule.old)
-                continue;
-            end
-            if app.PrefixModeButton.Value
-                % å‰ç¼€æ¨¡å¼
-                if strncmpi(newName, rule.old, length(rule.old))
-                    newName = [rule.new, newName(length(rule.old)+1:end)];
-                end
-            else
-                % å…³é”®è¯æ¨¡å¼ (æ­£åˆ™æ›¿æ¢ï¼Œå¿½ç•¥å¤§å°å†™)
-                % å¯¹ rule.old ä¸­çš„ç‰¹æ®Šå­—ç¬¦è¿›è¡Œè½¬ä¹‰ï¼Œé¿å…æ­£åˆ™è¯¯è§£
-                escapedOld = regexptranslate('escape', rule.old);
-                newName = regexprep(newName, escapedOld, rule.new, 'ignorecase');
+            if bestOverallMatch.familyIdx > -1
+                dir = bestOverallMatch.dir; match_idx = bestOverallMatch.matchIdx; f_idx = bestOverallMatch.familyIdx;
+                prefix = nameLower(1:match_idx-1); suffix = nameLower(match_idx+length(dir):end);
+                familyKey = sprintf('%d#%s#%s', f_idx, prefix, suffix);
+
+                if ~isKey(familyGroups, familyKey), familyGroups(familyKey) = containers.Map(); end
+                group = familyGroups(familyKey); group(dir) = name;
             end
         end
-    else
-        % å•æ¡æ¨¡å¼ï¼ˆåŸé€»è¾‘ï¼‰
-        oldStr = app.OldStringField.Value;
-        newStr = app.NewStringField.Value;
-        if isempty(oldStr)
+
+        familyKeys = keys(familyGroups);
+        for i = 1:length(familyKeys)
+            key = familyKeys{i}; group = familyGroups(key);
+            keyParts = strsplit(key, '#'); familyId = str2double(keyParts{1});
+            directions = familyDefs{familyId};
+            if group.Count == length(directions)
+                prefix = keyParts{2}; suffix = keyParts{3};
+                for d_idx = 1:length(directions)
+                    dir = directions{d_idx}; originalFullName = group(dir);
+                    originalPrefix = originalFullName(1:length(prefix)); originalSuffix = originalFullName(end-length(suffix)+1:end);
+                    newFullName = [originalPrefix, '_', dir, '_', originalSuffix];
+                    newFullName = strrep(newFullName, '__', '_');
+                    if startsWith(newFullName, '_'), newFullName = newFullName(2:end); end
+                    if endsWith(newFullName, '_'), newFullName = newFullName(1:end-1); end
+                    renameMap(originalFullName) = newFullName;
+
+                    if ~isKey(app.LearnedMap, originalFullName)
+                        app.LearnedMap(originalFullName) = newFullName;
+                        updateLearnedArea();
+                    end
+                end
+            end
+        end
+    end
+
+% --- ĞŞ¸ÄºóµÄ applyF1Rule£¬Ö§³ÖÅúÁ¿Ä£Ê½ ---
+    function newName = applyF1Rule(oldName)
+        if ~app.EnableF1CheckBox.Value
             newName = oldName;
             return;
         end
-        if app.PrefixModeButton.Value
-            if strncmpi(oldName, oldStr, length(oldStr))
-                newName = [newStr, oldName(length(oldStr)+1:end)];
-            else
-                newName = oldName;
+
+        if app.BatchMode && ~isempty(app.BatchRenameRules)
+            % ÅúÁ¿Ä£Ê½£ºÒÀ´ÎÓ¦ÓÃËùÓĞ¹æÔò
+            newName = oldName;
+            for r = 1:length(app.BatchRenameRules)
+                rule = app.BatchRenameRules{r};
+                if isempty(rule.old)
+                    continue;
+                end
+                if app.PrefixModeButton.Value
+                    % Ç°×ºÄ£Ê½
+                    if strncmpi(newName, rule.old, length(rule.old))
+                        newName = [rule.new, newName(length(rule.old)+1:end)];
+                    end
+                else
+                    % ¹Ø¼ü´ÊÄ£Ê½ (ÕıÔòÌæ»»£¬ºöÂÔ´óĞ¡Ğ´)
+                    % ¶Ô rule.old ÖĞµÄÌØÊâ×Ö·û½øĞĞ×ªÒå£¬±ÜÃâÕıÔòÎó½â
+                    escapedOld = regexptranslate('escape', rule.old);
+                    newName = regexprep(newName, escapedOld, rule.new, 'ignorecase');
+                end
             end
         else
-            newName = regexprep(oldName, oldStr, newStr, 'ignorecase');
-        end
-    end
-end
-
-function safeSetParam(handle, paramName, desiredName)
-    objectType = get_param(handle, 'Type');
-    finalName = desiredName;
-    suffix = 1;
-    addSuffixLog = false;
-    if strcmp(objectType, 'block')
-        parentPath = get_param(handle, 'Parent');
-        while true
-            existingObj = find_system(parentPath, 'SearchDepth', 1, 'Name', finalName);
-            isSelf = false;
-            if ~isempty(existingObj)
-                if iscell(existingObj) && numel(existingObj) == 1, isSelf = (get_param(existingObj{1}, 'Handle') == handle);
-                elseif numel(existingObj) == 1, isSelf = (existingObj == handle); end
+            % µ¥ÌõÄ£Ê½£¨Ô­Âß¼­£©
+            oldStr = app.OldStringField.Value;
+            newStr = app.NewStringField.Value;
+            if isempty(oldStr)
+                newName = oldName;
+                return;
             end
-            if isempty(existingObj) || isSelf, break;
-            else, finalName = sprintf('%s_%d', desiredName, suffix); suffix = suffix + 1; addSuffixLog = true; end
+            if app.PrefixModeButton.Value
+                if strncmpi(oldName, oldStr, length(oldStr))
+                    newName = [newStr, oldName(length(oldStr)+1:end)];
+                else
+                    newName = oldName;
+                end
+            else
+                newName = regexprep(oldName, oldStr, newStr, 'ignorecase');
+            end
         end
     end
-    originalName = get_param(handle, paramName);
-    if ~strcmp(originalName, finalName)
-        set_param(handle, paramName, finalName);
-        logText = sprintf('%s (%s): "%s" -> "%s"', paramName, objectType, originalName, finalName);
-        if addSuffixLog, logText = [logText, ' (å› å†²çªè‡ªåŠ¨æ·»åŠ åç¼€)']; end
-        logDetail(logText);
-    end
-end
 
-function safeSetSfName(sfObj, desiredName), parentObj = sfObj.getParent; finalName = desiredName; suffix = 1; while true, existingObj = parentObj.find('-isa', class(sfObj), 'Name', finalName); if isempty(existingObj) || (numel(existingObj) == 1 && existingObj.Id == sfObj.Id), break; else, finalName = sprintf('%s_%d', desiredName, suffix); suffix = suffix + 1; end, end, originalName = sfObj.Name; if ~strcmp(originalName, finalName), sf('set', sfObj.Id, '.name', finalName); logDetail(sprintf('SF Name: "%s" -> "%s" (%s)', originalName, finalName, class(sfObj))); end, end
-function newName = applyF2Rule(oldName, type)
-    if ~ischar(oldName), newName = oldName; return; end
-    newName = oldName; 
-    if strcmp(type, 'auto')
-        if ~strcmp(oldName, upper(oldName)) || isempty(regexp(oldName, '^[A-Z_0-9]+$', 'once')), type = 'signal'; else, type = 'parameter'; end
-    end
-    parts = strsplit(oldName, '_');
-    if isempty(parts) || isempty(parts{1}); return; end
-    if strcmp(type, 'signal')
-        if numel(parts) >= 1; parts{1} = upper(parts{1}); end
-        if numel(parts) >= 2 && ~isempty(parts{2}); parts{2} = [upper(parts{2}(1)), lower(parts{2}(2:end))]; end
-        if numel(parts) >= 3; for i = 3:numel(parts); parts{i} = lower(parts{i}); end; end
-        newName = strjoin(parts, '_');
-    elseif strcmp(type, 'parameter'), newName = upper(strrep(oldName, ' ', '')); end
-end
-
-function log(message, writeToFile)
-    if nargin < 2, writeToFile = true; end
-    timestamp = datestr(now, 'HH:MM:SS');
-    fullMessage = ['[' timestamp '] ' message];
-    currentLog = app.LogArea.Value; 
-    if ischar(currentLog); currentLog = {currentLog}; end
-    if numel(currentLog) == 1 && isempty(currentLog{1}); currentLog = {}; end
-    app.LogArea.Value = [currentLog; {fullMessage}]; 
-    drawnow;
-    if writeToFile, app.DetailedLog{end+1} = fullMessage; end
-end
-
-function logDetail(message)
-    log(message, true);
-end
-
-function writeLogToTxt(path, modelName)
-    log('æ­£åœ¨ç”ŸæˆTXTæ—¥å¿—æ–‡ä»¶...');
-    try
-        logFileName = fullfile(path, ['æ”¹åŠ¨æ—¥å¿—_' modelName '_' datestr(now, 'yyyymmdd_HHMMSS') '.txt']);
-        logContent = app.DetailedLog;
-        fileID = fopen(logFileName, 'w', 'n', 'UTF-8');
-        if fileID == -1, error('æ— æ³•åˆ›å»ºæ—¥å¿—æ–‡ä»¶ã€‚è¯·æ£€æŸ¥æ–‡ä»¶å¤¹æƒé™ã€‚'); end
-        cleanupObj = onCleanup(@() fclose(fileID));
-        fprintf(fileID, '--- Simulinkæ‰¹é‡ä¿®æ”¹å·¥å…· V20.2.20 æ”¹åŠ¨æ—¥å¿— ---\n');
-        fprintf(fileID, '--- æ‰§è¡Œæ—¶é—´: %s ---\n\n', datestr(now));
-        for i = 1:numel(logContent), fprintf(fileID, '%s\n', logContent{i}); end
-        log(['TXTæ—¥å¿—æ–‡ä»¶å·²ç”Ÿæˆ: ', logFileName]);
-    catch ME, log(['è­¦å‘Š: ç”ŸæˆTXTæ—¥å¿—æ–‡ä»¶å¤±è´¥: ', ME.message]); end
-end
-
-function updateProgress(), app.CurrentStep = app.CurrentStep + 1; if app.TotalSteps > 0, progress = round(app.CurrentStep / app.TotalSteps * 100); app.ProgressBar.Value = progress; app.ProgressLabel.Text = sprintf('è¿›åº¦: %d%%', progress); end, drawnow; end
-function sanitized_name = sanitizeName(name), sanitized_name = strrep(name, '/', '_'); end
-function restoreAllCallbacks(callbacks), if isempty(callbacks), return; end, log('æ­£åœ¨æ¢å¤æ‰€æœ‰åŸå§‹æ¨¡å‹å›è°ƒ...'); for i = 1:size(callbacks, 1), model = callbacks{i, 1}; if bdIsLoaded(model), try, set_param(model, 'PreSaveFcn', callbacks{i, 2}); set_param(model, 'PostSaveFcn', callbacks{i, 3}); catch ME, log(sprintf('è­¦å‘Š: æ— æ³•ä¸º %s æ¢å¤å›è°ƒ: %s', model, ME.message)); end, end, end, log('å›è°ƒæ¢å¤å®Œæ¯•ã€‚'); end
-
-function ClearLearnedMapButtonPushed(~, ~)
-    app.LearnedMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
-    updateLearnedArea();
-    log('é¢„å¤„ç†è®°å¿†åº“å·²æ¸…ç©ºã€‚');
-end
-
-function updateLearnedArea()
-    mapKeys = keys(app.LearnedMap);
-    
-    if isempty(mapKeys)
-        app.LearnedArea.Value = '';
-    else
-        mapVals = values(app.LearnedMap);
-        displayContent = cell(length(mapKeys), 1);
-        for i = 1:length(mapKeys)
-            displayContent{i} = sprintf('"%s" -> "%s"', mapKeys{i}, mapVals{i});
+    function safeSetParam(handle, paramName, desiredName)
+        objectType = get_param(handle, 'Type');
+        finalName = desiredName;
+        suffix = 1;
+        addSuffixLog = false;
+        if strcmp(objectType, 'block')
+            parentPath = get_param(handle, 'Parent');
+            while true
+                existingObj = find_system(parentPath, 'SearchDepth', 1, 'Name', finalName);
+                isSelf = false;
+                if ~isempty(existingObj)
+                    if iscell(existingObj) && numel(existingObj) == 1, isSelf = (get_param(existingObj{1}, 'Handle') == handle);
+                    elseif numel(existingObj) == 1, isSelf = (existingObj == handle); end
+                end
+                if isempty(existingObj) || isSelf, break;
+                else, finalName = sprintf('%s_%d', desiredName, suffix); suffix = suffix + 1; addSuffixLog = true; end
+            end
         end
-        app.LearnedArea.Value = displayContent;
+        originalName = get_param(handle, paramName);
+        if ~strcmp(originalName, finalName)
+            set_param(handle, paramName, finalName);
+            logText = sprintf('%s (%s): "%s" -> "%s"', paramName, objectType, originalName, finalName);
+            if addSuffixLog, logText = [logText, ' (Òò³åÍ»×Ô¶¯Ìí¼Óºó×º)']; end
+            logDetail(logText);
+        end
     end
-    
-    drawnow;
-end
+
+    function safeSetSfName(sfObj, desiredName), parentObj = sfObj.getParent; finalName = desiredName; suffix = 1; while true, existingObj = parentObj.find('-isa', class(sfObj), 'Name', finalName); if isempty(existingObj) || (numel(existingObj) == 1 && existingObj.Id == sfObj.Id), break; else, finalName = sprintf('%s_%d', desiredName, suffix); suffix = suffix + 1; end, end, originalName = sfObj.Name; if ~strcmp(originalName, finalName), sf('set', sfObj.Id, '.name', finalName); logDetail(sprintf('SF Name: "%s" -> "%s" (%s)', originalName, finalName, class(sfObj))); end, end
+        function newName = applyF2Rule(oldName, type)
+            if ~ischar(oldName), newName = oldName; return; end
+            newName = oldName;
+            if strcmp(type, 'auto')
+                if ~strcmp(oldName, upper(oldName)) || isempty(regexp(oldName, '^[A-Z_0-9]+$', 'once')), type = 'signal'; else, type = 'parameter'; end
+            end
+            parts = strsplit(oldName, '_');
+            if isempty(parts) || isempty(parts{1}); return; end
+            if strcmp(type, 'signal')
+                if numel(parts) >= 1; parts{1} = upper(parts{1}); end
+                if numel(parts) >= 2 && ~isempty(parts{2}); parts{2} = [upper(parts{2}(1)), lower(parts{2}(2:end))]; end
+                if numel(parts) >= 3; for i = 3:numel(parts); parts{i} = lower(parts{i}); end; end
+                newName = strjoin(parts, '_');
+            elseif strcmp(type, 'parameter'), newName = upper(strrep(oldName, ' ', '')); end
+        end
+
+        function log(message, writeToFile)
+            if nargin < 2, writeToFile = true; end
+            timestamp = datestr(now, 'HH:MM:SS');
+            fullMessage = ['[' timestamp '] ' message];
+            currentLog = app.LogArea.Value;
+            if ischar(currentLog); currentLog = {currentLog}; end
+            if numel(currentLog) == 1 && isempty(currentLog{1}); currentLog = {}; end
+            app.LogArea.Value = [currentLog; {fullMessage}];
+            drawnow;
+            if writeToFile, app.DetailedLog{end+1} = fullMessage; end
+        end
+
+        function logDetail(message)
+            log(message, true);
+        end
+
+        function writeLogToTxt(path, modelName)
+            log('ÕıÔÚÉú³ÉTXTÈÕÖ¾ÎÄ¼ş...');
+            try
+                logFileName = fullfile(path, ['¸Ä¶¯ÈÕÖ¾_' modelName '_' datestr(now, 'yyyymmdd_HHMMSS') '.txt']);
+                logContent = app.DetailedLog;
+                fileID = fopen(logFileName, 'w', 'n', 'UTF-8');
+                if fileID == -1, error('ÎŞ·¨´´½¨ÈÕÖ¾ÎÄ¼ş¡£Çë¼ì²éÎÄ¼ş¼ĞÈ¨ÏŞ¡£'); end
+                cleanupObj = onCleanup(@() fclose(fileID));
+                fprintf(fileID, '--- SimulinkÅúÁ¿ĞŞ¸Ä¹¤¾ß V20.2.20 ¸Ä¶¯ÈÕÖ¾ ---\n');
+                fprintf(fileID, '--- Ö´ĞĞÊ±¼ä: %s ---\n\n', datestr(now));
+                for i = 1:numel(logContent), fprintf(fileID, '%s\n', logContent{i}); end
+                log(['TXTÈÕÖ¾ÎÄ¼şÒÑÉú³É: ', logFileName]);
+            catch ME, log(['¾¯¸æ: Éú³ÉTXTÈÕÖ¾ÎÄ¼şÊ§°Ü: ', ME.message]); end
+        end
+
+        function updateProgress(), app.CurrentStep = app.CurrentStep + 1; if app.TotalSteps > 0, progress = round(app.CurrentStep / app.TotalSteps * 100); app.ProgressBar.Value = progress; app.ProgressLabel.Text = sprintf('½ø¶È: %d%%', progress); end, drawnow; end
+            function sanitized_name = sanitizeName(name), sanitized_name = strrep(name, '/', '_'); end
+                function restoreAllCallbacks(callbacks), if isempty(callbacks), return; end, log('ÕıÔÚ»Ö¸´ËùÓĞÔ­Ê¼Ä£ĞÍ»Øµ÷...'); for i = 1:size(callbacks, 1), model = callbacks{i, 1}; if bdIsLoaded(model), try, set_param(model, 'PreSaveFcn', callbacks{i, 2}); set_param(model, 'PostSaveFcn', callbacks{i, 3}); catch ME, log(sprintf('¾¯¸æ: ÎŞ·¨Îª %s »Ö¸´»Øµ÷: %s', model, ME.message)); end, end, end, log('»Øµ÷»Ö¸´Íê±Ï¡£'); end
+
+                    function ClearLearnedMapButtonPushed(~, ~)
+                        app.LearnedMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
+                        updateLearnedArea();
+                        log('Ô¤´¦Àí¼ÇÒä¿âÒÑÇå¿Õ¡£');
+                    end
+
+                    function updateLearnedArea()
+                        mapKeys = keys(app.LearnedMap);
+
+                        if isempty(mapKeys)
+                            app.LearnedArea.Value = '';
+                        else
+                            mapVals = values(app.LearnedMap);
+                            displayContent = cell(length(mapKeys), 1);
+                            for i = 1:length(mapKeys)
+                                displayContent{i} = sprintf('"%s" -> "%s"', mapKeys{i}, mapVals{i});
+                            end
+                            app.LearnedArea.Value = displayContent;
+                        end
+
+                        drawnow;
+                    end
 
 end

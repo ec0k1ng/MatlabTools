@@ -1,66 +1,67 @@
 function SignalEnumGenerator()
-    % ä¿¡å·å’Œæšä¸¾ç”Ÿæˆå·¥å…·ï¼ˆæ”¯æŒæšä¸¾ã€æ€»çº¿ã€è‡ªå®šä¹‰æ•°å€¼ç±»å‹ã€ä¿¡å·/å‚æ•°ã€å˜é‡å®šä¹‰æ–‡ä»¶ï¼‰
-    % æ”¯æŒç”ŸæˆåŠ è½½è„šæœ¬ï¼Œä¸€é”®æ¢å¤æ‰€æœ‰å·¥ä½œåŒºå¯¹è±¡ï¼ˆå«æè¿°ä¿¡æ¯ï¼‰
-    % ä¼˜åŒ–ï¼šæ€»çº¿ç”Ÿæˆä¸å†äº§ç”Ÿä¸´æ—¶å˜é‡ï¼Œå·¥ä½œåŒºæ›´å¹²å‡€
-    % æ–°å¢ï¼šå¯ç¼©æ”¾UIã€å¤šæ–‡ä»¶ç®¡ç†ã€æ•°æ®ç±»å‹æ ¡éªŒã€åŠ è½½è„šæœ¬åˆå¹¶ã€å•ä¾‹æ¨¡å¼
+% ĞÅºÅºÍÃ¶¾ÙÉú³É¹¤¾ß£¨Ö§³ÖÃ¶¾Ù¡¢×ÜÏß¡¢×Ô¶¨ÒåÊıÖµÀàĞÍ¡¢ĞÅºÅ/²ÎÊı¡¢±äÁ¿¶¨ÒåÎÄ¼ş£©
+% Ö§³ÖÉú³É¼ÓÔØ½Å±¾£¬Ò»¼ü»Ö¸´ËùÓĞ¹¤×÷Çø¶ÔÏó£¨º¬ÃèÊöĞÅÏ¢£©
+% ÓÅ»¯£º×ÜÏßÉú³É²»ÔÙ²úÉúÁÙÊ±±äÁ¿£¬¹¤×÷Çø¸ü¸É¾»
+% ĞÂÔö£º¿ÉËõ·ÅUI¡¢¶àÎÄ¼ş¹ÜÀí¡¢Êı¾İÀàĞÍĞ£Ñé¡¢¼ÓÔØ½Å±¾ºÏ²¢¡¢µ¥ÀıÄ£Ê½
+% ¼æÈİĞÔ£ºR2018bÒÔÏÂÊ¹ÓÃ´¿ÏñËØ²¼¾Ö
 
-    % å•ä¾‹æ¨¡å¼ï¼šå…³é—­å·²æœ‰å®ä¾‹
-    persistent FIG_HANDLE
-    if ~isempty(FIG_HANDLE) && ishandle(FIG_HANDLE)
-        delete(FIG_HANDLE);
-    end
+% µ¥ÀıÄ£Ê½£º¹Ø±ÕÒÑÓĞÊµÀı
+persistent FIG_HANDLE
+if ~isempty(FIG_HANDLE) && ishandle(FIG_HANDLE)
+    delete(FIG_HANDLE);
+end
 
-    % åˆ›å»ºä¸»çª—å£ (uifigure æ”¯æŒç¼©æ”¾)
-    fig = uifigure('Name', 'ä¿¡å·ä¸æšä¸¾ç”Ÿæˆå·¥å…·', 'Position', [300 150 950 800], ...
-                   'NumberTitle', 'off', 'Resize', 'on');
-    FIG_HANDLE = fig;
+% ´´½¨Ö÷´°¿Ú
+fig = uifigure('Name', 'ĞÅºÅÓëÃ¶¾ÙÉú³É¹¤¾ß', 'Position', [300 150 950 800], ...
+    'NumberTitle', 'off', 'Resize', 'on');
+FIG_HANDLE = fig;
 
-    % åˆ›å»ºä¸»ç½‘æ ¼å¸ƒå±€ (è¡Œæ•°åŠ¨æ€è°ƒæ•´)
+% ---------- °æ±¾¼æÈİ·ÖÖ§£¨ĞŞ¸´ÅĞ¶ÏÌõ¼ş£©----------
+if ~verLessThan('matlab', '9.5')   % R2018b (9.5) ¼°ÒÔÉÏ
+    % ======== Ô­Ê¼ uigridlayout ²¼¾Ö ========
     mainGrid = uigridlayout(fig, [20, 3], ...
         'RowHeight', {30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,'1x'}, ...
         'ColumnWidth', {120, '1x', 90}, ...
         'Padding', [10 10 10 10], 'RowSpacing', 5, 'ColumnSpacing', 5);
 
-    % ==================== æšä¸¾æ–‡ä»¶ç®¡ç†åŒºåŸŸ ====================
-    lblEnum = uilabel(mainGrid, 'Text', 'æšä¸¾å®šä¹‰æ–‡ä»¶åˆ—è¡¨:', 'FontWeight', 'bold', ...
-        'Tooltip', 'æ”¯æŒå¤šä¸ªExcelæ–‡ä»¶ï¼ŒæŒ‰é¡ºåºåˆå¹¶ï¼Œé‡å¤å®šä¹‰ä»¥æœ€åä¸ºå‡†');
+    % ==================== Ã¶¾ÙÎÄ¼ş¹ÜÀíÇøÓò ====================
+    lblEnum = uilabel(mainGrid, 'Text', 'Ã¶¾Ù¶¨ÒåÎÄ¼şÁĞ±í:', 'FontWeight', 'bold', ...
+        'Tooltip', 'Ö§³Ö¶à¸öExcelÎÄ¼ş£¬°´Ë³ĞòºÏ²¢£¬ÖØ¸´¶¨ÒåÒÔ×îºóÎª×¼');
     lblEnum.Layout.Row = 1; lblEnum.Layout.Column = 1;
-    
-    % å ä½
+
     placeholder1 = uilabel(mainGrid, 'Text', '');
     placeholder1.Layout.Row = 1; placeholder1.Layout.Column = 2;
     placeholder2 = uilabel(mainGrid, 'Text', '');
     placeholder2.Layout.Row = 1; placeholder2.Layout.Column = 3;
 
     enumListBox = uilistbox(mainGrid, 'Items', {}, 'Multiselect', 'on', ...
-        'Tooltip', 'å·²é€‰æ‹©çš„æšä¸¾å®šä¹‰æ–‡ä»¶ï¼ˆå®Œæ•´è·¯å¾„ï¼‰');
+        'Tooltip', 'ÒÑÑ¡ÔñµÄÃ¶¾Ù¶¨ÒåÎÄ¼ş£¨ÍêÕûÂ·¾¶£©');
     enumListBox.Layout.Row = [2, 6];
     enumListBox.Layout.Column = 2;
 
-    btnAddEnumFile = uibutton(mainGrid, 'Text', 'æ·»åŠ æ–‡ä»¶...', ...
+    btnAddEnumFile = uibutton(mainGrid, 'Text', 'Ìí¼ÓÎÄ¼ş...', ...
         'ButtonPushedFcn', @(src,event) addFiles('enum'));
     btnAddEnumFile.Layout.Row = 2; btnAddEnumFile.Layout.Column = 3;
-    btnAddEnumFolder = uibutton(mainGrid, 'Text', 'æ·»åŠ æ–‡ä»¶å¤¹...', ...
+    btnAddEnumFolder = uibutton(mainGrid, 'Text', 'Ìí¼ÓÎÄ¼ş¼Ğ...', ...
         'ButtonPushedFcn', @(src,event) addFolder('enum'));
     btnAddEnumFolder.Layout.Row = 3; btnAddEnumFolder.Layout.Column = 3;
-    btnDelEnum = uibutton(mainGrid, 'Text', 'åˆ é™¤é€‰ä¸­', ...
+    btnDelEnum = uibutton(mainGrid, 'Text', 'É¾³ıÑ¡ÖĞ', ...
         'ButtonPushedFcn', @(src,event) deleteSelected('enum'));
     btnDelEnum.Layout.Row = 4; btnDelEnum.Layout.Column = 3;
-    btnClearEnum = uibutton(mainGrid, 'Text', 'æ¸…ç©ºå…¨éƒ¨', ...
+    btnClearEnum = uibutton(mainGrid, 'Text', 'Çå¿ÕÈ«²¿', ...
         'ButtonPushedFcn', @(src,event) clearAll('enum'));
     btnClearEnum.Layout.Row = 5; btnClearEnum.Layout.Column = 3;
 
-    % æšä¸¾æ–‡ä»¶å­˜æ”¾è·¯å¾„
-    lblTargetPath = uilabel(mainGrid, 'Text', 'æšä¸¾æ–‡ä»¶å­˜æ”¾è·¯å¾„:', 'FontWeight', 'bold');
+    lblTargetPath = uilabel(mainGrid, 'Text', 'Ã¶¾ÙÎÄ¼ş´æ·ÅÂ·¾¶:', 'FontWeight', 'bold');
     lblTargetPath.Layout.Row = 7; lblTargetPath.Layout.Column = 1;
     enumTargetPathEdit = uieditfield(mainGrid, 'text', 'Value', '');
     enumTargetPathEdit.Layout.Row = 7; enumTargetPathEdit.Layout.Column = 2;
-    btnBrowsePath = uibutton(mainGrid, 'Text', 'æµè§ˆ...', ...
+    btnBrowsePath = uibutton(mainGrid, 'Text', 'ä¯ÀÀ...', ...
         'ButtonPushedFcn', @(src,event) selectEnumTargetFolder());
     btnBrowsePath.Layout.Row = 7; btnBrowsePath.Layout.Column = 3;
 
-    % ==================== Interface æ–‡ä»¶ç®¡ç†åŒºåŸŸ ====================
-    lblIntf = uilabel(mainGrid, 'Text', 'Interfaceæ–‡ä»¶åˆ—è¡¨:', 'FontWeight', 'bold');
+    % ==================== Interface ÎÄ¼ş¹ÜÀíÇøÓò ====================
+    lblIntf = uilabel(mainGrid, 'Text', 'InterfaceÎÄ¼şÁĞ±í:', 'FontWeight', 'bold');
     lblIntf.Layout.Row = 8; lblIntf.Layout.Column = 1;
     placeholder3 = uilabel(mainGrid, 'Text', '');
     placeholder3.Layout.Row = 8; placeholder3.Layout.Column = 2;
@@ -68,25 +69,25 @@ function SignalEnumGenerator()
     placeholder4.Layout.Row = 8; placeholder4.Layout.Column = 3;
 
     interfaceListBox = uilistbox(mainGrid, 'Items', {}, 'Multiselect', 'on', ...
-        'Tooltip', 'å·²é€‰æ‹©çš„Interfaceæ–‡ä»¶ï¼ˆå®Œæ•´è·¯å¾„ï¼‰');
+        'Tooltip', 'ÒÑÑ¡ÔñµÄInterfaceÎÄ¼ş£¨ÍêÕûÂ·¾¶£©');
     interfaceListBox.Layout.Row = [9, 12];
     interfaceListBox.Layout.Column = 2;
 
-    btnAddIntf = uibutton(mainGrid, 'Text', 'æ·»åŠ æ–‡ä»¶...', ...
+    btnAddIntf = uibutton(mainGrid, 'Text', 'Ìí¼ÓÎÄ¼ş...', ...
         'ButtonPushedFcn', @(src,event) addFiles('interface'));
     btnAddIntf.Layout.Row = 9; btnAddIntf.Layout.Column = 3;
-    btnAddIntfFolder = uibutton(mainGrid, 'Text', 'æ·»åŠ æ–‡ä»¶å¤¹...', ...
+    btnAddIntfFolder = uibutton(mainGrid, 'Text', 'Ìí¼ÓÎÄ¼ş¼Ğ...', ...
         'ButtonPushedFcn', @(src,event) addFolder('interface'));
     btnAddIntfFolder.Layout.Row = 10; btnAddIntfFolder.Layout.Column = 3;
-    btnDelIntf = uibutton(mainGrid, 'Text', 'åˆ é™¤é€‰ä¸­', ...
+    btnDelIntf = uibutton(mainGrid, 'Text', 'É¾³ıÑ¡ÖĞ', ...
         'ButtonPushedFcn', @(src,event) deleteSelected('interface'));
     btnDelIntf.Layout.Row = 11; btnDelIntf.Layout.Column = 3;
-    btnClearIntf = uibutton(mainGrid, 'Text', 'æ¸…ç©ºå…¨éƒ¨', ...
+    btnClearIntf = uibutton(mainGrid, 'Text', 'Çå¿ÕÈ«²¿', ...
         'ButtonPushedFcn', @(src,event) clearAll('interface'));
     btnClearIntf.Layout.Row = 12; btnClearIntf.Layout.Column = 3;
 
-    % ==================== å˜é‡å®šä¹‰æ–‡ä»¶ç®¡ç†åŒºåŸŸ ====================
-    lblVar = uilabel(mainGrid, 'Text', 'å˜é‡å®šä¹‰æ–‡ä»¶åˆ—è¡¨:', 'FontWeight', 'bold');
+    % ==================== ±äÁ¿¶¨ÒåÎÄ¼ş¹ÜÀíÇøÓò ====================
+    lblVar = uilabel(mainGrid, 'Text', '±äÁ¿¶¨ÒåÎÄ¼şÁĞ±í:', 'FontWeight', 'bold');
     lblVar.Layout.Row = 13; lblVar.Layout.Column = 1;
     placeholder5 = uilabel(mainGrid, 'Text', '');
     placeholder5.Layout.Row = 13; placeholder5.Layout.Column = 2;
@@ -94,112 +95,190 @@ function SignalEnumGenerator()
     placeholder6.Layout.Row = 13; placeholder6.Layout.Column = 3;
 
     varListBox = uilistbox(mainGrid, 'Items', {}, 'Multiselect', 'on', ...
-        'Tooltip', 'å·²é€‰æ‹©çš„å˜é‡å®šä¹‰æ–‡ä»¶ï¼ˆå®Œæ•´è·¯å¾„ï¼‰');
+        'Tooltip', 'ÒÑÑ¡ÔñµÄ±äÁ¿¶¨ÒåÎÄ¼ş£¨ÍêÕûÂ·¾¶£©');
     varListBox.Layout.Row = [14, 17];
     varListBox.Layout.Column = 2;
 
-    btnAddVar = uibutton(mainGrid, 'Text', 'æ·»åŠ æ–‡ä»¶...', ...
+    btnAddVar = uibutton(mainGrid, 'Text', 'Ìí¼ÓÎÄ¼ş...', ...
         'ButtonPushedFcn', @(src,event) addFiles('var'));
     btnAddVar.Layout.Row = 14; btnAddVar.Layout.Column = 3;
-    btnAddVarFolder = uibutton(mainGrid, 'Text', 'æ·»åŠ æ–‡ä»¶å¤¹...', ...
+    btnAddVarFolder = uibutton(mainGrid, 'Text', 'Ìí¼ÓÎÄ¼ş¼Ğ...', ...
         'ButtonPushedFcn', @(src,event) addFolder('var'));
     btnAddVarFolder.Layout.Row = 15; btnAddVarFolder.Layout.Column = 3;
-    btnDelVar = uibutton(mainGrid, 'Text', 'åˆ é™¤é€‰ä¸­', ...
+    btnDelVar = uibutton(mainGrid, 'Text', 'É¾³ıÑ¡ÖĞ', ...
         'ButtonPushedFcn', @(src,event) deleteSelected('var'));
     btnDelVar.Layout.Row = 16; btnDelVar.Layout.Column = 3;
-    btnClearVar = uibutton(mainGrid, 'Text', 'æ¸…ç©ºå…¨éƒ¨', ...
+    btnClearVar = uibutton(mainGrid, 'Text', 'Çå¿ÕÈ«²¿', ...
         'ButtonPushedFcn', @(src,event) clearAll('var'));
     btnClearVar.Layout.Row = 17; btnClearVar.Layout.Column = 3;
 
-    % åŠ è½½è„šæœ¬æ–‡ä»¶å
-    lblScript = uilabel(mainGrid, 'Text', 'åŠ è½½è„šæœ¬æ–‡ä»¶å:', 'FontWeight', 'bold');
+    lblScript = uilabel(mainGrid, 'Text', '¼ÓÔØ½Å±¾ÎÄ¼şÃû:', 'FontWeight', 'bold');
     lblScript.Layout.Row = 18; lblScript.Layout.Column = 1;
     scriptNameEdit = uieditfield(mainGrid, 'text', 'Value', 'LoadWorkspaceData.m');
     scriptNameEdit.Layout.Row = 18; scriptNameEdit.Layout.Column = 2;
-    lblScriptHint = uilabel(mainGrid, 'Text', 'ï¼ˆ.mæ–‡ä»¶ï¼Œä¿å­˜åœ¨å½“å‰ç›®å½•ï¼‰', ...
+    lblScriptHint = uilabel(mainGrid, 'Text', '£¨.mÎÄ¼ş£¬±£´æÔÚµ±Ç°Ä¿Â¼£©', ...
         'FontColor', [0.5 0.5 0.5]);
     lblScriptHint.Layout.Row = 18; lblScriptHint.Layout.Column = 3;
 
-    % ç”Ÿæˆä¸é€€å‡ºæŒ‰é’®é¢æ¿
     btnPanel = uigridlayout(mainGrid, [1,2], 'ColumnWidth', {'1x','1x'}, ...
         'Padding', [0 0 0 0]);
     btnPanel.Layout.Row = 19; btnPanel.Layout.Column = [1,3];
-    btnGenerate = uibutton(btnPanel, 'Text', 'ç”Ÿæˆ', 'BackgroundColor', [0.3 0.7 0.3], ...
+    btnGenerate = uibutton(btnPanel, 'Text', 'Éú³É', 'BackgroundColor', [0.3 0.7 0.3], ...
         'FontColor','w','FontWeight','bold','FontSize',12, ...
         'ButtonPushedFcn', @(src,event) generate());
     btnGenerate.Layout.Row = 1; btnGenerate.Layout.Column = 1;
-    btnExit = uibutton(btnPanel, 'Text', 'é€€å‡º', 'BackgroundColor', [0.8 0.3 0.3], ...
+    btnExit = uibutton(btnPanel, 'Text', 'ÍË³ö', 'BackgroundColor', [0.8 0.3 0.3], ...
         'FontColor','w','FontWeight','bold','FontSize',12, ...
         'ButtonPushedFcn', @(src,event) delete(fig));
     btnExit.Layout.Row = 1; btnExit.Layout.Column = 2;
 
-    % çŠ¶æ€æ 
-    statusLabel = uilabel(mainGrid, 'Text', 'å°±ç»ª', 'FontAngle', 'italic', ...
+    statusLabel = uilabel(mainGrid, 'Text', '¾ÍĞ÷', 'FontAngle', 'italic', ...
         'BackgroundColor', [0.9 0.9 0.9]);
     statusLabel.Layout.Row = 20; statusLabel.Layout.Column = [1,3];
 
-    % å­˜å‚¨æ•°æ®
-    appData = struct();
-    appData.enumFiles = {};
-    appData.targetPath = '';
-    appData.interfaceFiles = {};
-    appData.varFiles = {};
-    appData.enumListBox = enumListBox;
-    appData.interfaceListBox = interfaceListBox;
-    appData.varListBox = varListBox;
-    set(fig, 'UserData', appData);
+else
+    % ======== R2018a¼°ÒÔÏÂ£º´¿ÏñËØ¶¨Î»£¬½ûÓÃËõ·Å ========
+    fig.Resize = 'off';
+    fW = fig.Position(3); fH = fig.Position(4);
+    fillH = max(fH - 30*19, 0);
+    rowHeights = [repmat(30,1,19), fillH];
+    col2W = max(fW - 120 - 90, 0);
+    colWidths = [120, col2W, 90];
 
-    % ==================== å›è°ƒå‡½æ•° ====================
+    uilabel(fig, 'Text', 'Ã¶¾Ù¶¨ÒåÎÄ¼şÁĞ±í:', 'FontWeight', 'bold', ...
+        'Position', getPosCompat(1,1, rowHeights, colWidths));
+    enumListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on', ...
+        'Position', getPosCompat([2,6], 2, rowHeights, colWidths));
+    btnAddEnumFile = uibutton(fig, 'Text', 'Ìí¼ÓÎÄ¼ş...', ...
+        'ButtonPushedFcn', @(src,event) addFiles('enum'), ...
+        'Position', getPosCompat(2,3, rowHeights, colWidths));
+    btnAddEnumFolder = uibutton(fig, 'Text', 'Ìí¼ÓÎÄ¼ş¼Ğ...', ...
+        'ButtonPushedFcn', @(src,event) addFolder('enum'), ...
+        'Position', getPosCompat(3,3, rowHeights, colWidths));
+    btnDelEnum = uibutton(fig, 'Text', 'É¾³ıÑ¡ÖĞ', ...
+        'ButtonPushedFcn', @(src,event) deleteSelected('enum'), ...
+        'Position', getPosCompat(4,3, rowHeights, colWidths));
+    btnClearEnum = uibutton(fig, 'Text', 'Çå¿ÕÈ«²¿', ...
+        'ButtonPushedFcn', @(src,event) clearAll('enum'), ...
+        'Position', getPosCompat(5,3, rowHeights, colWidths));
+    uilabel(fig, 'Text', 'Ã¶¾ÙÎÄ¼ş´æ·ÅÂ·¾¶:', 'FontWeight', 'bold', ...
+        'Position', getPosCompat(7,1, rowHeights, colWidths));
+    enumTargetPathEdit = uieditfield(fig, 'text', 'Value', '', ...
+        'Position', getPosCompat(7,2, rowHeights, colWidths));
+    btnBrowsePath = uibutton(fig, 'Text', 'ä¯ÀÀ...', ...
+        'ButtonPushedFcn', @(src,event) selectEnumTargetFolder(), ...
+        'Position', getPosCompat(7,3, rowHeights, colWidths));
+    uilabel(fig, 'Text', 'InterfaceÎÄ¼şÁĞ±í:', 'FontWeight', 'bold', ...
+        'Position', getPosCompat(8,1, rowHeights, colWidths));
+    interfaceListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on', ...
+        'Position', getPosCompat([9,12], 2, rowHeights, colWidths));
+    btnAddIntf = uibutton(fig, 'Text', 'Ìí¼ÓÎÄ¼ş...', ...
+        'ButtonPushedFcn', @(src,event) addFiles('interface'), ...
+        'Position', getPosCompat(9,3, rowHeights, colWidths));
+    btnAddIntfFolder = uibutton(fig, 'Text', 'Ìí¼ÓÎÄ¼ş¼Ğ...', ...
+        'ButtonPushedFcn', @(src,event) addFolder('interface'), ...
+        'Position', getPosCompat(10,3, rowHeights, colWidths));
+    btnDelIntf = uibutton(fig, 'Text', 'É¾³ıÑ¡ÖĞ', ...
+        'ButtonPushedFcn', @(src,event) deleteSelected('interface'), ...
+        'Position', getPosCompat(11,3, rowHeights, colWidths));
+    btnClearIntf = uibutton(fig, 'Text', 'Çå¿ÕÈ«²¿', ...
+        'ButtonPushedFcn', @(src,event) clearAll('interface'), ...
+        'Position', getPosCompat(12,3, rowHeights, colWidths));
+    uilabel(fig, 'Text', '±äÁ¿¶¨ÒåÎÄ¼şÁĞ±í:', 'FontWeight', 'bold', ...
+        'Position', getPosCompat(13,1, rowHeights, colWidths));
+    varListBox = uilistbox(fig, 'Items', {}, 'Multiselect', 'on', ...
+        'Position', getPosCompat([14,17], 2, rowHeights, colWidths));
+    btnAddVar = uibutton(fig, 'Text', 'Ìí¼ÓÎÄ¼ş...', ...
+        'ButtonPushedFcn', @(src,event) addFiles('var'), ...
+        'Position', getPosCompat(14,3, rowHeights, colWidths));
+    btnAddVarFolder = uibutton(fig, 'Text', 'Ìí¼ÓÎÄ¼ş¼Ğ...', ...
+        'ButtonPushedFcn', @(src,event) addFolder('var'), ...
+        'Position', getPosCompat(15,3, rowHeights, colWidths));
+    btnDelVar = uibutton(fig, 'Text', 'É¾³ıÑ¡ÖĞ', ...
+        'ButtonPushedFcn', @(src,event) deleteSelected('var'), ...
+        'Position', getPosCompat(16,3, rowHeights, colWidths));
+    btnClearVar = uibutton(fig, 'Text', 'Çå¿ÕÈ«²¿', ...
+        'ButtonPushedFcn', @(src,event) clearAll('var'), ...
+        'Position', getPosCompat(17,3, rowHeights, colWidths));
+    uilabel(fig, 'Text', '¼ÓÔØ½Å±¾ÎÄ¼şÃû:', 'FontWeight', 'bold', ...
+        'Position', getPosCompat(18,1, rowHeights, colWidths));
+    scriptNameEdit = uieditfield(fig, 'text', 'Value', 'LoadWorkspaceData.m', ...
+        'Position', getPosCompat(18,2, rowHeights, colWidths));
+    uilabel(fig, 'Text', '£¨.mÎÄ¼ş£¬±£´æÔÚµ±Ç°Ä¿Â¼£©', ...
+        'FontColor', [0.5 0.5 0.5], ...
+        'Position', getPosCompat(18,3, rowHeights, colWidths));
+    btnPos = getPosCompat(19, [1,3], rowHeights, colWidths);
+    btnW = (btnPos(3) - 10) / 2;
+    btnGenerate = uibutton(fig, 'Text', 'Éú³É', ...
+        'BackgroundColor', [0.3 0.7 0.3], 'FontColor','w','FontWeight','bold','FontSize',12, ...
+        'ButtonPushedFcn', @(src,event) generate(), ...
+        'Position', [btnPos(1), btnPos(2), btnW, btnPos(4)]);
+    btnExit = uibutton(fig, 'Text', 'ÍË³ö', ...
+        'BackgroundColor', [0.8 0.3 0.3], 'FontColor','w','FontWeight','bold','FontSize',12, ...
+        'ButtonPushedFcn', @(src,event) delete(fig), ...
+        'Position', [btnPos(1)+btnW+10, btnPos(2), btnW, btnPos(4)]);
+    statusLabel = uilabel(fig, 'Text', '¾ÍĞ÷£¨¼æÈİÄ£Ê½£©', 'FontAngle', 'italic', ...
+        'BackgroundColor', [0.9 0.9 0.9], ...
+        'Position', getPosCompat(20, [1,3], rowHeights, colWidths));
+end
+
+% ´æ´¢Êı¾İ
+appData = struct();
+appData.enumFiles = {};
+appData.targetPath = '';
+appData.interfaceFiles = {};
+appData.varFiles = {};
+appData.enumListBox = enumListBox;
+appData.interfaceListBox = interfaceListBox;
+appData.varListBox = varListBox;
+set(fig, 'UserData', appData);
+
+% ==================== »Øµ÷º¯Êı ====================
     function selectEnumTargetFolder()
-        folder = uigetdir(pwd, 'é€‰æ‹©æšä¸¾ç±»ç”Ÿæˆç›®æ ‡è·¯å¾„');
-        % ç½®é¡¶çª—å£
+        folder = uigetdir(pwd, 'Ñ¡ÔñÃ¶¾ÙÀàÉú³ÉÄ¿±êÂ·¾¶');
         pause(0.01);
         figure(fig);
         drawnow;
-        % å…³é”®ï¼šå¯¹åˆ—è¡¨æ¡†åšæ“ä½œæ¥ä¿æŒçª—å£æ´»è·ƒ
         appData = get(fig, 'UserData');
-        updateListBox(appData.enumListBox, appData.enumFiles);  % å¼ºåˆ¶åˆ·æ–°ç•Œé¢
+        updateListBox(appData.enumListBox, appData.enumFiles);
         if folder ~= 0
             enumTargetPathEdit.Value = folder;
-            appData = get(fig, 'UserData');
             appData.targetPath = folder;
             set(fig, 'UserData', appData);
-            statusLabel.Text = sprintf('æšä¸¾æ–‡ä»¶å­˜æ”¾è·¯å¾„: %s', folder);
+            statusLabel.Text = sprintf('Ã¶¾ÙÎÄ¼ş´æ·ÅÂ·¾¶: %s', folder);
         end
     end
 
     function addFiles(type)
         switch type
             case 'enum'
-                [files, path] = uigetfile('*.xlsx', 'é€‰æ‹©ä¸€ä¸ªæˆ–å¤šä¸ªæšä¸¾ Excel æ–‡ä»¶', ...
+                [files, path] = uigetfile('*.xlsx', 'Ñ¡ÔñÒ»¸ö»ò¶à¸öÃ¶¾Ù Excel ÎÄ¼ş', ...
                     pwd, 'MultiSelect', 'on');
             case 'interface'
-                [files, path] = uigetfile('*.xlsx', 'é€‰æ‹©ä¸€ä¸ªæˆ–å¤šä¸ª Interface Excel æ–‡ä»¶', ...
+                [files, path] = uigetfile('*.xlsx', 'Ñ¡ÔñÒ»¸ö»ò¶à¸ö Interface Excel ÎÄ¼ş', ...
                     pwd, 'MultiSelect', 'on');
             case 'var'
-                [files, path] = uigetfile('*.xlsx', 'é€‰æ‹©ä¸€ä¸ªæˆ–å¤šä¸ªå˜é‡å®šä¹‰ Excel æ–‡ä»¶', ...
+                [files, path] = uigetfile('*.xlsx', 'Ñ¡ÔñÒ»¸ö»ò¶à¸ö±äÁ¿¶¨Òå Excel ÎÄ¼ş', ...
                     pwd, 'MultiSelect', 'on');
         end
-        % ç½®é¡¶çª—å£
         pause(0.01);
         figure(fig);
         drawnow;
         if isequal(files, 0), return; end
         if ischar(files), files = {files}; end
-        
-        % è¿‡æ»¤æ‰ä¸´æ—¶æ–‡ä»¶ï¼ˆä»¥~å¼€å¤´çš„æ–‡ä»¶ï¼‰
+
         validFiles = {};
         for i = 1:length(files)
             if ~startsWith(files{i}, '~')
                 validFiles{end+1} = files{i};
             end
         end
-        
+
         if isempty(validFiles)
-            statusLabel.Text = 'æœªé€‰æ‹©æœ‰æ•ˆçš„æ–‡ä»¶ï¼ˆä¸´æ—¶æ–‡ä»¶å·²è¢«è¿‡æ»¤ï¼‰';
+            statusLabel.Text = 'Î´Ñ¡ÔñÓĞĞ§µÄÎÄ¼ş£¨ÁÙÊ±ÎÄ¼şÒÑ±»¹ıÂË£©';
             return;
         end
-        
+
         newPaths = cellfun(@(f) fullfile(path, f), validFiles, 'UniformOutput', false);
         appData = get(fig, 'UserData');
         switch type
@@ -208,19 +287,19 @@ function SignalEnumGenerator()
                 allFiles = unique(allFiles, 'stable');
                 appData.enumFiles = allFiles;
                 updateListBox(appData.enumListBox, allFiles);
-                statusLabel.Text = sprintf('å·²æ·»åŠ  %d ä¸ªæšä¸¾æ–‡ä»¶ï¼Œå…± %d ä¸ª', length(newPaths), length(allFiles));
+                statusLabel.Text = sprintf('ÒÑÌí¼Ó %d ¸öÃ¶¾ÙÎÄ¼ş£¬¹² %d ¸ö', length(newPaths), length(allFiles));
             case 'interface'
                 allFiles = [appData.interfaceFiles, newPaths];
                 allFiles = unique(allFiles, 'stable');
                 appData.interfaceFiles = allFiles;
                 updateListBox(appData.interfaceListBox, allFiles);
-                statusLabel.Text = sprintf('å·²æ·»åŠ  %d ä¸ª Interface æ–‡ä»¶ï¼Œå…± %d ä¸ª', length(newPaths), length(allFiles));
+                statusLabel.Text = sprintf('ÒÑÌí¼Ó %d ¸ö Interface ÎÄ¼ş£¬¹² %d ¸ö', length(newPaths), length(allFiles));
             case 'var'
                 allFiles = [appData.varFiles, newPaths];
                 allFiles = unique(allFiles, 'stable');
                 appData.varFiles = allFiles;
                 updateListBox(appData.varListBox, allFiles);
-                statusLabel.Text = sprintf('å·²æ·»åŠ  %d ä¸ªå˜é‡å®šä¹‰æ–‡ä»¶ï¼Œå…± %d ä¸ª', length(newPaths), length(allFiles));
+                statusLabel.Text = sprintf('ÒÑÌí¼Ó %d ¸ö±äÁ¿¶¨ÒåÎÄ¼ş£¬¹² %d ¸ö', length(newPaths), length(allFiles));
         end
         set(fig, 'UserData', appData);
     end
@@ -228,23 +307,21 @@ function SignalEnumGenerator()
     function addFolder(type)
         switch type
             case 'enum'
-                folder = uigetdir(pwd, 'é€‰æ‹©åŒ…å«æšä¸¾ Excel æ–‡ä»¶çš„æ ¹æ–‡ä»¶å¤¹');
+                folder = uigetdir(pwd, 'Ñ¡Ôñ°üº¬Ã¶¾Ù Excel ÎÄ¼şµÄ¸ùÎÄ¼ş¼Ğ');
             case 'interface'
-                folder = uigetdir(pwd, 'é€‰æ‹©åŒ…å« Interface Excel æ–‡ä»¶çš„æ ¹æ–‡ä»¶å¤¹');
+                folder = uigetdir(pwd, 'Ñ¡Ôñ°üº¬ Interface Excel ÎÄ¼şµÄ¸ùÎÄ¼ş¼Ğ');
             case 'var'
-                folder = uigetdir(pwd, 'é€‰æ‹©åŒ…å«å˜é‡å®šä¹‰ Excel æ–‡ä»¶çš„æ ¹æ–‡ä»¶å¤¹');
+                folder = uigetdir(pwd, 'Ñ¡Ôñ°üº¬±äÁ¿¶¨Òå Excel ÎÄ¼şµÄ¸ùÎÄ¼ş¼Ğ');
         end
-        % ç½®é¡¶çª—å£
         pause(0.01);
         figure(fig);
         drawnow;
         if folder == 0, return; end
-        statusLabel.Text = 'æ­£åœ¨æ‰«ææ–‡ä»¶å¤¹...';  % UIæ›´æ–°ï¼šä¿æŒçª—å£æ´»è·ƒ
-        % å…³é”®ï¼šå¯¹åˆ—è¡¨æ¡†åšæ“ä½œæ¥ä¿æŒçª—å£æ´»è·ƒ
+        statusLabel.Text = 'ÕıÔÚÉ¨ÃèÎÄ¼ş¼Ğ...';
         appData = get(fig, 'UserData');
         switch type
             case 'enum'
-                updateListBox(appData.enumListBox, appData.enumFiles);  % å¼ºåˆ¶åˆ·æ–°ç•Œé¢
+                updateListBox(appData.enumListBox, appData.enumFiles);
             case 'interface'
                 updateListBox(appData.interfaceListBox, appData.interfaceFiles);
             case 'var'
@@ -257,19 +334,19 @@ function SignalEnumGenerator()
                 allFiles = unique(allFiles, 'stable');
                 appData.enumFiles = allFiles;
                 updateListBox(appData.enumListBox, allFiles);
-                statusLabel.Text = sprintf('ä»æ–‡ä»¶å¤¹ä¸­æ·»åŠ äº† %d ä¸ªæšä¸¾æ–‡ä»¶ï¼Œå…± %d ä¸ª', length(excelFiles), length(allFiles));
+                statusLabel.Text = sprintf('´ÓÎÄ¼ş¼ĞÖĞÌí¼ÓÁË %d ¸öÃ¶¾ÙÎÄ¼ş£¬¹² %d ¸ö', length(excelFiles), length(allFiles));
             case 'interface'
                 allFiles = [appData.interfaceFiles, excelFiles];
                 allFiles = unique(allFiles, 'stable');
                 appData.interfaceFiles = allFiles;
                 updateListBox(appData.interfaceListBox, allFiles);
-                statusLabel.Text = sprintf('ä»æ–‡ä»¶å¤¹ä¸­æ·»åŠ äº† %d ä¸ª Interface æ–‡ä»¶ï¼Œå…± %d ä¸ª', length(excelFiles), length(allFiles));
+                statusLabel.Text = sprintf('´ÓÎÄ¼ş¼ĞÖĞÌí¼ÓÁË %d ¸ö Interface ÎÄ¼ş£¬¹² %d ¸ö', length(excelFiles), length(allFiles));
             case 'var'
                 allFiles = [appData.varFiles, excelFiles];
                 allFiles = unique(allFiles, 'stable');
                 appData.varFiles = allFiles;
                 updateListBox(appData.varListBox, allFiles);
-                statusLabel.Text = sprintf('ä»æ–‡ä»¶å¤¹ä¸­æ·»åŠ äº† %d ä¸ªå˜é‡å®šä¹‰æ–‡ä»¶ï¼Œå…± %d ä¸ª', length(excelFiles), length(allFiles));
+                statusLabel.Text = sprintf('´ÓÎÄ¼ş¼ĞÖĞÌí¼ÓÁË %d ¸ö±äÁ¿¶¨ÒåÎÄ¼ş£¬¹² %d ¸ö', length(excelFiles), length(allFiles));
         end
         set(fig, 'UserData', appData);
     end
@@ -284,7 +361,7 @@ function SignalEnumGenerator()
                 [~, idx] = intersect(appData.enumFiles, selected);
                 appData.enumFiles(idx) = [];
                 updateListBox(appData.enumListBox, appData.enumFiles);
-                statusLabel.Text = sprintf('å·²åˆ é™¤ %d ä¸ªæšä¸¾æ–‡ä»¶ï¼Œå‰©ä½™ %d ä¸ª', length(idx), length(appData.enumFiles));
+                statusLabel.Text = sprintf('ÒÑÉ¾³ı %d ¸öÃ¶¾ÙÎÄ¼ş£¬Ê£Óà %d ¸ö', length(idx), length(appData.enumFiles));
             case 'interface'
                 if isempty(appData.interfaceFiles), return; end
                 selected = appData.interfaceListBox.Value;
@@ -292,7 +369,7 @@ function SignalEnumGenerator()
                 [~, idx] = intersect(appData.interfaceFiles, selected);
                 appData.interfaceFiles(idx) = [];
                 updateListBox(appData.interfaceListBox, appData.interfaceFiles);
-                statusLabel.Text = sprintf('å·²åˆ é™¤ %d ä¸ª Interface æ–‡ä»¶ï¼Œå‰©ä½™ %d ä¸ª', length(idx), length(appData.interfaceFiles));
+                statusLabel.Text = sprintf('ÒÑÉ¾³ı %d ¸ö Interface ÎÄ¼ş£¬Ê£Óà %d ¸ö', length(idx), length(appData.interfaceFiles));
             case 'var'
                 if isempty(appData.varFiles), return; end
                 selected = appData.varListBox.Value;
@@ -300,11 +377,10 @@ function SignalEnumGenerator()
                 [~, idx] = intersect(appData.varFiles, selected);
                 appData.varFiles(idx) = [];
                 updateListBox(appData.varListBox, appData.varFiles);
-                statusLabel.Text = sprintf('å·²åˆ é™¤ %d ä¸ªå˜é‡å®šä¹‰æ–‡ä»¶ï¼Œå‰©ä½™ %d ä¸ª', length(idx), length(appData.varFiles));
+                statusLabel.Text = sprintf('ÒÑÉ¾³ı %d ¸ö±äÁ¿¶¨ÒåÎÄ¼ş£¬Ê£Óà %d ¸ö', length(idx), length(appData.varFiles));
         end
         set(fig, 'UserData', appData);
     end
-
 
     function clearAll(type)
         appData = get(fig, 'UserData');
@@ -312,15 +388,15 @@ function SignalEnumGenerator()
             case 'enum'
                 appData.enumFiles = {};
                 updateListBox(appData.enumListBox, {});
-                statusLabel.Text = 'å·²æ¸…ç©ºæšä¸¾æ–‡ä»¶åˆ—è¡¨';
+                statusLabel.Text = 'ÒÑÇå¿ÕÃ¶¾ÙÎÄ¼şÁĞ±í';
             case 'interface'
                 appData.interfaceFiles = {};
                 updateListBox(appData.interfaceListBox, {});
-                statusLabel.Text = 'å·²æ¸…ç©º Interface æ–‡ä»¶åˆ—è¡¨';
+                statusLabel.Text = 'ÒÑÇå¿Õ Interface ÎÄ¼şÁĞ±í';
             case 'var'
                 appData.varFiles = {};
                 updateListBox(appData.varListBox, {});
-                statusLabel.Text = 'å·²æ¸…ç©ºå˜é‡å®šä¹‰æ–‡ä»¶åˆ—è¡¨';
+                statusLabel.Text = 'ÒÑÇå¿Õ±äÁ¿¶¨ÒåÎÄ¼şÁĞ±í';
         end
         set(fig, 'UserData', appData);
     end
@@ -348,144 +424,123 @@ function SignalEnumGenerator()
         end
     end
 
-    % ==================== ç”Ÿæˆä¸»å‡½æ•° ====================
+% ==================== Éú³ÉÖ÷º¯Êı ====================
     function generate()
         appData = get(fig, 'UserData');
         if ~isempty(appData.enumFiles) && isempty(appData.targetPath)
-            uialert(fig, 'é€‰æ‹©äº†æšä¸¾æ–‡ä»¶ï¼Œè¯·é€‰æ‹©æšä¸¾æ–‡ä»¶å­˜æ”¾è·¯å¾„ï¼', 'é”™è¯¯');
+            uialert(fig, 'Ñ¡ÔñÁËÃ¶¾ÙÎÄ¼ş£¬ÇëÑ¡ÔñÃ¶¾ÙÎÄ¼ş´æ·ÅÂ·¾¶£¡', '´íÎó');
             return;
         end
 
-        % é”™è¯¯æ—¥å¿—æ”¶é›†
         errorLog = {};
         warningLog = {};
-
-        % è®°å½•å·²ç”Ÿæˆçš„å¯¹è±¡ï¼ˆç”¨äºåŠ è½½è„šæœ¬åˆå¹¶ï¼‰
         generatedVarNames = {};
 
-        % ä½¿ç”¨ Map è®°å½•æ¯ä¸ªå˜é‡åå¯¹åº”çš„è„šæœ¬è¡Œï¼ˆå»é‡ï¼‰
         scriptMap = containers.Map();
-        scriptOrder = {};  % ä¿æŒå˜é‡ç¬¬ä¸€æ¬¡å‡ºç°çš„é¡ºåº
+        scriptOrder = {};
         function recordScriptLine(varName, lines)
-            if ischar(lines)
-                lines = {lines};
-            end
-            if ~scriptMap.isKey(varName)
-                scriptOrder{end+1} = varName;
-            end
+            if ischar(lines), lines = {lines}; end
+            if ~scriptMap.isKey(varName), scriptOrder{end+1} = varName; end
             scriptMap(varName) = lines;
         end
 
-        % æ·»åŠ å¤´éƒ¨å›ºå®šè¡Œ
         headerLines = {
-            '%% Simulink å·¥ä½œåŒºæ•°æ®åŠ è½½è„šæœ¬';
-            '% æ­¤è„šæœ¬ç”± SignalEnumGenerator è‡ªåŠ¨ç”Ÿæˆ';
-            '% è¿è¡Œæ­¤è„šæœ¬å¯æ¢å¤æ‰€æœ‰å·¥ä½œåŒºå¯¹è±¡ï¼ˆæšä¸¾, AliasType, Bus, Parameter, Signalï¼‰åŠå…¶æè¿°ä¿¡æ¯';
+            '%% Simulink ¹¤×÷ÇøÊı¾İ¼ÓÔØ½Å±¾';
+            '% ´Ë½Å±¾ÓÉ SignalEnumGenerator ×Ô¶¯Éú³É';
+            '% ÔËĞĞ´Ë½Å±¾¿É»Ö¸´ËùÓĞ¹¤×÷Çø¶ÔÏó£¨Ã¶¾Ù, AliasType, Bus, Parameter, Signal£©¼°ÆäÃèÊöĞÅÏ¢';
             '';
             };
         if ~isempty(appData.targetPath)
             headerLines = [headerLines; ...
-                {sprintf('%% æ·»åŠ æšä¸¾ç±»è·¯å¾„'); ...
-                 sprintf('addpath(''%s'');', appData.targetPath); ...
-                 'savepath;'; ...
-                 ''}];
+                {sprintf('%% Ìí¼ÓÃ¶¾ÙÀàÂ·¾¶'); ...
+                sprintf('addpath(''%s'');', appData.targetPath); ...
+                'savepath;'; ...
+                ''}];
         end
         for i = 1:length(headerLines)
             recordScriptLine(['__header__' num2str(i)], headerLines{i});
         end
 
-        statusLabel.Text = 'æ­£åœ¨ç”Ÿæˆ...';
+        statusLabel.Text = 'ÕıÔÚÉú³É...';
         statusLabel.FontColor = [0.5 0 0];
         drawnow;
 
         try
-            % 1. å¤„ç†æ‰€æœ‰æšä¸¾æ–‡ä»¶
             for i = 1:length(appData.enumFiles)
                 enumFile = appData.enumFiles{i};
-                fprintf('\n--- å¤„ç†æšä¸¾æ–‡ä»¶ (%d/%d): %s ---\n', i, length(appData.enumFiles), enumFile);
+                fprintf('\n--- ´¦ÀíÃ¶¾ÙÎÄ¼ş (%d/%d): %s ---\n', i, length(appData.enumFiles), enumFile);
                 try
                     [newVars, errors, warnings] = processEnumFile(enumFile, appData.targetPath);
                     generatedVarNames = [generatedVarNames, newVars];
                     errorLog = [errorLog; errors];
                     warningLog = [warningLog; warnings];
                 catch ME
-                    errorLog{end+1} = sprintf('æšä¸¾æ–‡ä»¶å¤„ç†å¤±è´¥: %s - %s', enumFile, ME.message);
+                    errorLog{end+1} = sprintf('Ã¶¾ÙÎÄ¼ş´¦ÀíÊ§°Ü: %s - %s', enumFile, ME.message);
                 end
             end
 
-            % 2. å¤„ç†æ‰€æœ‰Interfaceæ–‡ä»¶
             for i = 1:length(appData.interfaceFiles)
                 intfFile = appData.interfaceFiles{i};
-                fprintf('\n--- å¤„ç† Interface æ–‡ä»¶ (%d/%d): %s ---\n', i, length(appData.interfaceFiles), intfFile);
+                fprintf('\n--- ´¦Àí Interface ÎÄ¼ş (%d/%d): %s ---\n', i, length(appData.interfaceFiles), intfFile);
                 try
                     [newVars, errors, warnings] = processInterfaceFile(intfFile);
                     generatedVarNames = [generatedVarNames, newVars];
                     errorLog = [errorLog; errors];
                     warningLog = [warningLog; warnings];
                 catch ME
-                    errorLog{end+1} = sprintf('Interfaceæ–‡ä»¶å¤„ç†å¤±è´¥: %s - %s', intfFile, ME.message);
+                    errorLog{end+1} = sprintf('InterfaceÎÄ¼ş´¦ÀíÊ§°Ü: %s - %s', intfFile, ME.message);
                 end
             end
 
-            % 3. å¤„ç†æ‰€æœ‰å˜é‡å®šä¹‰æ–‡ä»¶
             for i = 1:length(appData.varFiles)
                 varFile = appData.varFiles{i};
-                fprintf('\n--- å¤„ç†å˜é‡å®šä¹‰æ–‡ä»¶ (%d/%d): %s ---\n', i, length(appData.varFiles), varFile);
+                fprintf('\n--- ´¦Àí±äÁ¿¶¨ÒåÎÄ¼ş (%d/%d): %s ---\n', i, length(appData.varFiles), varFile);
                 try
                     [newVars, errors, warnings] = processVariableDefinitionFile(varFile);
                     generatedVarNames = [generatedVarNames, newVars];
                     errorLog = [errorLog; errors];
                     warningLog = [warningLog; warnings];
                 catch ME
-                    errorLog{end+1} = sprintf('å˜é‡å®šä¹‰æ–‡ä»¶å¤„ç†å¤±è´¥: %s - %s', varFile, ME.message);
+                    errorLog{end+1} = sprintf('±äÁ¿¶¨ÒåÎÄ¼ş´¦ÀíÊ§°Ü: %s - %s', varFile, ME.message);
                 end
             end
 
-            % 4. ç”ŸæˆåŠ è½½è„šæœ¬ï¼ˆåˆå¹¶æ¨¡å¼ï¼Œæ— å¤‡ä»½ï¼‰
             scriptFileName = strtrim(scriptNameEdit.Value);
-            if isempty(scriptFileName)
-                scriptFileName = 'LoadWorkspaceData.m';
-            end
-            if ~endsWith(scriptFileName, '.m')
-                scriptFileName = [scriptFileName, '.m'];
-            end
+            if isempty(scriptFileName), scriptFileName = 'LoadWorkspaceData.m'; end
+            if ~endsWith(scriptFileName, '.m'), scriptFileName = [scriptFileName, '.m']; end
             scriptPath = fullfile(pwd, scriptFileName);
             mergeLoadScript(scriptPath, scriptMap, scriptOrder, generatedVarNames);
 
-            % 5. ç»Ÿä¸€è¾“å‡ºé”™è¯¯å’Œè­¦å‘Š
             if ~isempty(warningLog)
-                fprintf('\nâš ï¸ è­¦å‘Šä¿¡æ¯æ±‡æ€»:\n');
+                fprintf('\n?? ¾¯¸æĞÅÏ¢»ã×Ü:\n');
                 for i = 1:length(warningLog)
                     fprintf('   %s\n', warningLog{i});
                 end
             end
             if ~isempty(errorLog)
-                fprintf('\nâŒ é”™è¯¯ä¿¡æ¯æ±‡æ€»:\n');
+                fprintf('\n? ´íÎóĞÅÏ¢»ã×Ü:\n');
                 for i = 1:length(errorLog)
                     fprintf('   %s\n', errorLog{i});
                 end
-                statusLabel.Text = 'ç”Ÿæˆå®Œæˆï¼Œä½†å­˜åœ¨é”™è¯¯';
+                statusLabel.Text = 'Éú³ÉÍê³É£¬µ«´æÔÚ´íÎó';
                 statusLabel.FontColor = [0.8 0.5 0];
-                uialert(fig, sprintf('ç”Ÿæˆè¿‡ç¨‹ä¸­å‘ç”Ÿ %d ä¸ªé”™è¯¯ï¼Œè¯·æŸ¥çœ‹å‘½ä»¤çª—å£', length(errorLog)), 'è­¦å‘Š');
+                uialert(fig, sprintf('Éú³É¹ı³ÌÖĞ·¢Éú %d ¸ö´íÎó£¬Çë²é¿´ÃüÁî´°¿Ú', length(errorLog)), '¾¯¸æ');
             else
-                fprintf('\nâœ… ç”Ÿæˆå®Œæˆï¼æ‰€æœ‰å¤„ç†æˆåŠŸã€‚\n');
-                statusLabel.Text = 'âœ… ç”Ÿæˆå®Œæˆï¼';
+                fprintf('\n? Éú³ÉÍê³É£¡ËùÓĞ´¦Àí³É¹¦¡£\n');
+                statusLabel.Text = '? Éú³ÉÍê³É£¡';
                 statusLabel.FontColor = [0 0.5 0];
-                uialert(fig, sprintf('ç”ŸæˆæˆåŠŸï¼\nåŠ è½½è„šæœ¬å·²ä¿å­˜è‡³:\n%s', scriptPath), 'å®Œæˆ', 'icon','success');
+                uialert(fig, sprintf('Éú³É³É¹¦£¡\n¼ÓÔØ½Å±¾ÒÑ±£´æÖÁ:\n%s', scriptPath), 'Íê³É', 'icon','success');
             end
         catch ME
-            statusLabel.Text = 'âŒ ç”Ÿæˆå¤±è´¥';
+            statusLabel.Text = '? Éú³ÉÊ§°Ü';
             statusLabel.FontColor = [0.8 0 0];
-            uialert(fig, sprintf('ç”Ÿæˆå¤±è´¥:\n%s', ME.message), 'é”™è¯¯');
+            uialert(fig, sprintf('Éú³ÉÊ§°Ü:\n%s', ME.message), '´íÎó');
             rethrow(ME);
         end
 
-        % ==================== åµŒå¥—è¾…åŠ©å‡½æ•° ====================
+        % ==================== Ç¶Ì×¸¨Öúº¯Êı ====================
         function [varNames, errors, warnings] = processEnumFile(excelFile, targetPath)
-            varNames = {};
-            errors = {};
-            warnings = {};
-            % ç”Ÿæˆæšä¸¾ç±»
+            varNames = {}; errors = {}; warnings = {};
             try
                 [enumGroups, enumErrors] = parseEnumSheet(excelFile);
                 errors = [errors; enumErrors];
@@ -495,15 +550,14 @@ function SignalEnumGenerator()
                         enumInfo = enumGroups{i};
                         className = matlab.lang.makeValidName(enumInfo.Name);
                         filePath = fullfile(targetPath, [className, '.m']);
-                        % æšä¸¾æ–‡ä»¶ç›´æ¥è¦†ç›–
                         fid = fopen(filePath, 'w', 'n', 'UTF-8');
                         if fid == -1
-                            errors{end+1} = sprintf('æ— æ³•åˆ›å»ºæšä¸¾æ–‡ä»¶: %s', className);
+                            errors{end+1} = sprintf('ÎŞ·¨´´½¨Ã¶¾ÙÎÄ¼ş: %s', className);
                             continue;
                         end
-                        fprintf(fid, '%% %s æšä¸¾ç±»å®šä¹‰\n', className);
+                        fprintf(fid, '%% %s Ã¶¾ÙÀà¶¨Òå\n', className);
                         if ~isempty(enumInfo.Description)
-                            fprintf(fid, '%% æè¿°: %s\n', enumInfo.Description);
+                            fprintf(fid, '%% ÃèÊö: %s\n', enumInfo.Description);
                         end
                         fprintf(fid, 'classdef %s < Simulink.IntEnumType\r\n', className);
                         fprintf(fid, '    enumeration\r\n');
@@ -515,55 +569,49 @@ function SignalEnumGenerator()
                         fprintf(fid, '    end\r\n');
                         fprintf(fid, 'end\r\n');
                         fclose(fid);
-                        fprintf('   âœ… ç”Ÿæˆæšä¸¾: %s.m\n', className);
+                        fprintf('   ? Éú³ÉÃ¶¾Ù: %s.m\n', className);
                     end
                 end
             catch ME
-                errors{end+1} = sprintf('è§£ææšä¸¾sheetå¤±è´¥: %s', ME.message);
+                errors{end+1} = sprintf('½âÎöÃ¶¾ÙsheetÊ§°Ü: %s', ME.message);
             end
-
-            % å¤„ç†è‡ªå®šä¹‰æ•°å€¼ç±»å‹ (numeric sheet)
             try
                 [aliasVars, aliasErrors, aliasWarnings] = processNumericSheet(excelFile);
                 varNames = [varNames, aliasVars];
                 errors = [errors; aliasErrors];
                 warnings = [warnings; aliasWarnings];
             catch ME
-                errors{end+1} = sprintf('å¤„ç†numeric sheetå¤±è´¥: %s', ME.message);
+                errors{end+1} = sprintf('´¦Àínumeric sheetÊ§°Ü: %s', ME.message);
             end
-
-            % å¤„ç†æ€»çº¿å®šä¹‰ (bus sheet)
             try
                 [busVars, busErrors, busWarnings] = processBusSheet(excelFile);
                 varNames = [varNames, busVars];
                 errors = [errors; busErrors];
                 warnings = [warnings; busWarnings];
             catch ME
-                errors{end+1} = sprintf('å¤„ç†bus sheetå¤±è´¥: %s', ME.message);
+                errors{end+1} = sprintf('´¦Àíbus sheetÊ§°Ü: %s', ME.message);
             end
         end
 
         function [enumGroups, errors] = parseEnumSheet(excelFile)
-            enumGroups = {};
-            errors = {};
+            enumGroups = {}; errors = {};
             try
                 [~, ~, rawData] = xlsread(excelFile, 'enumeration');
                 if isempty(rawData)
-                    errors{end+1} = 'æ— æ³•è¯»å– "enumeration" sheet';
+                    errors{end+1} = 'ÎŞ·¨¶ÁÈ¡ "enumeration" sheet';
                     return;
                 end
                 [headerRowIdx, headers] = findHeaderRow(rawData, {'ConvName'});
                 if headerRowIdx == 0
-                    errors{end+1} = 'æœªæ‰¾åˆ° ConvName åˆ—';
+                    errors{end+1} = 'Î´ÕÒµ½ ConvName ÁĞ';
                     return;
                 end
                 convNameCol = findColumnIndex(headers, {'ConvName'});
-                descCol = findColumnIndex(headers, {'Description', 'æè¿°'});
+                descCol = findColumnIndex(headers, {'Description', 'ÃèÊö'});
                 if convNameCol == 0
-                    errors{end+1} = 'æœªæ‰¾åˆ° ConvName åˆ—';
+                    errors{end+1} = 'Î´ÕÒµ½ ConvName ÁĞ';
                     return;
                 end
-                % æŒ‰è¡Œè§£æï¼Œç›¸åŒConvNameåˆå¹¶ï¼ˆåé¢çš„è¦†ç›–å‰é¢ï¼‰
                 enumMap = containers.Map();
                 for row = headerRowIdx+1:size(rawData, 1)
                     if convNameCol > size(rawData, 2), continue; end
@@ -593,14 +641,12 @@ function SignalEnumGenerator()
                 end
                 enumGroups = values(enumMap);
             catch ME
-                errors{end+1} = sprintf('è§£ææšä¸¾sheetå¼‚å¸¸: %s', ME.message);
+                errors{end+1} = sprintf('½âÎöÃ¶¾ÙsheetÒì³£: %s', ME.message);
             end
         end
 
         function [varNames, errors, warnings] = processNumericSheet(excelFile)
-            varNames = {};
-            errors = {};
-            warnings = {};
+            varNames = {}; errors = {}; warnings = {};
             try
                 [~, ~, rawData] = xlsread(excelFile, 'numeric');
                 if isempty(rawData) || size(rawData, 1) < 2
@@ -608,14 +654,14 @@ function SignalEnumGenerator()
                 end
                 [headerRowIdx, headers] = findHeaderRow(rawData, {'ConvName', 'DataType'});
                 if headerRowIdx == 0
-                    warnings{end+1} = sprintf('%s: numeric sheet æœªæ‰¾åˆ° ConvName/DataType åˆ—ï¼Œè·³è¿‡', excelFile);
+                    warnings{end+1} = sprintf('%s: numeric sheet Î´ÕÒµ½ ConvName/DataType ÁĞ£¬Ìø¹ı', excelFile);
                     return;
                 end
                 convNameCol = findColumnIndex(headers, {'ConvName'});
                 dataTypeCol = findColumnIndex(headers, {'DataType'});
-                descCol = findColumnIndex(headers, {'Description', 'æè¿°'});
+                descCol = findColumnIndex(headers, {'Description', 'ÃèÊö'});
                 if convNameCol == 0 || dataTypeCol == 0
-                    warnings{end+1} = sprintf('%s: numeric sheet ç¼ºå°‘å¿…éœ€åˆ—ï¼Œè·³è¿‡', excelFile);
+                    warnings{end+1} = sprintf('%s: numeric sheet È±ÉÙ±ØĞèÁĞ£¬Ìø¹ı', excelFile);
                     return;
                 end
                 dataRows = rawData(headerRowIdx+1:end, :);
@@ -652,31 +698,28 @@ function SignalEnumGenerator()
                         end
                         assignin('base', typeName, aliasObj);
                         varNames{end+1} = typeName;
-                        % è®°å½•è„šæœ¬è¡Œ
                         lines = {
-                            sprintf('%% è‡ªå®šä¹‰ç±»å‹: %s', typeName);
+                            sprintf('%% ×Ô¶¨ÒåÀàĞÍ: %s', typeName);
                             sprintf('%s = Simulink.AliasType;', typeName);
                             sprintf('%s.BaseType = ''%s'';', typeName, baseType);
                             sprintf('%s.Description = ''%s'';', typeName, strrep(aliasObj.Description, '''', ''''''));
                             sprintf('assignin(''base'', ''%s'', %s);', typeName, typeName);
                             ''};
                         recordScriptLine(typeName, lines);
-                        fprintf('   âœ… åˆ›å»ºè‡ªå®šä¹‰ç±»å‹: %s (æœ¬è´¨ç±»å‹: %s)\n', typeName, baseType);
+                        fprintf('   ? ´´½¨×Ô¶¨ÒåÀàĞÍ: %s (±¾ÖÊÀàĞÍ: %s)\n', typeName, baseType);
                     catch ME
-                        errors{end+1} = sprintf('åˆ›å»ºAliasTypeå¤±è´¥ %s: %s', typeName, ME.message);
+                        errors{end+1} = sprintf('´´½¨AliasTypeÊ§°Ü %s: %s', typeName, ME.message);
                     end
                 end
             catch ME
                 if ~strcmp(ME.identifier, 'MATLAB:xlsread:SheetNotFound')
-                    errors{end+1} = sprintf('å¤„ç†numeric sheetå¤±è´¥: %s', ME.message);
+                    errors{end+1} = sprintf('´¦Àínumeric sheetÊ§°Ü: %s', ME.message);
                 end
             end
         end
 
         function [varNames, errors, warnings] = processBusSheet(excelFile)
-            varNames = {};
-            errors = {};
-            warnings = {};
+            varNames = {}; errors = {}; warnings = {};
             try
                 [~, ~, rawData] = xlsread(excelFile, 'bus');
                 if isempty(rawData) || size(rawData, 1) < 2
@@ -684,18 +727,18 @@ function SignalEnumGenerator()
                 end
                 [headerRowIdx, headers] = findHeaderRow(rawData, {'BusName', 'ElementName', 'Typedef'});
                 if headerRowIdx == 0
-                    warnings{end+1} = sprintf('%s: bus sheet æœªæ‰¾åˆ° BusName/ElementName/Typedef åˆ—ï¼Œè·³è¿‡', excelFile);
+                    warnings{end+1} = sprintf('%s: bus sheet Î´ÕÒµ½ BusName/ElementName/Typedef ÁĞ£¬Ìø¹ı', excelFile);
                     return;
                 end
                 busNameCol = findColumnIndex(headers, {'BusName'});
                 elemIdxCol = findColumnIndex(headers, {'ElementIndex'});
                 elemNameCol = findColumnIndex(headers, {'ElementName'});
                 typeDefCol = findColumnIndex(headers, {'Typedef'});
-                busDescCol = findColumnIndex(headers, {'BusDescription', 'æ€»çº¿æè¿°'});
-                elemDescCol = findColumnIndex(headers, {'ElementDescription', 'å…ƒç´ æè¿°', 'Description', 'æè¿°'});
-                initValCol = findColumnIndex(headers, {'InitialValue', 'åˆå§‹å€¼'});
+                busDescCol = findColumnIndex(headers, {'BusDescription', '×ÜÏßÃèÊö'});
+                elemDescCol = findColumnIndex(headers, {'ElementDescription', 'ÔªËØÃèÊö', 'Description', 'ÃèÊö'});
+                initValCol = findColumnIndex(headers, {'InitialValue', '³õÊ¼Öµ'});
                 if busNameCol == 0 || elemNameCol == 0 || typeDefCol == 0
-                    warnings{end+1} = sprintf('%s: bus sheet ç¼ºå°‘å¿…éœ€åˆ—ï¼Œè·³è¿‡', excelFile);
+                    warnings{end+1} = sprintf('%s: bus sheet È±ÉÙ±ØĞèÁĞ£¬Ìø¹ı', excelFile);
                     return;
                 end
                 dataRows = rawData(headerRowIdx+1:end, :);
@@ -809,9 +852,8 @@ function SignalEnumGenerator()
                     busObj.Elements = [elemArray{:}];
                     assignin('base', busName, busObj);
                     varNames{end+1} = busName;
-                    % æ€»çº¿è„šæœ¬è¡Œ
                     busLines = {};
-                    busLines{end+1} = sprintf('%% æ€»çº¿: %s', busName);
+                    busLines{end+1} = sprintf('%% ×ÜÏß: %s', busName);
                     busLines{end+1} = sprintf('%s = Simulink.Bus;', busName);
                     busLines{end+1} = sprintf('%s.Description = ''%s'';', busName, strrep(busObj.Description, '''', ''''''));
                     busLines{end+1} = sprintf('%s.DataScope = ''%s'';', busName, busObj.DataScope);
@@ -835,8 +877,7 @@ function SignalEnumGenerator()
                     busLines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', busName, busName);
                     busLines{end+1} = '';
                     recordScriptLine(busName, busLines);
-                    
-                    % ä¸ºæ¯ä¸ªæˆå‘˜ç”Ÿæˆ Simulink.Signal
+
                     for j = 1:length(elements)
                         elem = elements(j);
                         signalName = matlab.lang.makeValidName(elem.name);
@@ -853,7 +894,7 @@ function SignalEnumGenerator()
                         assignin('base', signalName, sig);
                         varNames{end+1} = signalName;
                         signalLines = {};
-                        signalLines{end+1} = sprintf('%% æ€»çº¿æˆå‘˜ä¿¡å·: %s (æ¥è‡ªæ€»çº¿ %s)', signalName, busName);
+                        signalLines{end+1} = sprintf('%% ×ÜÏß³ÉÔ±ĞÅºÅ: %s (À´×Ô×ÜÏß %s)', signalName, busName);
                         signalLines{end+1} = sprintf('%s = Simulink.Signal;', signalName);
                         signalLines{end+1} = sprintf('%s.DataType = ''%s'';', signalName, elem.type);
                         if ~isempty(elem.initVal)
@@ -870,21 +911,19 @@ function SignalEnumGenerator()
                         signalLines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', signalName, signalName);
                         signalLines{end+1} = '';
                         recordScriptLine(signalName, signalLines);
-                        fprintf('   âœ… åˆ›å»ºæ€»çº¿æˆå‘˜ä¿¡å·: %s (æ‰€å±æ€»çº¿: %s)\n', signalName, busName);
+                        fprintf('   ? ´´½¨×ÜÏß³ÉÔ±ĞÅºÅ: %s (ËùÊô×ÜÏß: %s)\n', signalName, busName);
                     end
-                    fprintf('   âœ… åˆ›å»ºæ€»çº¿å¯¹è±¡: %s (åŒ…å« %d ä¸ªå…ƒç´ )\n', busName, length(elements));
+                    fprintf('   ? ´´½¨×ÜÏß¶ÔÏó: %s (°üº¬ %d ¸öÔªËØ)\n', busName, length(elements));
                 end
             catch ME
                 if ~strcmp(ME.identifier, 'MATLAB:xlsread:SheetNotFound')
-                    errors{end+1} = sprintf('å¤„ç†bus sheetå¤±è´¥: %s', ME.message);
+                    errors{end+1} = sprintf('´¦Àíbus sheetÊ§°Ü: %s', ME.message);
                 end
             end
         end
 
         function [varNames, errors, warnings] = processInterfaceFile(excelFile)
-            varNames = {};
-            errors = {};
-            warnings = {};
+            varNames = {}; errors = {}; warnings = {};
             sheets = {'CAL', 'NVV', 'IN', 'OUT', 'MP'};
             for i = 1:length(sheets)
                 sheetName = sheets{i};
@@ -902,15 +941,13 @@ function SignalEnumGenerator()
                     errors = [errors; errs];
                     warnings = [warnings; warns];
                 catch ME
-                    errors{end+1} = sprintf('å·¥ä½œè¡¨ %s å¤„ç†å¤±è´¥: %s', sheetName, ME.message);
+                    errors{end+1} = sprintf('¹¤×÷±í %s ´¦ÀíÊ§°Ü: %s', sheetName, ME.message);
                 end
             end
         end
 
         function [varNames, errors, warnings] = processCalNvvSheet(rawData, numData, srcFile)
-            varNames = {};
-            errors = {};
-            warnings = {};
+            varNames = {}; errors = {}; warnings = {};
             if isempty(rawData) || size(rawData,1) < 2
                 return;
             end
@@ -924,9 +961,9 @@ function SignalEnumGenerator()
             typeCol = findColumnIndex(headers, {'typedef', 'DataType'});
             defaultCol = findColumnIndex(headers, {'defaultvalue', 'default', 'Value'});
             widthCol = findColumnIndex(headers, {'width'});
-            descCol = findColumnIndex(headers, {'Description', 'æè¿°'});
+            descCol = findColumnIndex(headers, {'Description', 'ÃèÊö'});
             if nameCol == 0
-                warnings{end+1} = sprintf('%s: æœªæ‰¾åˆ°Nameåˆ—ï¼Œè·³è¿‡', srcFile);
+                warnings{end+1} = sprintf('%s: Î´ÕÒµ½NameÁĞ£¬Ìø¹ı', srcFile);
                 return;
             end
             dataRows = rawData(2:end, :);
@@ -942,10 +979,9 @@ function SignalEnumGenerator()
                         dataTypeRaw = strtrim(dt);
                     end
                 end
-                % æ•°æ®ç±»å‹æ ¡éªŒ
                 [valid, errMsg] = validateDataType(dataTypeRaw);
                 if ~valid
-                    errors{end+1} = sprintf('å‚æ•° %s æ•°æ®ç±»å‹æ— æ•ˆ: %s', varName, errMsg);
+                    errors{end+1} = sprintf('²ÎÊı %s Êı¾İÀàĞÍÎŞĞ§: %s', varName, errMsg);
                     continue;
                 end
                 width = 1;
@@ -1001,13 +1037,12 @@ function SignalEnumGenerator()
                         description = strtrim(d);
                     end
                 end
-                % å¤„ç†æšä¸¾ç±»å‹
                 if startsWith(dataTypeRaw, 'Enum:', 'IgnoreCase', true)
                     enumClassName = strtrim(dataTypeRaw(6:end));
                     enumClassName = matlab.lang.makeValidName(enumClassName);
                     try
                         if ~exist(enumClassName, 'class')
-                            errors{end+1} = sprintf('æšä¸¾ç±» %s æœªæ‰¾åˆ°ï¼Œå‚æ•° %s åˆ›å»ºå¤±è´¥', enumClassName, varName);
+                            errors{end+1} = sprintf('Ã¶¾ÙÀà %s Î´ÕÒµ½£¬²ÎÊı %s ´´½¨Ê§°Ü', enumClassName, varName);
                             continue;
                         end
                         param = Simulink.Parameter;
@@ -1024,11 +1059,11 @@ function SignalEnumGenerator()
                                 if ~isempty(idx)
                                     enumValue = members(idx);
                                 else
-                                    warnings{end+1} = sprintf('æ•°å€¼ %d æœªåŒ¹é…æšä¸¾ %sï¼Œä½¿ç”¨ç¬¬ä¸€ä¸ªæˆå‘˜', defaultValue, enumClassName);
+                                    warnings{end+1} = sprintf('ÊıÖµ %d Î´Æ¥ÅäÃ¶¾Ù %s£¬Ê¹ÓÃµÚÒ»¸ö³ÉÔ±', defaultValue, enumClassName);
                                     enumValue = members(1);
                                 end
                             else
-                                errors{end+1} = sprintf('æšä¸¾ç±» %s æ— æˆå‘˜', enumClassName);
+                                errors{end+1} = sprintf('Ã¶¾ÙÀà %s ÎŞ³ÉÔ±', enumClassName);
                                 continue;
                             end
                         elseif ischar(defaultValue)
@@ -1049,19 +1084,19 @@ function SignalEnumGenerator()
                                 if ~isempty(idx)
                                     enumValue = members(idx);
                                 else
-                                    errors{end+1} = sprintf('æšä¸¾ç±» %s ä¸­æœªæ‰¾åˆ°æˆå‘˜ %s', enumClassName, memberName);
+                                    errors{end+1} = sprintf('Ã¶¾ÙÀà %s ÖĞÎ´ÕÒµ½³ÉÔ± %s', enumClassName, memberName);
                                     continue;
                                 end
                             end
                         else
-                            errors{end+1} = sprintf('å‚æ•° %s é»˜è®¤å€¼ç±»å‹ä¸æ”¯æŒ', varName);
+                            errors{end+1} = sprintf('²ÎÊı %s Ä¬ÈÏÖµÀàĞÍ²»Ö§³Ö', varName);
                             continue;
                         end
                         param.Value = enumValue;
                         assignin('base', varName, param);
                         varNames{end+1} = varName;
                         lines = {
-                            sprintf('%% æšä¸¾å‚æ•°: %s', varName);
+                            sprintf('%% Ã¶¾Ù²ÎÊı: %s', varName);
                             sprintf('%s = Simulink.Parameter;', varName);
                             sprintf('%s.DataType = ''Enum: %s'';', varName, enumClassName);
                             };
@@ -1072,12 +1107,11 @@ function SignalEnumGenerator()
                         lines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', varName, varName);
                         lines{end+1} = '';
                         recordScriptLine(varName, lines);
-                        fprintf('   âœ… åˆ›å»ºæšä¸¾å‚æ•°: %s\n', varName);
+                        fprintf('   ? ´´½¨Ã¶¾Ù²ÎÊı: %s\n', varName);
                     catch ME
-                        errors{end+1} = sprintf('åˆ›å»ºæšä¸¾å‚æ•°å¤±è´¥ %s: %s', varName, ME.message);
+                        errors{end+1} = sprintf('´´½¨Ã¶¾Ù²ÎÊıÊ§°Ü %s: %s', varName, ME.message);
                     end
                 else
-                    % æ™®é€šå‚æ•°
                     try
                         param = Simulink.Parameter;
                         [baseType, isBuiltin] = resolveBaseTypeWithFlag(dataTypeRaw);
@@ -1102,7 +1136,7 @@ function SignalEnumGenerator()
                         assignin('base', varName, param);
                         varNames{end+1} = varName;
                         lines = {
-                            sprintf('%% å‚æ•°: %s', varName);
+                            sprintf('%% ²ÎÊı: %s', varName);
                             sprintf('%s = Simulink.Parameter;', varName);
                             sprintf('%s.DataType = ''%s'';', varName, param.DataType);
                             };
@@ -1113,18 +1147,16 @@ function SignalEnumGenerator()
                         lines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', varName, varName);
                         lines{end+1} = '';
                         recordScriptLine(varName, lines);
-                        fprintf('   âœ… åˆ›å»ºå‚æ•°: %s\n', varName);
+                        fprintf('   ? ´´½¨²ÎÊı: %s\n', varName);
                     catch ME
-                        errors{end+1} = sprintf('åˆ›å»ºå‚æ•°å¤±è´¥ %s: %s', varName, ME.message);
+                        errors{end+1} = sprintf('´´½¨²ÎÊıÊ§°Ü %s: %s', varName, ME.message);
                     end
                 end
             end
         end
 
         function [varNames, errors, warnings] = processSignalSheet(rawData, srcFile)
-            varNames = {};
-            errors = {};
-            warnings = {};
+            varNames = {}; errors = {}; warnings = {};
             if isempty(rawData) || size(rawData,1) < 2
                 return;
             end
@@ -1137,9 +1169,9 @@ function SignalEnumGenerator()
             nameCol = findColumnIndex(headers, {'Name'});
             typeCol = findColumnIndex(headers, {'typedef', 'DataType'});
             initCol = findColumnIndex(headers, {'defaultvalue', 'default', 'InitialValue'});
-            descCol = findColumnIndex(headers, {'Description', 'æè¿°'});
+            descCol = findColumnIndex(headers, {'Description', 'ÃèÊö'});
             if nameCol == 0
-                warnings{end+1} = sprintf('%s: æœªæ‰¾åˆ°Nameåˆ—ï¼Œè·³è¿‡', srcFile);
+                warnings{end+1} = sprintf('%s: Î´ÕÒµ½NameÁĞ£¬Ìø¹ı', srcFile);
                 return;
             end
             dataRows = rawData(2:end, :);
@@ -1155,10 +1187,9 @@ function SignalEnumGenerator()
                         dataType = strtrim(dt);
                     end
                 end
-                % æ•°æ®ç±»å‹æ ¡éªŒ
                 [valid, errMsg] = validateDataType(dataType);
                 if ~valid
-                    errors{end+1} = sprintf('ä¿¡å· %s æ•°æ®ç±»å‹æ— æ•ˆ: %s', sigName, errMsg);
+                    errors{end+1} = sprintf('ĞÅºÅ %s Êı¾İÀàĞÍÎŞĞ§: %s', sigName, errMsg);
                     continue;
                 end
                 initVal = '0';
@@ -1196,7 +1227,7 @@ function SignalEnumGenerator()
                     assignin('base', sigName, sig);
                     varNames{end+1} = sigName;
                     lines = {
-                        sprintf('%% ä¿¡å·: %s', sigName);
+                        sprintf('%% ĞÅºÅ: %s', sigName);
                         sprintf('%s = Simulink.Signal;', sigName);
                         sprintf('%s.DataType = ''%s'';', sigName, dataType);
                         };
@@ -1220,21 +1251,19 @@ function SignalEnumGenerator()
                     lines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', sigName, sigName);
                     lines{end+1} = '';
                     recordScriptLine(sigName, lines);
-                    fprintf('   âœ… åˆ›å»º Simulink.Signal: %s\n', sigName);
+                    fprintf('   ? ´´½¨ Simulink.Signal: %s\n', sigName);
                 catch ME
-                    errors{end+1} = sprintf('åˆ›å»ºä¿¡å·å¤±è´¥ %s: %s', sigName, ME.message);
+                    errors{end+1} = sprintf('´´½¨ĞÅºÅÊ§°Ü %s: %s', sigName, ME.message);
                 end
             end
         end
 
         function [varNames, errors, warnings] = processVariableDefinitionFile(excelFile)
-            varNames = {};
-            errors = {};
-            warnings = {};
+            varNames = {}; errors = {}; warnings = {};
             try
                 [~, sheetNames] = xlsfinfo(excelFile);
                 if isempty(sheetNames)
-                    warnings{end+1} = sprintf('æ–‡ä»¶ %s æ— æœ‰æ•ˆå·¥ä½œè¡¨ï¼Œè·³è¿‡', excelFile);
+                    warnings{end+1} = sprintf('ÎÄ¼ş %s ÎŞÓĞĞ§¹¤×÷±í£¬Ìø¹ı', excelFile);
                     return;
                 end
                 for s = 1:length(sheetNames)
@@ -1249,100 +1278,59 @@ function SignalEnumGenerator()
                         errors = [errors; errs];
                         warnings = [warnings; warns];
                     catch ME
-                        errors{end+1} = sprintf('å·¥ä½œè¡¨ %s å¤„ç†å¤±è´¥: %s', sheetName, ME.message);
+                        errors{end+1} = sprintf('¹¤×÷±í %s ´¦ÀíÊ§°Ü: %s', sheetName, ME.message);
                     end
                 end
             catch ME
-                errors{end+1} = sprintf('å¤„ç†å˜é‡å®šä¹‰æ–‡ä»¶å¤±è´¥: %s', ME.message);
+                errors{end+1} = sprintf('´¦Àí±äÁ¿¶¨ÒåÎÄ¼şÊ§°Ü: %s', ME.message);
             end
         end
 
         function [valid, errMsg] = validateDataType(dataType)
-            valid = true;
-            errMsg = '';
+            valid = true; errMsg = '';
             dataType = strtrim(dataType);
-            % å†…ç½®ç±»å‹
             builtinTypes = {'uint8','uint16','uint32','uint64','int8','int16','int32','int64','single','double','logical','boolean'};
-            if ismember(lower(dataType), builtinTypes)
-                return;
-            end
-            % æšä¸¾ç±»å‹
+            if ismember(lower(dataType), builtinTypes), return; end
             if startsWith(dataType, 'Enum:', 'IgnoreCase', true)
                 enumName = strtrim(dataType(6:end));
-                if exist(enumName, 'class')
-                    return;
-                else
-                    valid = false;
-                    errMsg = sprintf('æšä¸¾ç±» %s ä¸å­˜åœ¨', enumName);
-                    return;
-                end
+                if exist(enumName, 'class'), return;
+                else valid = false; errMsg = sprintf('Ã¶¾ÙÀà %s ²»´æÔÚ', enumName); return; end
             end
-            % æ€»çº¿ç±»å‹
             if startsWith(dataType, 'Bus:', 'IgnoreCase', true)
                 busName = strtrim(dataType(5:end));
-                if evalin('base', sprintf('exist(''%s'', ''var'')', busName)) && evalin('base', sprintf('isa(%s, ''Simulink.Bus'')', busName))
-                    return;
-                else
-                    valid = false;
-                    errMsg = sprintf('Buså¯¹è±¡ %s ä¸å­˜åœ¨', busName);
-                    return;
-                end
+                if evalin('base', sprintf('exist(''%s'', ''var'')', busName)) && evalin('base', sprintf('isa(%s, ''Simulink.Bus'')', busName)), return;
+                else valid = false; errMsg = sprintf('Bus¶ÔÏó %s ²»´æÔÚ', busName); return; end
             end
-            % è‡ªå®šä¹‰AliasType
-            if evalin('base', sprintf('exist(''%s'', ''var'')', dataType)) && evalin('base', sprintf('isa(%s, ''Simulink.AliasType'')', dataType))
-                return;
-            else
-                valid = false;
-                errMsg = sprintf('æ•°æ®ç±»å‹ %s ä¸æ˜¯å†…ç½®ç±»å‹ã€æšä¸¾ã€Busæˆ–å·²å®šä¹‰çš„AliasType', dataType);
-            end
+            if evalin('base', sprintf('exist(''%s'', ''var'')', dataType)) && evalin('base', sprintf('isa(%s, ''Simulink.AliasType'')', dataType)), return;
+            else valid = false; errMsg = sprintf('Êı¾İÀàĞÍ %s ²»ÊÇÄÚÖÃÀàĞÍ¡¢Ã¶¾Ù¡¢Bus»òÒÑ¶¨ÒåµÄAliasType', dataType); end
         end
-    end % end of generate
+    end
 
     function mergeLoadScript(scriptPath, scriptMap, scriptOrder, generatedVars)
-        % åˆå¹¶åŠ è½½è„šæœ¬ï¼šä¿ç•™æ—§è„šæœ¬ä¸­ç‹¬æœ‰çš„å˜é‡å®šä¹‰ï¼Œæ–°ç”Ÿæˆçš„å˜é‡å®šä¹‰è¦†ç›–åŒåæ—§å®šä¹‰
-        % ä¸è¿›è¡Œå¤‡ä»½
-        
-        % ç”Ÿæˆæ–°è„šæœ¬å†…å®¹ï¼ˆæŒ‰é¡ºåºï¼‰
         newScriptLines = {};
         for i = 1:length(scriptOrder)
             varName = scriptOrder{i};
             if startsWith(varName, '__header__')
                 lines = scriptMap(varName);
-                if iscell(lines)
-                    newScriptLines = [newScriptLines; lines(:)];
-                else
-                    newScriptLines{end+1} = lines;
-                end
+                if iscell(lines), newScriptLines = [newScriptLines; lines(:)]; else newScriptLines{end+1} = lines; end
             else
                 lines = scriptMap(varName);
-                if iscell(lines)
-                    newScriptLines = [newScriptLines; lines(:)];
-                else
-                    newScriptLines{end+1} = lines;
-                end
+                if iscell(lines), newScriptLines = [newScriptLines; lines(:)]; else newScriptLines{end+1} = lines; end
             end
         end
-        
+
         if ~exist(scriptPath, 'file')
-            % æ–°æ–‡ä»¶ï¼Œç›´æ¥å†™å…¥
             fid = fopen(scriptPath, 'w');
-            if fid == -1, error('æ— æ³•åˆ›å»ºè„šæœ¬æ–‡ä»¶'); end
-            for i = 1:length(newScriptLines)
-                fprintf(fid, '%s\n', newScriptLines{i});
-            end
+            if fid == -1, error('ÎŞ·¨´´½¨½Å±¾ÎÄ¼ş'); end
+            for i = 1:length(newScriptLines), fprintf(fid, '%s\n', newScriptLines{i}); end
             fclose(fid);
-            fprintf('âœ… å·²ç”ŸæˆåŠ è½½è„šæœ¬: %s\n', scriptPath);
+            fprintf('? ÒÑÉú³É¼ÓÔØ½Å±¾: %s\n', scriptPath);
             return;
         end
-        
-        % è¯»å–æ—§è„šæœ¬å†…å®¹
+
         oldContent = fileread(scriptPath);
         lines = strsplit(oldContent, '\n');
-        
-        % æ–°ç”Ÿæˆçš„å˜é‡åé›†åˆï¼ˆå»é‡ï¼‰
         newVarSet = unique(generatedVars);
-        
-        % é€è¡Œåˆ†æï¼Œä¿ç•™æ—§è„šæœ¬ä¸­ä¸åœ¨æ–°å˜é‡é›†åˆä¸­çš„å®šä¹‰å—
         keepLines = {};
         i = 1;
         while i <= length(lines)
@@ -1351,25 +1339,19 @@ function SignalEnumGenerator()
             if ~isempty(tokens)
                 varName = tokens{1}{1};
                 if ismember(varName, newVarSet)
-                    % è·³è¿‡æ•´ä¸ªå®šä¹‰å—
                     i = i + 1;
                     while i <= length(lines)
                         nextLine = lines{i};
-                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens'))
-                            break;
-                        end
+                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
                         i = i + 1;
                     end
                     continue;
                 else
-                    % ä¿ç•™è¯¥å˜é‡å®šä¹‰åŠå…¶åç»­å…³è”è¡Œ
                     keepLines{end+1} = line;
                     i = i + 1;
                     while i <= length(lines)
                         nextLine = lines{i};
-                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens'))
-                            break;
-                        end
+                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
                         keepLines{end+1} = nextLine;
                         i = i + 1;
                     end
@@ -1379,132 +1361,118 @@ function SignalEnumGenerator()
                 i = i + 1;
             end
         end
-        
-        % å†™å…¥åˆå¹¶åçš„è„šæœ¬
+
         fid = fopen(scriptPath, 'w');
-        if fid == -1, error('æ— æ³•å†™å…¥è„šæœ¬æ–‡ä»¶'); end
-        for i = 1:length(keepLines)
-            fprintf(fid, '%s\n', keepLines{i});
-        end
-        fprintf(fid, '\n%% ========== ä»¥ä¸‹ä¸ºæ–°ç”Ÿæˆçš„å†…å®¹ ==========\n');
-        for i = 1:length(newScriptLines)
-            fprintf(fid, '%s\n', newScriptLines{i});
-        end
+        if fid == -1, error('ÎŞ·¨Ğ´Èë½Å±¾ÎÄ¼ş'); end
+        for i = 1:length(keepLines), fprintf(fid, '%s\n', keepLines{i}); end
+        fprintf(fid, '\n%% ========== ÒÔÏÂÎªĞÂÉú³ÉµÄÄÚÈİ ==========\n');
+        for i = 1:length(newScriptLines), fprintf(fid, '%s\n', newScriptLines{i}); end
         fclose(fid);
-        fprintf('âœ… å·²åˆå¹¶ç”ŸæˆåŠ è½½è„šæœ¬: %s\n', scriptPath);
+        fprintf('? ÒÑºÏ²¢Éú³É¼ÓÔØ½Å±¾: %s\n', scriptPath);
+    end
+
+% ¼æÈİÄ£Ê½²¼¾Ö¼ÆËã£¨Ç¶Ì×º¯Êı£¬¹© else ·ÖÖ§µ÷ÓÃ£©
+    function pos = getPosCompat(rowSpan, colSpan, rowHeights, colWidths)
+        if isscalar(rowSpan)
+            r1 = rowSpan; r2 = rowSpan;
+        else
+            r1 = rowSpan(1); r2 = rowSpan(2);
+        end
+        h = sum(rowHeights(r1:r2));
+        y = sum(rowHeights(r2+1:end));
+        if isscalar(colSpan)
+            c1 = colSpan; c2 = colSpan;
+        else
+            c1 = colSpan(1); c2 = colSpan(2);
+        end
+        x = sum(colWidths(1:c1-1));
+        w = sum(colWidths(c1:c2));
+        pos = [x, y, w, h];
     end
 end
 
-%% ======================== å…¨å±€è¾…åŠ©å‡½æ•°ï¼ˆç‹¬ç«‹ï¼‰ ========================
+%% ======================== È«¾Ö¸¨Öúº¯Êı ========================
 function [headerRowIdx, headers] = findHeaderRow(rawData, requiredColNames)
-    if isempty(rawData)
-        headerRowIdx = 0;
-        headers = {};
-        return;
-    end
-    for row = 1:size(rawData, 1)
-        rowData = rawData(row, :);
-        foundAll = true;
-        for j = 1:length(requiredColNames)
-            colFound = false;
-            for col = 1:length(rowData)
-                cellVal = rowData{col};
-                if ischar(cellVal) && ~isempty(strtrim(cellVal))
-                    if strcmpi(strtrim(cellVal), requiredColNames{j})
-                        colFound = true;
-                        break;
-                    end
-                end
-            end
-            if ~colFound
-                foundAll = false;
-                break;
+if isempty(rawData), headerRowIdx = 0; headers = {}; return; end
+for row = 1:size(rawData, 1)
+    rowData = rawData(row, :);
+    foundAll = true;
+    for j = 1:length(requiredColNames)
+        colFound = false;
+        for col = 1:length(rowData)
+            cellVal = rowData{col};
+            if ischar(cellVal) && ~isempty(strtrim(cellVal))
+                if strcmpi(strtrim(cellVal), requiredColNames{j}), colFound = true; break; end
             end
         end
-        if foundAll
-            headerRowIdx = row;
-            headers = rowData;
-            return;
-        end
+        if ~colFound, foundAll = false; break; end
     end
-    headerRowIdx = 0;
-    headers = {};
+    if foundAll, headerRowIdx = row; headers = rowData; return; end
+end
+headerRowIdx = 0; headers = {};
 end
 
 function colIdx = findColumnIndex(headers, possibleNames)
-    colIdx = 0;
-    for i = 1:length(headers)
-        if ~isempty(headers{i}) && ischar(headers{i})
-            hdr = strtrim(headers{i});
-            for j = 1:length(possibleNames)
-                if strcmpi(hdr, possibleNames{j})
-                    colIdx = i;
-                    return;
-                end
-            end
+colIdx = 0;
+for i = 1:length(headers)
+    if ~isempty(headers{i}) && ischar(headers{i})
+        hdr = strtrim(headers{i});
+        for j = 1:length(possibleNames)
+            if strcmpi(hdr, possibleNames{j}), colIdx = i; return; end
         end
     end
+end
 end
 
 function [baseType, isBuiltin] = resolveBaseTypeWithFlag(typeName)
-    baseType = lower(strtrim(typeName));
-    builtinTypes = {'uint8','uint16','uint32','uint64','int8','int16','int32','int64','single','double','logical','boolean'};
-    if ismember(baseType, builtinTypes)
-        isBuiltin = true;
-        return;
+baseType = lower(strtrim(typeName));
+builtinTypes = {'uint8','uint16','uint32','uint64','int8','int16','int32','int64','single','double','logical','boolean'};
+if ismember(baseType, builtinTypes), isBuiltin = true; return; end
+if strcmp(baseType, 'boolean') || strcmp(baseType, 'bool'), baseType = 'boolean'; isBuiltin = true; return; end
+try
+    if evalin('base', sprintf('exist(''%s'', ''var'')', baseType))
+        obj = evalin('base', baseType);
+        if isa(obj, 'Simulink.AliasType'), [baseType, isBuiltin] = resolveBaseTypeWithFlag(obj.BaseType); return; end
     end
-    if strcmp(baseType, 'boolean') || strcmp(baseType, 'bool')
-        baseType = 'boolean';
-        isBuiltin = true;
-        return;
-    end
-    try
-        if evalin('base', sprintf('exist(''%s'', ''var'')', baseType))
-            obj = evalin('base', baseType);
-            if isa(obj, 'Simulink.AliasType')
-                [baseType, isBuiltin] = resolveBaseTypeWithFlag(obj.BaseType);
-                return;
-            end
-        end
-    catch
-    end
-    isBuiltin = false;
+catch
+end
+isBuiltin = false;
 end
 
 function val = castScalar(val, dataType)
-    if ~isnumeric(val), return; end
-    switch dataType
-        case 'uint8',   val = uint8(val);
-        case 'uint16',  val = uint16(val);
-        case 'uint32',  val = uint32(val);
-        case 'uint64',  val = uint64(val);
-        case 'int8',    val = int8(val);
-        case 'int16',   val = int16(val);
-        case 'int32',   val = int32(val);
-        case 'int64',   val = int64(val);
-        case 'single',  val = single(val);
-        case 'double',  val = double(val);
-        case 'logical', val = logical(val);
-        case 'boolean', val = logical(val);
-        otherwise
-    end
+if ~isnumeric(val), return; end
+switch dataType
+    case 'uint8',   val = uint8(val);
+    case 'uint16',  val = uint16(val);
+    case 'uint32',  val = uint32(val);
+    case 'uint64',  val = uint64(val);
+    case 'int8',    val = int8(val);
+    case 'int16',   val = int16(val);
+    case 'int32',   val = int32(val);
+    case 'int64',   val = int64(val);
+    case 'single',  val = single(val);
+    case 'double',  val = double(val);
+    case 'logical', val = logical(val);
+    case 'boolean', val = logical(val);
+    otherwise
+end
 end
 
 function arr = castArray(arr, dataType)
-    if ~isnumeric(arr), return; end
-    switch dataType
-        case 'uint8',   arr = uint8(arr);
-        case 'uint16',  arr = uint16(arr);
-        case 'uint32',  arr = uint32(arr);
-        case 'uint64',  arr = uint64(arr);
-        case 'int8',    arr = int8(arr);
-        case 'int16',   arr = int16(arr);
-        case 'int32',   arr = int32(arr);
-        case 'int64',   arr = int64(arr);
-        case 'single',  arr = single(arr);
-        case 'double',  arr = double(arr);
-        case 'logical', arr = logical(arr);
-        case 'boolean', arr = logical(arr);
-        otherwise
-    end
+if ~isnumeric(arr), return; end
+switch dataType
+    case 'uint8',   arr = uint8(arr);
+    case 'uint16',  arr = uint16(arr);
+    case 'uint32',  arr = uint32(arr);
+    case 'uint64',  arr = uint64(arr);
+    case 'int8',    arr = int8(arr);
+    case 'int16',   arr = int16(arr);
+    case 'int32',   arr = int32(arr);
+    case 'int64',   arr = int64(arr);
+    case 'single',  arr = single(arr);
+    case 'double',  arr = double(arr);
+    case 'logical', arr = logical(arr);
+    case 'boolean', arr = logical(arr);
+    otherwise
+end
 end
