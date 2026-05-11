@@ -873,8 +873,20 @@ set(fig, 'UserData', appData);
     end
 
     function focusMainWindow()
+        if ~isvalid(fig)
+            return;
+        end
+        drawnow;
         if isLegacyUI
             figure(fig);
+        else
+            try
+                show(fig);
+            catch
+                if isprop(fig, 'Visible')
+                    fig.Visible = 'on';
+                end
+            end
         end
         drawnow;
     end
