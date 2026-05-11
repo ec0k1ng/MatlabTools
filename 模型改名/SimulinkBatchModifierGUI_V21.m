@@ -138,7 +138,7 @@ app.UIFigure.Visible = 'on';
 
         if excelEnabled && signalEnabled
             app.EnableSignalExcelCheckBox.Enable = 'on';
-            if ~signalExcelWasEnabled && ~app.EnableSignalExcelCheckBox.Value
+            if ~signalExcelWasEnabled
                 app.EnableSignalExcelCheckBox.Value = true;
             end
         else
@@ -148,7 +148,7 @@ app.UIFigure.Visible = 'on';
 
         if excelEnabled && parameterEnabled
             app.EnableParamExcelCheckBox.Enable = 'on';
-            if ~paramExcelWasEnabled && ~app.EnableParamExcelCheckBox.Value
+            if ~paramExcelWasEnabled
                 app.EnableParamExcelCheckBox.Value = true;
             end
         else
