@@ -877,17 +877,7 @@ set(fig, 'UserData', appData);
             return;
         end
         drawnow;
-        if isLegacyUI
-            figure(fig);
-        else
-            try
-                show(fig);
-            catch
-                if isprop(fig, 'Visible')
-                    fig.Visible = 'on';
-                end
-            end
-        end
+        figure(fig);
         drawnow;
     end
 
