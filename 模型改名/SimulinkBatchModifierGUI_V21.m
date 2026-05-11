@@ -71,7 +71,7 @@ app.UIFigure.Visible = 'on';
 
         % --- 其余面板保持不变 ---
         app.Function2Panel = uipanel(app.UIFigure, 'Title', '功能2: 名称规范检查及修正', 'Position', [20, 223, 500, 130]);
-        app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', '启用此功能 (名称规范化)', 'Position', [15, 80, 350, 22], 'Value', true);
+        app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', '启用此功能 (名称规范化)', 'Position', [15, 80, 350, 22], 'Value', false);
         uilabel(app.Function2Panel, 'Text', '说明: 仅对功能1实际改动过的名称进行规范化修正。', 'Position', [25, 58, 430, 18], 'FontColor', [0 0 0]);
         uilabel(app.Function2Panel, 'Text', '· 信号名称: 首段大写，次段首字母大写，其余小写', 'Position', [25, 38, 430, 18], 'FontColor', [0 0 0]);
         uilabel(app.Function2Panel, 'Text', '· 参数名称: 全部转为大写，并移除空格', 'Position', [25, 16, 430, 18], 'FontColor', [0 0 0]);
@@ -79,22 +79,20 @@ app.UIFigure.Visible = 'on';
         app.ExcelPanel = uipanel(app.UIFigure, 'Title', '功能3: 配套Interface Excel修改', 'Position', [20, 55, 500, 158]);
         app.EnableExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', '启用Excel修改功能', 'Position', [15, 106, 160, 22], 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
         app.ExcelStatusLabel = uilabel(app.ExcelPanel, 'Text', '请先选择模型文件...', 'Position', [190, 106, 295, 22], 'HorizontalAlignment', 'left', 'FontWeight', 'bold');
-        app.ExcelScopeHintLabel = uilabel(app.ExcelPanel, 'Text', '提示: 仅同步已启用改名范围对应的 Interface Excel sheet。', ...
-            'Position', [15, 130, 470, 18], 'HorizontalAlignment', 'right', 'FontSize', 10, 'FontColor', [0.6 0.6 0.6]);
         app.EnableSignalExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'IN / OUT / MP（信号）', ...
-            'Position', [15, 66, 180, 22], 'Value', false, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+            'Position', [15, 66, 180, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
         uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 IN / OUT / MP sheet', ...
             'Position', [210, 66, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
         app.EnableParamExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'CAL / NVV（参数）', ...
-            'Position', [15, 30, 170, 22], 'Value', false, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+            'Position', [15, 30, 170, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
         uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 CAL / NVV sheet', ...
             'Position', [210, 30, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
 
-        app.ProgressBar = uigauge(app.UIFigure, 'linear', 'Position', [20, 12, 990, 34]);
+        app.ProgressBar = uigauge(app.UIFigure, 'linear', 'Position', [20, 12, 950, 34]);
         app.ProgressBar.Limits = [0 100];
         app.ProgressBar.Value = 0;
         app.ProgressBar.MajorTicks = [0 25 50 75 100];
-        app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [1012, 18, 50, 22], 'Text', '0%');
+        app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [978, 18, 84, 22], 'Text', '0%');
         app.RunButton = uibutton(app.UIFigure, 'push', 'Text', '开始执行', 'Position', [1068, 8, 192, 42], 'FontSize', 14, 'FontWeight', 'bold', 'ButtonPushedFcn', @RunButtonPushed, 'Enable', 'off');
 
         app.LogArea = uitextarea(app.UIFigure, 'Editable', 'off', 'Position', [540, 55, 720, 700], 'Value', '');
@@ -135,9 +133,14 @@ app.UIFigure.Visible = 'on';
         parameterEnabled = app.EnableParameterRenameCheckBox.Value;
         hasExcelCapability = strcmp(app.EnableExcelCheckBox.Enable, 'on');
         excelEnabled = hasExcelCapability && app.EnableExcelCheckBox.Value;
+        signalExcelWasEnabled = strcmp(app.EnableSignalExcelCheckBox.Enable, 'on');
+        paramExcelWasEnabled = strcmp(app.EnableParamExcelCheckBox.Enable, 'on');
 
         if excelEnabled && signalEnabled
             app.EnableSignalExcelCheckBox.Enable = 'on';
+            if ~signalExcelWasEnabled && ~app.EnableSignalExcelCheckBox.Value
+                app.EnableSignalExcelCheckBox.Value = true;
+            end
         else
             app.EnableSignalExcelCheckBox.Enable = 'off';
             app.EnableSignalExcelCheckBox.Value = false;
@@ -145,6 +148,9 @@ app.UIFigure.Visible = 'on';
 
         if excelEnabled && parameterEnabled
             app.EnableParamExcelCheckBox.Enable = 'on';
+            if ~paramExcelWasEnabled && ~app.EnableParamExcelCheckBox.Value
+                app.EnableParamExcelCheckBox.Value = true;
+            end
         else
             app.EnableParamExcelCheckBox.Enable = 'off';
             app.EnableParamExcelCheckBox.Value = false;
@@ -210,6 +216,9 @@ app.UIFigure.Visible = 'on';
             app.BatchRenameRules = rules;
             app.BatchRuleCountLabel.Text = sprintf('已加载 %d 条规则', length(rules));
             log(sprintf('批量规则加载成功，共 %d 条规则。', length(rules)));
+            for ruleIdx = 1:length(rules)
+                log(sprintf('%s --> %s', rules{ruleIdx}.old, rules{ruleIdx}.new));
+            end
         catch ME
             errordlg(['加载批量Excel失败: ' ME.message], '错误');
             log(['加载批量Excel失败: ' ME.message]);
@@ -761,6 +770,10 @@ app.UIFigure.Visible = 'on';
 
         app.LogArea.Value = [currentLog; {fullMessage}];
         drawnow;
+        try
+            scroll(app.LogArea, 'bottom');
+        catch
+        end
         if writeToFile
             app.DetailedLog{end+1} = fullMessage;
         end
