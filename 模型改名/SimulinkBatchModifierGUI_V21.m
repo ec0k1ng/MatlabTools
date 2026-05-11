@@ -770,11 +770,6 @@ app.UIFigure.Visible = 'on';
 
         app.LogArea.Value = [currentLog; {fullMessage}];
         drawnow;
-        try
-            scroll(app.LogArea, 'bottom');
-        catch
-            % 兼容旧版 MATLAB：不支持滚动接口时静默跳过。
-        end
         if writeToFile
             app.DetailedLog{end+1} = fullMessage;
         end
