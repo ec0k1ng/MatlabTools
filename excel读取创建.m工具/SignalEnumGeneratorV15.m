@@ -964,7 +964,7 @@ set(fig, 'UserData', appData);
 
         errorLog = cell(0, 1);
         warningLog = cell(0, 1);
-        generatedVarNames = cell(1, 0);
+        generatedVarNames = cell(0, 1);
 
         scriptMap = containers.Map();
         scriptOrder = {};
@@ -1250,7 +1250,7 @@ set(fig, 'UserData', appData);
                             aliasObj.Description = sprintf('Custom numeric type created from Excel: %s -> %s', typeName, baseType);
                         end
                         assignin('base', typeName, aliasObj);
-                        varNames{1, end+1} = typeName;
+                        varNames = appendCellRow(varNames, {typeName});
                         lines = {
                             sprintf('%% 自定义类型: %s', typeName);
                             sprintf('%s = Simulink.AliasType;', typeName);
@@ -1404,7 +1404,7 @@ set(fig, 'UserData', appData);
                     end
                     busObj.Elements = [elemArray{:}];
                     assignin('base', busName, busObj);
-                    varNames{1, end+1} = busName;
+                    varNames = appendCellRow(varNames, {busName});
                     busLines = {};
                     busLines{end+1} = sprintf('%% 总线: %s', busName);
                     busLines{end+1} = sprintf('%s = Simulink.Bus;', busName);
@@ -1445,7 +1445,7 @@ set(fig, 'UserData', appData);
                             sig.Description = sprintf('Signal for bus %s element %s', busName, elem.name);
                         end
                         assignin('base', signalName, sig);
-                        varNames{1, end+1} = signalName;
+                        varNames = appendCellRow(varNames, {signalName});
                         signalLines = {};
                         signalLines{end+1} = sprintf('%% 总线成员信号: %s (来自总线 %s)', signalName, busName);
                         signalLines{end+1} = sprintf('%s = Simulink.Signal;', signalName);
@@ -1646,7 +1646,7 @@ set(fig, 'UserData', appData);
                         end
                         param.Value = enumValue;
                         assignin('base', varName, param);
-                        varNames{1, end+1} = varName;
+                        varNames = appendCellRow(varNames, {varName});
                         lines = {
                             sprintf('%% 枚举参数: %s', varName);
                             sprintf('%s = Simulink.Parameter;', varName);
@@ -1686,7 +1686,7 @@ set(fig, 'UserData', appData);
                             param.Description = description;
                         end
                         assignin('base', varName, param);
-                        varNames{1, end+1} = varName;
+                        varNames = appendCellRow(varNames, {varName});
                         lines = {
                             sprintf('%% 参数: %s', varName);
                             sprintf('%s = Simulink.Parameter;', varName);
@@ -1777,7 +1777,7 @@ set(fig, 'UserData', appData);
                         sig.Description = description;
                     end
                     assignin('base', sigName, sig);
-                    varNames{1, end+1} = sigName;
+                    varNames = appendCellRow(varNames, {sigName});
                     lines = {
                         sprintf('%% 信号: %s', sigName);
                         sprintf('%s = Simulink.Signal;', sigName);
@@ -1994,7 +1994,7 @@ set(fig, 'UserData', appData);
             end
             tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens', 'once');
             if ~isempty(tokens)
-                varNames{1, end+1} = tokens{1};
+                varNames = appendCellRow(varNames, {tokens{1}});
             end
         end
         if ~isempty(varNames)
