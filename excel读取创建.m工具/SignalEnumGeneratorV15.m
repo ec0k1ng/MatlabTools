@@ -2072,13 +2072,13 @@ end
 
 function items = appendCellColumn(items, newItems)
 if isempty(items), items = cell(0, 1); else items = items(:); end
-if isempty(newItems), return; end
+if isempty(newItems), newItems = cell(0, 1); end
 items = [items; newItems(:)];
 end
 
 function items = appendCellRow(items, newItems)
 if isempty(items), items = cell(1, 0); else items = reshape(items, 1, []); end
-if isempty(newItems), return; end
+if isempty(newItems), newItems = cell(1, 0); end
 items = [items, reshape(newItems, 1, [])];
 end
 
