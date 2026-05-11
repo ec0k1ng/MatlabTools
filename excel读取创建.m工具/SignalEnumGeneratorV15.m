@@ -873,9 +873,11 @@ set(fig, 'UserData', appData);
     end
 
     function focusMainWindow()
-        if isLegacyUI
-            figure(fig);
+        if ~isvalid(fig)
+            return;
         end
+        drawnow;
+        figure(fig);
         drawnow;
     end
 
@@ -962,9 +964,9 @@ set(fig, 'UserData', appData);
             return;
         end
 
-        errorLog = {};
-        warningLog = {};
-        generatedVarNames = {};
+        errorLog = cell(0, 1);
+        warningLog = cell(0, 1);
+        generatedVarNames = cell(0, 1);
 
         scriptMap = containers.Map();
         scriptOrder = {};
@@ -1000,12 +1002,17 @@ set(fig, 'UserData', appData);
                 fprintf('\n--- 处理枚举文件 (%d/%d): %s ---\n', enumIdx, length(appData.enumFiles), enumFile);
                 try
                     [newVars, errors, warnings] = processEnumFile(enumFile, appData.targetPath);
-                    generatedVarNames = [generatedVarNames, newVars];
-                    errorLog = [errorLog; errors];
-                    warningLog = [warningLog; warnings];
+                    generatedVarNames = appendCellRow(generatedVarNames, newVars);
+                    errorLog = appendCellColumn(errorLog, errors);
+                    warningLog = appendCellColumn(warningLog, warnings);
                 catch ME
-                    errorLog{end+1} = sprintf('枚举文件处理失败: %s - %s', enumFile, ME.message);
+                    errorLog = appendCellMessage(errorLog, sprintf('枚举文件处理失败: %s - %s', enumFile, ME.message));
                 end
+            end
+
+            if ~isempty(appData.enumFiles) && ~isempty(appData.targetPath)
+                addpath(appData.targetPath);
+                rehash;
             end
 
             for intfIdx = 1:length(appData.interfaceFiles)
@@ -1013,11 +1020,11 @@ set(fig, 'UserData', appData);
                 fprintf('\n--- 处理 Interface 文件 (%d/%d): %s ---\n', intfIdx, length(appData.interfaceFiles), intfFile);
                 try
                     [newVars, errors, warnings] = processInterfaceFile(intfFile);
-                    generatedVarNames = [generatedVarNames, newVars];
-                    errorLog = [errorLog; errors];
-                    warningLog = [warningLog; warnings];
+                    generatedVarNames = appendCellRow(generatedVarNames, newVars);
+                    errorLog = appendCellColumn(errorLog, errors);
+                    warningLog = appendCellColumn(warningLog, warnings);
                 catch ME
-                    errorLog{end+1} = sprintf('Interface文件处理失败: %s - %s', intfFile, ME.message);
+                    errorLog = appendCellMessage(errorLog, sprintf('Interface文件处理失败: %s - %s', intfFile, ME.message));
                 end
             end
 
@@ -1026,11 +1033,11 @@ set(fig, 'UserData', appData);
                 fprintf('\n--- 处理变量定义文件 (%d/%d): %s ---\n', varIdx, length(appData.varFiles), varFile);
                 try
                     [newVars, errors, warnings] = processVariableDefinitionFile(varFile);
-                    generatedVarNames = [generatedVarNames, newVars];
-                    errorLog = [errorLog; errors];
-                    warningLog = [warningLog; warnings];
+                    generatedVarNames = appendCellRow(generatedVarNames, newVars);
+                    errorLog = appendCellColumn(errorLog, errors);
+                    warningLog = appendCellColumn(warningLog, warnings);
                 catch ME
-                    errorLog{end+1} = sprintf('变量定义文件处理失败: %s - %s', varFile, ME.message);
+                    errorLog = appendCellMessage(errorLog, sprintf('变量定义文件处理失败: %s - %s', varFile, ME.message));
                 end
             end
 
@@ -1070,7 +1077,7 @@ set(fig, 'UserData', appData);
             for fileIdx = 1:length(filePaths)
                 scriptFile = filePaths{fileIdx};
                 if ~exist(scriptFile, 'file')
-                    warningLog{end+1} = sprintf('附加脚本不存在，已跳过: %s', scriptFile);
+                    warningLog = appendCellMessage(warningLog, sprintf('附加脚本不存在，已跳过: %s', scriptFile));
                     continue;
                 end
                 try
@@ -1081,17 +1088,17 @@ set(fig, 'UserData', appData);
                     lines{end+1} = sprintf('%% ===== 结束: %s =====', scriptFile);
                     lines{end+1} = '';
                 catch ME
-                    warningLog{end+1} = sprintf('读取附加脚本失败 %s: %s', scriptFile, ME.message);
+                    warningLog = appendCellMessage(warningLog, sprintf('读取附加脚本失败 %s: %s', scriptFile, ME.message));
                 end
             end
         end
 
         % ==================== 嵌套辅助函数 ====================
         function [varNames, errors, warnings] = processEnumFile(excelFile, targetPath)
-            varNames = {}; errors = {}; warnings = {};
+            varNames = cell(1, 0); errors = cell(0, 1); warnings = cell(0, 1);
             try
                 [enumGroups, enumErrors] = parseEnumSheet(excelFile);
-                errors = [errors; enumErrors];
+                errors = appendCellColumn(errors, enumErrors);
                 if ~isempty(enumGroups)
                     if ~exist(targetPath, 'dir'), mkdir(targetPath); end
                     for enumGroupIdx = 1:length(enumGroups)
@@ -1100,7 +1107,7 @@ set(fig, 'UserData', appData);
                         filePath = fullfile(targetPath, [className, '.m']);
                         fid = fopen(filePath, 'w');
                         if fid == -1
-                            errors{end+1} = sprintf('无法创建枚举文件: %s', className);
+                            errors = appendCellMessage(errors, sprintf('无法创建枚举文件: %s', className));
                             continue;
                         end
                         fprintf(fid, '%% %s 枚举类定义\n', className);
@@ -1121,43 +1128,43 @@ set(fig, 'UserData', appData);
                     end
                 end
             catch ME
-                errors{end+1} = sprintf('解析枚举sheet失败: %s', ME.message);
+                errors = appendCellMessage(errors, sprintf('解析枚举sheet失败: %s', ME.message));
             end
             try
                 [aliasVars, aliasErrors, aliasWarnings] = processNumericSheet(excelFile);
-                varNames = [varNames, aliasVars];
-                errors = [errors; aliasErrors];
-                warnings = [warnings; aliasWarnings];
+                varNames = appendCellRow(varNames, aliasVars);
+                errors = appendCellColumn(errors, aliasErrors);
+                warnings = appendCellColumn(warnings, aliasWarnings);
             catch ME
-                errors{end+1} = sprintf('处理numeric sheet失败: %s', ME.message);
+                errors = appendCellMessage(errors, sprintf('处理numeric sheet失败: %s', ME.message));
             end
             try
                 [busVars, busErrors, busWarnings] = processBusSheet(excelFile);
-                varNames = [varNames, busVars];
-                errors = [errors; busErrors];
-                warnings = [warnings; busWarnings];
+                varNames = appendCellRow(varNames, busVars);
+                errors = appendCellColumn(errors, busErrors);
+                warnings = appendCellColumn(warnings, busWarnings);
             catch ME
-                errors{end+1} = sprintf('处理bus sheet失败: %s', ME.message);
+                errors = appendCellMessage(errors, sprintf('处理bus sheet失败: %s', ME.message));
             end
         end
 
         function [enumGroups, errors] = parseEnumSheet(excelFile)
-            enumGroups = {}; errors = {};
+            enumGroups = {}; errors = cell(0, 1);
             try
                 [~, ~, rawData] = xlsread(excelFile, 'enumeration');
                 if isempty(rawData)
-                    errors{end+1} = '无法读取 "enumeration" sheet';
+                    errors = appendCellMessage(errors, '无法读取 "enumeration" sheet');
                     return;
                 end
                 [headerRowIdx, headers] = findHeaderRow(rawData, {'ConvName'});
                 if headerRowIdx == 0
-                    errors{end+1} = '未找到 ConvName 列';
+                    errors = appendCellMessage(errors, '未找到 ConvName 列');
                     return;
                 end
                 convNameCol = findColumnIndex(headers, {'ConvName'});
                 descCol = findColumnIndex(headers, {'Description', '描述'});
                 if convNameCol == 0
-                    errors{end+1} = '未找到 ConvName 列';
+                    errors = appendCellMessage(errors, '未找到 ConvName 列');
                     return;
                 end
                 enumMap = containers.Map();
@@ -1189,12 +1196,12 @@ set(fig, 'UserData', appData);
                 end
                 enumGroups = values(enumMap);
             catch ME
-                errors{end+1} = sprintf('解析枚举sheet异常: %s', ME.message);
+                errors = appendCellMessage(errors, sprintf('解析枚举sheet异常: %s', ME.message));
             end
         end
 
         function [varNames, errors, warnings] = processNumericSheet(excelFile)
-            varNames = {}; errors = {}; warnings = {};
+            varNames = cell(1, 0); errors = cell(0, 1); warnings = cell(0, 1);
             try
                 [~, ~, rawData] = xlsread(excelFile, 'numeric');
                 if isempty(rawData) || size(rawData, 1) < 2
@@ -1202,14 +1209,14 @@ set(fig, 'UserData', appData);
                 end
                 [headerRowIdx, headers] = findHeaderRow(rawData, {'ConvName', 'DataType'});
                 if headerRowIdx == 0
-                    warnings{end+1} = sprintf('%s: numeric sheet 未找到 ConvName/DataType 列，跳过', excelFile);
+                    warnings = appendCellMessage(warnings, sprintf('%s: numeric sheet 未找到 ConvName/DataType 列，跳过', excelFile));
                     return;
                 end
                 convNameCol = findColumnIndex(headers, {'ConvName'});
                 dataTypeCol = findColumnIndex(headers, {'DataType'});
                 descCol = findColumnIndex(headers, {'Description', '描述'});
                 if convNameCol == 0 || dataTypeCol == 0
-                    warnings{end+1} = sprintf('%s: numeric sheet 缺少必需列，跳过', excelFile);
+                    warnings = appendCellMessage(warnings, sprintf('%s: numeric sheet 缺少必需列，跳过', excelFile));
                     return;
                 end
                 dataRows = rawData(headerRowIdx+1:end, :);
@@ -1245,7 +1252,7 @@ set(fig, 'UserData', appData);
                             aliasObj.Description = sprintf('Custom numeric type created from Excel: %s -> %s', typeName, baseType);
                         end
                         assignin('base', typeName, aliasObj);
-                        varNames{end+1} = typeName;
+                        varNames = appendCellRow(varNames, {typeName});
                         lines = {
                             sprintf('%% 自定义类型: %s', typeName);
                             sprintf('%s = Simulink.AliasType;', typeName);
@@ -1256,18 +1263,18 @@ set(fig, 'UserData', appData);
                         recordScriptLine(typeName, lines);
                         fprintf('   [OK] 创建自定义类型: %s (本质类型: %s)\n', typeName, baseType);
                     catch ME
-                        errors{end+1} = sprintf('创建AliasType失败 %s: %s', typeName, ME.message);
+                        errors = appendCellMessage(errors, sprintf('创建AliasType失败 %s: %s', typeName, ME.message));
                     end
                 end
             catch ME
                 if ~strcmp(ME.identifier, 'MATLAB:xlsread:SheetNotFound')
-                    errors{end+1} = sprintf('处理numeric sheet失败: %s', ME.message);
+                    errors = appendCellMessage(errors, sprintf('处理numeric sheet失败: %s', ME.message));
                 end
             end
         end
 
         function [varNames, errors, warnings] = processBusSheet(excelFile)
-            varNames = {}; errors = {}; warnings = {};
+            varNames = cell(1, 0); errors = cell(0, 1); warnings = cell(0, 1);
             try
                 [~, ~, rawData] = xlsread(excelFile, 'bus');
                 if isempty(rawData) || size(rawData, 1) < 2
@@ -1275,7 +1282,7 @@ set(fig, 'UserData', appData);
                 end
                 [headerRowIdx, headers] = findHeaderRow(rawData, {'BusName', 'ElementName', 'Typedef'});
                 if headerRowIdx == 0
-                    warnings{end+1} = sprintf('%s: bus sheet 未找到 BusName/ElementName/Typedef 列，跳过', excelFile);
+                    warnings = appendCellMessage(warnings, sprintf('%s: bus sheet 未找到 BusName/ElementName/Typedef 列，跳过', excelFile));
                     return;
                 end
                 busNameCol = findColumnIndex(headers, {'BusName'});
@@ -1286,7 +1293,7 @@ set(fig, 'UserData', appData);
                 elemDescCol = findColumnIndex(headers, {'ElementDescription', '元素描述', 'Description', '描述'});
                 initValCol = findColumnIndex(headers, {'InitialValue', '初始值'});
                 if busNameCol == 0 || elemNameCol == 0 || typeDefCol == 0
-                    warnings{end+1} = sprintf('%s: bus sheet 缺少必需列，跳过', excelFile);
+                    warnings = appendCellMessage(warnings, sprintf('%s: bus sheet 缺少必需列，跳过', excelFile));
                     return;
                 end
                 dataRows = rawData(headerRowIdx+1:end, :);
@@ -1399,7 +1406,7 @@ set(fig, 'UserData', appData);
                     end
                     busObj.Elements = [elemArray{:}];
                     assignin('base', busName, busObj);
-                    varNames{end+1} = busName;
+                    varNames = appendCellRow(varNames, {busName});
                     busLines = {};
                     busLines{end+1} = sprintf('%% 总线: %s', busName);
                     busLines{end+1} = sprintf('%s = Simulink.Bus;', busName);
@@ -1440,7 +1447,7 @@ set(fig, 'UserData', appData);
                             sig.Description = sprintf('Signal for bus %s element %s', busName, elem.name);
                         end
                         assignin('base', signalName, sig);
-                        varNames{end+1} = signalName;
+                        varNames = appendCellRow(varNames, {signalName});
                         signalLines = {};
                         signalLines{end+1} = sprintf('%% 总线成员信号: %s (来自总线 %s)', signalName, busName);
                         signalLines{end+1} = sprintf('%s = Simulink.Signal;', signalName);
@@ -1465,13 +1472,13 @@ set(fig, 'UserData', appData);
                 end
             catch ME
                 if ~strcmp(ME.identifier, 'MATLAB:xlsread:SheetNotFound')
-                    errors{end+1} = sprintf('处理bus sheet失败: %s', ME.message);
+                    errors = appendCellMessage(errors, sprintf('处理bus sheet失败: %s', ME.message));
                 end
             end
         end
 
         function [varNames, errors, warnings] = processInterfaceFile(excelFile)
-            varNames = {}; errors = {}; warnings = {};
+            varNames = cell(1, 0); errors = cell(0, 1); warnings = cell(0, 1);
             sheets = {'CAL', 'NVV', 'IN', 'OUT', 'MP'};
             for sheetIdx = 1:length(sheets)
                 sheetName = sheets{sheetIdx};
@@ -1485,17 +1492,17 @@ set(fig, 'UserData', appData);
                     else
                         [vars, errs, warns] = processSignalSheet(rawData, excelFile);
                     end
-                    varNames = [varNames, vars];
-                    errors = [errors; errs];
-                    warnings = [warnings; warns];
+                    varNames = appendCellRow(varNames, vars);
+                    errors = appendCellColumn(errors, errs);
+                    warnings = appendCellColumn(warnings, warns);
                 catch ME
-                    errors{end+1} = sprintf('工作表 %s 处理失败: %s', sheetName, ME.message);
+                    errors = appendCellMessage(errors, sprintf('工作表 %s 处理失败: %s', sheetName, ME.message));
                 end
             end
         end
 
         function [varNames, errors, warnings] = processCalNvvSheet(rawData, numData, srcFile)
-            varNames = {}; errors = {}; warnings = {};
+            varNames = cell(1, 0); errors = cell(0, 1); warnings = cell(0, 1);
             if isempty(rawData) || size(rawData,1) < 2
                 return;
             end
@@ -1511,7 +1518,7 @@ set(fig, 'UserData', appData);
             widthCol = findColumnIndex(headers, {'width'});
             descCol = findColumnIndex(headers, {'Description', '描述'});
             if nameCol == 0
-                warnings{end+1} = sprintf('%s: 未找到Name列，跳过', srcFile);
+                warnings = appendCellMessage(warnings, sprintf('%s: 未找到Name列，跳过', srcFile));
                 return;
             end
             dataRows = rawData(2:end, :);
@@ -1529,7 +1536,7 @@ set(fig, 'UserData', appData);
                 end
                 [valid, errMsg] = validateDataType(dataTypeRaw);
                 if ~valid
-                    errors{end+1} = sprintf('参数 %s 数据类型无效: %s', varName, errMsg);
+                    errors = appendCellMessage(errors, sprintf('参数 %s 数据类型无效: %s', varName, errMsg));
                     continue;
                 end
                 width = 1;
@@ -1590,7 +1597,7 @@ set(fig, 'UserData', appData);
                     enumClassName = matlab.lang.makeValidName(enumClassName);
                     try
                         if ~exist(enumClassName, 'class')
-                            errors{end+1} = sprintf('枚举类 %s 未找到，参数 %s 创建失败', enumClassName, varName);
+                            errors = appendCellMessage(errors, sprintf('枚举类 %s 未找到，参数 %s 创建失败', enumClassName, varName));
                             continue;
                         end
                         param = Simulink.Parameter;
@@ -1606,11 +1613,11 @@ set(fig, 'UserData', appData);
                                 if ~isempty(idx)
                                     enumValue = members(idx);
                                 else
-                                    warnings{end+1} = sprintf('数值 %d 未匹配枚举 %s，使用第一个成员', defaultValue, enumClassName);
+                                    warnings = appendCellMessage(warnings, sprintf('数值 %d 未匹配枚举 %s，使用第一个成员', defaultValue, enumClassName));
                                     enumValue = members(1);
                                 end
                             else
-                                errors{end+1} = sprintf('枚举类 %s 无成员', enumClassName);
+                                errors = appendCellMessage(errors, sprintf('枚举类 %s 无成员', enumClassName));
                                 continue;
                             end
                         elseif ischar(defaultValue)
@@ -1631,17 +1638,17 @@ set(fig, 'UserData', appData);
                                 if ~isempty(idx)
                                     enumValue = members(idx);
                                 else
-                                    errors{end+1} = sprintf('枚举类 %s 中未找到成员 %s', enumClassName, memberName);
+                                    errors = appendCellMessage(errors, sprintf('枚举类 %s 中未找到成员 %s', enumClassName, memberName));
                                     continue;
                                 end
                             end
                         else
-                            errors{end+1} = sprintf('参数 %s 默认值类型不支持', varName);
+                            errors = appendCellMessage(errors, sprintf('参数 %s 默认值类型不支持', varName));
                             continue;
                         end
                         param.Value = enumValue;
                         assignin('base', varName, param);
-                        varNames{end+1} = varName;
+                        varNames = appendCellRow(varNames, {varName});
                         lines = {
                             sprintf('%% 枚举参数: %s', varName);
                             sprintf('%s = Simulink.Parameter;', varName);
@@ -1656,7 +1663,7 @@ set(fig, 'UserData', appData);
                         recordScriptLine(varName, lines);
                         fprintf('   [OK] 创建枚举参数: %s\n', varName);
                     catch ME
-                        errors{end+1} = sprintf('创建枚举参数失败 %s: %s', varName, ME.message);
+                        errors = appendCellMessage(errors, sprintf('创建枚举参数失败 %s: %s', varName, ME.message));
                     end
                 else
                     try
@@ -1681,7 +1688,7 @@ set(fig, 'UserData', appData);
                             param.Description = description;
                         end
                         assignin('base', varName, param);
-                        varNames{end+1} = varName;
+                        varNames = appendCellRow(varNames, {varName});
                         lines = {
                             sprintf('%% 参数: %s', varName);
                             sprintf('%s = Simulink.Parameter;', varName);
@@ -1696,14 +1703,14 @@ set(fig, 'UserData', appData);
                         recordScriptLine(varName, lines);
                         fprintf('   [OK] 创建参数: %s\n', varName);
                     catch ME
-                        errors{end+1} = sprintf('创建参数失败 %s: %s', varName, ME.message);
+                        errors = appendCellMessage(errors, sprintf('创建参数失败 %s: %s', varName, ME.message));
                     end
                 end
             end
         end
 
         function [varNames, errors, warnings] = processSignalSheet(rawData, srcFile)
-            varNames = {}; errors = {}; warnings = {};
+            varNames = cell(1, 0); errors = cell(0, 1); warnings = cell(0, 1);
             if isempty(rawData) || size(rawData,1) < 2
                 return;
             end
@@ -1718,7 +1725,7 @@ set(fig, 'UserData', appData);
             initCol = findColumnIndex(headers, {'defaultvalue', 'default', 'InitialValue'});
             descCol = findColumnIndex(headers, {'Description', '描述'});
             if nameCol == 0
-                warnings{end+1} = sprintf('%s: 未找到Name列，跳过', srcFile);
+                warnings = appendCellMessage(warnings, sprintf('%s: 未找到Name列，跳过', srcFile));
                 return;
             end
             dataRows = rawData(2:end, :);
@@ -1736,7 +1743,7 @@ set(fig, 'UserData', appData);
                 end
                 [valid, errMsg] = validateDataType(dataType);
                 if ~valid
-                    errors{end+1} = sprintf('信号 %s 数据类型无效: %s', sigName, errMsg);
+                    errors = appendCellMessage(errors, sprintf('信号 %s 数据类型无效: %s', sigName, errMsg));
                     continue;
                 end
                 initVal = '0';
@@ -1772,7 +1779,7 @@ set(fig, 'UserData', appData);
                         sig.Description = description;
                     end
                     assignin('base', sigName, sig);
-                    varNames{end+1} = sigName;
+                    varNames = appendCellRow(varNames, {sigName});
                     lines = {
                         sprintf('%% 信号: %s', sigName);
                         sprintf('%s = Simulink.Signal;', sigName);
@@ -1800,17 +1807,17 @@ set(fig, 'UserData', appData);
                     recordScriptLine(sigName, lines);
                     fprintf('   [OK] 创建 Simulink.Signal: %s\n', sigName);
                 catch ME
-                    errors{end+1} = sprintf('创建信号失败 %s: %s', sigName, ME.message);
+                    errors = appendCellMessage(errors, sprintf('创建信号失败 %s: %s', sigName, ME.message));
                 end
             end
         end
 
         function [varNames, errors, warnings] = processVariableDefinitionFile(excelFile)
-            varNames = {}; errors = {}; warnings = {};
+            varNames = cell(1, 0); errors = cell(0, 1); warnings = cell(0, 1);
             try
                 [~, sheetNames] = xlsfinfo(excelFile);
                 if isempty(sheetNames)
-                    warnings{end+1} = sprintf('文件 %s 无有效工作表，跳过', excelFile);
+                    warnings = appendCellMessage(warnings, sprintf('文件 %s 无有效工作表，跳过', excelFile));
                     return;
                 end
                 for s = 1:length(sheetNames)
@@ -1821,15 +1828,15 @@ set(fig, 'UserData', appData);
                             continue;
                         end
                         [vars, errs, warns] = processCalNvvSheet(rawData, numData, excelFile);
-                        varNames = [varNames, vars];
-                        errors = [errors; errs];
-                        warnings = [warnings; warns];
+                        varNames = appendCellRow(varNames, vars);
+                        errors = appendCellColumn(errors, errs);
+                        warnings = appendCellColumn(warnings, warns);
                     catch ME
-                        errors{end+1} = sprintf('工作表 %s 处理失败: %s', sheetName, ME.message);
+                        errors = appendCellMessage(errors, sprintf('工作表 %s 处理失败: %s', sheetName, ME.message));
                     end
                 end
             catch ME
-                errors{end+1} = sprintf('处理变量定义文件失败: %s', ME.message);
+                errors = appendCellMessage(errors, sprintf('处理变量定义文件失败: %s', ME.message));
             end
         end
 
@@ -1989,7 +1996,7 @@ set(fig, 'UserData', appData);
             end
             tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens', 'once');
             if ~isempty(tokens)
-                varNames{end+1} = tokens{1};
+                varNames = appendCellRow(varNames, {tokens{1}});
             end
         end
         if ~isempty(varNames)
@@ -2063,6 +2070,23 @@ try
 catch
 end
 isBuiltin = false;
+end
+
+function items = appendCellColumn(items, newItems)
+if isempty(items), items = cell(0, 1); else items = items(:); end
+if isempty(newItems), newItems = cell(0, 1); end
+items = [items; newItems(:)];
+end
+
+function items = appendCellRow(items, newItems)
+if isempty(items), items = cell(1, 0); else items = reshape(items, 1, []); end
+if isempty(newItems), newItems = cell(1, 0); end
+items = [items, reshape(newItems, 1, [])];
+end
+
+function items = appendCellMessage(items, message)
+if isempty(items), items = cell(0, 1); else items = items(:); end
+items{end+1, 1} = message;
 end
 
 function val = castScalar(val, dataType)
