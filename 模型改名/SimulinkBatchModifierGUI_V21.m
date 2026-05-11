@@ -59,23 +59,19 @@ app.UIFigure.Visible = 'on';
         scopePanel = uipanel(app.Function1Panel, 'Title', '改名范围', 'Position', [18, 8, 464, 170]);
         app.EnableSignalRenameCheckBox = uicheckbox(scopePanel, 'Text', '信号名', ...
             'Position', [12, 120, 80, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+        uilabel(scopePanel, 'Text', '包含 Inport、Outport 模块名，信号线名，Goto/From 标签，Stateflow 数据名', ...
+            'Position', [38, 94, 414, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
         app.EnableParameterRenameCheckBox = uicheckbox(scopePanel, 'Text', '参数名', ...
-            'Position', [12, 18, 80, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
-        app.EnableInOutCheckBox = uicheckbox(scopePanel, 'Text', 'In/Out模块', ...
-            'Position', [38, 96, 130, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
-        app.EnableLineCheckBox = uicheckbox(scopePanel, 'Text', '信号线', ...
-            'Position', [250, 96, 90, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
-        app.EnableGotoFromCheckBox = uicheckbox(scopePanel, 'Text', 'Goto/From内容', ...
-            'Position', [38, 62, 130, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
-        app.EnableStateflowCheckBox = uicheckbox(scopePanel, 'Text', 'Stateflow', ...
-            'Position', [250, 62, 100, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+            'Position', [12, 52, 80, 22], 'Value', true, 'ValueChangedFcn', @ScopeSelectionChanged);
+        uilabel(scopePanel, 'Text', '包含 Constant 模块 Value 参数，Lookup Table 模块 Table 及 Breakpoints 参数', ...
+            'Position', [38, 26, 420, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
         % 初始化批量数据结构
         app.BatchMode = false;
         app.BatchRenameRules = {};  % cell of struct('old','new')
 
         % --- 其余面板保持不变 ---
         app.Function2Panel = uipanel(app.UIFigure, 'Title', '功能2: 名称规范检查及修正', 'Position', [20, 223, 500, 130]);
-        app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', '启用此功能 (名称规范化)', 'Position', [15, 80, 350, 22], 'Value', true);
+        app.EnableF2CheckBox = uicheckbox(app.Function2Panel, 'Text', '启用此功能 (名称规范化)', 'Position', [15, 80, 350, 22], 'Value', false);
         uilabel(app.Function2Panel, 'Text', '说明: 仅对功能1实际改动过的名称进行规范化修正。', 'Position', [25, 58, 430, 18], 'FontColor', [0 0 0]);
         uilabel(app.Function2Panel, 'Text', '· 信号名称: 首段大写，次段首字母大写，其余小写', 'Position', [25, 38, 430, 18], 'FontColor', [0 0 0]);
         uilabel(app.Function2Panel, 'Text', '· 参数名称: 全部转为大写，并移除空格', 'Position', [25, 16, 430, 18], 'FontColor', [0 0 0]);
@@ -83,26 +79,20 @@ app.UIFigure.Visible = 'on';
         app.ExcelPanel = uipanel(app.UIFigure, 'Title', '功能3: 配套Interface Excel修改', 'Position', [20, 55, 500, 158]);
         app.EnableExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', '启用Excel修改功能', 'Position', [15, 106, 160, 22], 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
         app.ExcelStatusLabel = uilabel(app.ExcelPanel, 'Text', '请先选择模型文件...', 'Position', [190, 106, 295, 22], 'HorizontalAlignment', 'left', 'FontWeight', 'bold');
-        app.EnableInOutExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'IN/OUT (随In/Out模块)', ...
-            'Position', [15, 78, 170, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
-        uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 IN / OUT sheet', ...
-            'Position', [210, 78, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
-        app.EnableMpExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'MP (随信号线)', ...
-            'Position', [15, 50, 130, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
-        uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 MP sheet', ...
-            'Position', [210, 50, 255, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
-        app.EnableCalNvvExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'CAL/NVV (随参数名)', ...
-            'Position', [15, 20, 180, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+        app.EnableSignalExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'IN / OUT / MP（信号）', ...
+            'Position', [15, 66, 180, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
+        uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 IN / OUT / MP sheet', ...
+            'Position', [210, 66, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
+        app.EnableParamExcelCheckBox = uicheckbox(app.ExcelPanel, 'Text', 'CAL / NVV（参数）', ...
+            'Position', [15, 30, 170, 22], 'Value', true, 'Enable', 'off', 'ValueChangedFcn', @ScopeSelectionChanged);
         uilabel(app.ExcelPanel, 'Text', '同步 Interface Excel 中的 CAL / NVV sheet', ...
-            'Position', [210, 20, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
-        app.ExcelScopeHintLabel = uilabel(app.ExcelPanel, 'Text', '提示: 先选择模型并启用功能3后，附属Excel选项才可勾选', ...
-            'Position', [15, 130, 470, 18], 'HorizontalAlignment', 'right', 'FontSize', 10, 'FontColor', [0.6 0.6 0.6], 'Visible', 'off');
+            'Position', [210, 30, 275, 18], 'FontSize', 10, 'FontColor', [0.45 0.45 0.45]);
 
-        app.ProgressBar = uigauge(app.UIFigure, 'linear', 'Position', [20, 12, 990, 34]);
+        app.ProgressBar = uigauge(app.UIFigure, 'linear', 'Position', [20, 12, 950, 34]);
         app.ProgressBar.Limits = [0 100];
         app.ProgressBar.Value = 0;
         app.ProgressBar.MajorTicks = [0 25 50 75 100];
-        app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [1012, 18, 50, 22], 'Text', '0%');
+        app.ProgressLabel = uilabel(app.UIFigure, 'HorizontalAlignment', 'center', 'Position', [978, 18, 84, 22], 'Text', '0%');
         app.RunButton = uibutton(app.UIFigure, 'push', 'Text', '开始执行', 'Position', [1068, 8, 192, 42], 'FontSize', 14, 'FontWeight', 'bold', 'ButtonPushedFcn', @RunButtonPushed, 'Enable', 'off');
 
         app.LogArea = uitextarea(app.UIFigure, 'Editable', 'off', 'Position', [540, 55, 720, 700], 'Value', '');
@@ -140,62 +130,33 @@ app.UIFigure.Visible = 'on';
 
     function refreshScopeControls()
         signalEnabled = app.EnableSignalRenameCheckBox.Value;
+        parameterEnabled = app.EnableParameterRenameCheckBox.Value;
         hasExcelCapability = strcmp(app.EnableExcelCheckBox.Enable, 'on');
         excelEnabled = hasExcelCapability && app.EnableExcelCheckBox.Value;
+        signalExcelWasEnabled = strcmp(app.EnableSignalExcelCheckBox.Enable, 'on');
+        paramExcelWasEnabled = strcmp(app.EnableParamExcelCheckBox.Enable, 'on');
 
-        app.EnableInOutCheckBox.Enable = onOff(signalEnabled);
-        app.EnableLineCheckBox.Enable = onOff(signalEnabled);
-        app.EnableGotoFromCheckBox.Enable = onOff(signalEnabled);
-        app.EnableStateflowCheckBox.Enable = onOff(signalEnabled);
-
-        app.EnableInOutExcelCheckBox.Enable = 'off';
-        app.EnableMpExcelCheckBox.Enable = 'off';
-        app.EnableCalNvvExcelCheckBox.Enable = 'off';
-
-        if ~hasExcelCapability
-            app.ExcelScopeHintLabel.Text = '提示: 先选择模型并找到配套Excel后，附属Excel选项才可勾选';
-        elseif ~excelEnabled
-            app.ExcelScopeHintLabel.Text = '提示: 启用功能3后，附属Excel选项才可勾选';
-        elseif signalEnabled && app.EnableInOutCheckBox.Value
-            app.EnableInOutExcelCheckBox.Enable = 'on';
-        end
-
-        if excelEnabled && signalEnabled && app.EnableLineCheckBox.Value
-            app.EnableMpExcelCheckBox.Enable = 'on';
-        end
-
-        if excelEnabled && app.EnableParameterRenameCheckBox.Value
-            app.EnableCalNvvExcelCheckBox.Enable = 'on';
-        end
-
-        if excelEnabled
-            % 保留用户当前勾选，仅通过 Enable 状态控制是否可选。
-        end
-
-        if excelEnabled
-            if signalEnabled && app.EnableInOutCheckBox.Value
-                if signalEnabled && app.EnableLineCheckBox.Value
-                    if app.EnableParameterRenameCheckBox.Value
-                        app.ExcelScopeHintLabel.Text = '提示: 可单独取消附属Excel选项，只改模型不改对应Excel';
-                    else
-                        app.ExcelScopeHintLabel.Text = '提示: 参数名未启用，CAL/NVV不会同步修改';
-                    end
-                else
-                    app.ExcelScopeHintLabel.Text = '提示: 信号线未启用，MP不会同步修改';
-                end
-            else
-                app.ExcelScopeHintLabel.Text = '提示: In/Out模块未启用，IN/OUT不会同步修改';
+        if excelEnabled && signalEnabled
+            app.EnableSignalExcelCheckBox.Enable = 'on';
+            if ~signalExcelWasEnabled
+                app.EnableSignalExcelCheckBox.Value = true;
             end
+        else
+            app.EnableSignalExcelCheckBox.Enable = 'off';
+            app.EnableSignalExcelCheckBox.Value = false;
+        end
+
+        if excelEnabled && parameterEnabled
+            app.EnableParamExcelCheckBox.Enable = 'on';
+            if ~paramExcelWasEnabled
+                app.EnableParamExcelCheckBox.Value = true;
+            end
+        else
+            app.EnableParamExcelCheckBox.Enable = 'off';
+            app.EnableParamExcelCheckBox.Value = false;
         end
     end
 
-    function value = onOff(flag)
-        if flag
-            value = 'on';
-        else
-            value = 'off';
-        end
-    end
 
 % --- 批量Excel选择回调 (兼容旧版MATLAB，无列名要求) ---
     function SelectBatchExcelButtonPushed(~, ~)
@@ -255,6 +216,9 @@ app.UIFigure.Visible = 'on';
             app.BatchRenameRules = rules;
             app.BatchRuleCountLabel.Text = sprintf('已加载 %d 条规则', length(rules));
             log(sprintf('批量规则加载成功，共 %d 条规则。', length(rules)));
+            for ruleIdx = 1:length(rules)
+                log(sprintf('%s --> %s', rules{ruleIdx}.old, rules{ruleIdx}.new));
+            end
         catch ME
             errordlg(['加载批量Excel失败: ' ME.message], '错误');
             log(['加载批量Excel失败: ' ME.message]);
@@ -387,30 +351,9 @@ app.UIFigure.Visible = 'on';
     end
 
     function tf = hasAnyEnabledRenameScope()
-        tf = isSignalScopeEnabled('inout') || isSignalScopeEnabled('line') || ...
-            isSignalScopeEnabled('gotofrom') || isSignalScopeEnabled('stateflow') || ...
-            app.EnableParameterRenameCheckBox.Value;
+        tf = app.EnableSignalRenameCheckBox.Value || app.EnableParameterRenameCheckBox.Value;
     end
 
-    function tf = isSignalScopeEnabled(scopeName)
-        if ~app.EnableSignalRenameCheckBox.Value
-            tf = false;
-            return;
-        end
-
-        switch lower(scopeName)
-            case 'inout'
-                tf = app.EnableInOutCheckBox.Value;
-            case 'line'
-                tf = app.EnableLineCheckBox.Value;
-            case 'gotofrom'
-                tf = app.EnableGotoFromCheckBox.Value;
-            case 'stateflow'
-                tf = app.EnableStateflowCheckBox.Value;
-            otherwise
-                tf = false;
-        end
-    end
 
     function tf = shouldProcessExcelSheet(sheetName)
         if ~app.EnableExcelCheckBox.Value
@@ -419,12 +362,10 @@ app.UIFigure.Visible = 'on';
         end
 
         switch upper(sheetName)
-            case {'IN', 'OUT'}
-                tf = isSignalScopeEnabled('inout') && app.EnableInOutExcelCheckBox.Value;
-            case 'MP'
-                tf = isSignalScopeEnabled('line') && app.EnableMpExcelCheckBox.Value;
+            case {'IN', 'OUT', 'MP'}
+                tf = app.EnableSignalRenameCheckBox.Value && app.EnableSignalExcelCheckBox.Value;
             case {'CAL', 'NVV'}
-                tf = app.EnableParameterRenameCheckBox.Value && app.EnableCalNvvExcelCheckBox.Value;
+                tf = app.EnableParameterRenameCheckBox.Value && app.EnableParamExcelCheckBox.Value;
             otherwise
                 tf = false;
         end
@@ -468,7 +409,7 @@ app.UIFigure.Visible = 'on';
                     end
                 end
             else
-                if isSignalScopeEnabled('inout') && any(strcmp(blockType, {'Inport', 'Outport'}))
+                if app.EnableSignalRenameCheckBox.Value && any(strcmp(blockType, {'Inport', 'Outport'}))
                     originalName = get_param(handle, 'Name');
                     finalName = calculateFinalName(originalName, 'signal');
                     if ~strcmp(originalName, finalName)
@@ -481,7 +422,7 @@ app.UIFigure.Visible = 'on';
                 if app.EnableParameterRenameCheckBox.Value && strcmp(blockType, 'Constant')
                     paramsToModify = {'Value'};
                     paramType = 'parameter';
-                elseif isSignalScopeEnabled('gotofrom') && any(strcmp(blockType, {'Goto', 'From'}))
+                elseif app.EnableSignalRenameCheckBox.Value && any(strcmp(blockType, {'Goto', 'From'}))
                     paramsToModify = {'GotoTag'};
                     paramType = 'signal';
                 end
@@ -506,7 +447,7 @@ app.UIFigure.Visible = 'on';
         for i = 1:length(lineHandles)
             handle = lineHandles(i);
 
-            if ~isSignalScopeEnabled('line')
+            if ~app.EnableSignalRenameCheckBox.Value
                 updateProgress();
                 continue;
             end
@@ -561,7 +502,7 @@ app.UIFigure.Visible = 'on';
 
         for i = 1:length(sfObjects)
             sfObj = sfObjects{i};
-            if isSignalScopeEnabled('stateflow')
+            if app.EnableSignalRenameCheckBox.Value
                 if isprop(sfObj, 'Name') && ~isempty(sfObj.Name)
                     originalName = sfObj.Name;
                     finalName = calculateFinalName(originalName, 'signal');
