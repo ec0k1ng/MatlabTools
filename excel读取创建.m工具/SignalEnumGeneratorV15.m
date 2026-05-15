@@ -2003,7 +2003,7 @@ set(fig, 'UserData', appData);
         if ~isempty(commentStart)
             line = line(1:commentStart-1);
         end
-        assignPos = regexp(line, '(?<![<>=~])=(?!=)', 'once');
+        assignPos = regexp(line, '(?<![<>=~!])=(?!=)', 'once');
         if isempty(assignPos)
             return;
         end
