@@ -1966,6 +1966,17 @@ set(fig, 'UserData', appData);
             end
         end
 
+        [propertyOverrideMap, extraScriptKeepMask] = buildPropertyOverrideMap(extraScriptLines);
+        if propertyOverrideMap.Count > 0
+            [keepGeneratedLines, appliedGeneratedPropertyKeys] = applyPropertyOverrides(keepGeneratedLines, propertyOverrideMap);
+            [keepMergedLines, appliedMergedPropertyKeys] = applyPropertyOverrides(keepMergedLines, propertyOverrideMap);
+            appliedPropertyKeys = [appliedGeneratedPropertyKeys, appliedMergedPropertyKeys];
+            if ~isempty(appliedPropertyKeys)
+                appliedPropertyKeys = unique(appliedPropertyKeys, 'stable');
+            end
+            extraScriptLines = filterPendingPropertyOverrides(extraScriptLines, extraScriptKeepMask, appliedPropertyKeys);
+        end
+
         fid = fopen(scriptPath, 'w');
         if fid == -1, error('无法写入脚本文件'); end
         for i = 1:length(keepGeneratedLines), fprintf(fid, '%s\n', keepGeneratedLines{i}); end
@@ -1983,8 +1994,8 @@ set(fig, 'UserData', appData);
         fprintf('[OK] 已合并生成加载脚本: %s\n', scriptPath);
     end
 
-    function varName = getTopLevelAssignedVarName(line)
-        varName = '';
+    function lhs = getAssignedLhs(line)
+        lhs = '';
         if ~ischar(line)
             return;
         end
@@ -1997,6 +2008,79 @@ set(fig, 'UserData', appData);
             return;
         end
         lhs = strtrim(line(1:assignPos-1));
+    end
+
+    function [overrideMap, keepMask] = buildPropertyOverrideMap(lines)
+        overrideMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
+        keepMask = true(size(lines));
+        if isempty(lines)
+            return;
+        end
+        seenKeys = containers.Map('KeyType', 'char', 'ValueType', 'logical');
+        for lineIdx = length(lines):-1:1
+            lhs = getAssignedLhs(lines{lineIdx});
+            if isempty(lhs) || isvarname(lhs)
+                continue;
+            end
+            if ~isKey(seenKeys, lhs)
+                seenKeys(lhs) = true;
+                overrideMap(lhs) = lines{lineIdx};
+            else
+                keepMask(lineIdx) = false;
+            end
+        end
+    end
+
+    function [lines, appliedKeys] = applyPropertyOverrides(lines, overrideMap)
+        appliedKeys = {};
+        if isempty(lines) || overrideMap.Count == 0
+            return;
+        end
+        for lineIdx = 1:length(lines)
+            lhs = getAssignedLhs(lines{lineIdx});
+            if isempty(lhs) || isvarname(lhs)
+                continue;
+            end
+            if isKey(overrideMap, lhs)
+                lines{lineIdx} = overrideMap(lhs);
+                appliedKeys = appendCellRow(appliedKeys, {lhs});
+            end
+        end
+        if ~isempty(appliedKeys)
+            appliedKeys = unique(appliedKeys, 'stable');
+        end
+    end
+
+    function lines = filterPendingPropertyOverrides(lines, keepMask, appliedKeys)
+        if isempty(lines)
+            return;
+        end
+        appliedKeySet = containers.Map('KeyType', 'char', 'ValueType', 'logical');
+        for keyIdx = 1:length(appliedKeys)
+            appliedKeySet(appliedKeys{keyIdx}) = true;
+        end
+        filteredLines = {};
+        for lineIdx = 1:length(lines)
+            line = lines{lineIdx};
+            lhs = getAssignedLhs(line);
+            if isempty(lhs) || isvarname(lhs)
+                filteredLines{end+1} = line;
+                continue;
+            end
+            if ~keepMask(lineIdx)
+                continue;
+            end
+            if isKey(appliedKeySet, lhs)
+                continue;
+            end
+            filteredLines{end+1} = line;
+        end
+        lines = filteredLines;
+    end
+
+    function varName = getTopLevelAssignedVarName(line)
+        varName = '';
+        lhs = getAssignedLhs(line);
         if isempty(lhs) || ~isvarname(lhs)
             return;
         end
