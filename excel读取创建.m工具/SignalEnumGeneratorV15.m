@@ -1890,7 +1890,7 @@ set(fig, 'UserData', appData);
 
         newVarSet = unique([generatedVars, extractAssignedVarNames(extraScriptLines)]);
 
-        if isempty(newVarSet) && exist(scriptPath, 'file')
+        if isempty(newVarSet) && isempty(extraScriptLines) && exist(scriptPath, 'file')
             fprintf('[OK] 未检测到新的变量或附加脚本，保持现有加载脚本不变: %s\n', scriptPath);
             return;
         end
