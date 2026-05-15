@@ -2010,6 +2010,10 @@ set(fig, 'UserData', appData);
         lhs = strtrim(line(1:assignPos-1));
     end
 
+    function isPropertyAssignment = isPropertyAssignmentLhs(lhs)
+        isPropertyAssignment = ~isempty(lhs) && ~isvarname(lhs);
+    end
+
     function [overrideMap, keepMask] = buildPropertyOverrideMap(lines)
         overrideMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
         keepMask = true(size(lines));
@@ -2019,7 +2023,7 @@ set(fig, 'UserData', appData);
         seenKeys = containers.Map('KeyType', 'char', 'ValueType', 'logical');
         for lineIdx = length(lines):-1:1
             lhs = getAssignedLhs(lines{lineIdx});
-            if isempty(lhs) || isvarname(lhs)
+            if ~isPropertyAssignmentLhs(lhs)
                 continue;
             end
             if ~isKey(seenKeys, lhs)
@@ -2038,7 +2042,7 @@ set(fig, 'UserData', appData);
         end
         for lineIdx = 1:length(lines)
             lhs = getAssignedLhs(lines{lineIdx});
-            if isempty(lhs) || isvarname(lhs)
+            if ~isPropertyAssignmentLhs(lhs)
                 continue;
             end
             if isKey(overrideMap, lhs)
@@ -2063,7 +2067,7 @@ set(fig, 'UserData', appData);
         for lineIdx = 1:length(lines)
             line = lines{lineIdx};
             lhs = getAssignedLhs(line);
-            if isempty(lhs) || isvarname(lhs)
+            if ~isPropertyAssignmentLhs(lhs)
                 filteredLines{end+1} = line;
                 continue;
             end
