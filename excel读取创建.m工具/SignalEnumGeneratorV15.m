@@ -2141,7 +2141,7 @@ set(fig, 'UserData', appData);
 
     function isContinuation = endsWithContinuation(line)
         trimmedLine = strtrim(line);
-        isContinuation = length(trimmedLine) >= 3 && strcmp(trimmedLine(end-2:end), '...');
+        isContinuation = endsWith(trimmedLine, '...');
     end
 
     function line = stripLineComment(line)
@@ -2180,7 +2180,11 @@ set(fig, 'UserData', appData);
             charIdx = charIdx + 1;
             writeIdx = writeIdx + 1;
         end
-        line = output(1:max(writeIdx - 1, 0));
+        if writeIdx <= 1
+            line = '';
+        else
+            line = output(1:writeIdx-1);
+        end
     end
 
     function varName = getTopLevelAssignedVarName(line)
