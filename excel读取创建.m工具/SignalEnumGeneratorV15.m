@@ -1890,7 +1890,7 @@ set(fig, 'UserData', appData);
 
         newVarSet = unique([generatedVars, extractAssignedVarNames(extraScriptLines)]);
 
-        if isempty(newVarSet) && exist(scriptPath, 'file')
+        if isempty(newVarSet) && isempty(extraScriptLines) && exist(scriptPath, 'file')
             fprintf('[OK] 未检测到新的变量或附加脚本，保持现有加载脚本不变: %s\n', scriptPath);
             return;
         end
@@ -1926,15 +1926,14 @@ set(fig, 'UserData', appData);
                 i = i + 1;
                 continue;
             end
-            tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens');
-            if ~isempty(tokens)
-                varName = tokens{1}{1};
+            varName = getTopLevelAssignedVarName(line);
+            if ~isempty(varName)
                 if ismember(varName, newVarSet)
                     i = i + 1;
                     while i <= length(lines)
                         nextLine = lines{i};
                         if strcmp(nextLine, generatedMarker) || strcmp(nextLine, mergedMarker), break; end
-                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
+                        if ~isempty(getTopLevelAssignedVarName(nextLine)), break; end
                         i = i + 1;
                     end
                     continue;
@@ -1948,7 +1947,7 @@ set(fig, 'UserData', appData);
                     while i <= length(lines)
                         nextLine = lines{i};
                         if strcmp(nextLine, generatedMarker) || strcmp(nextLine, mergedMarker), break; end
-                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
+                        if ~isempty(getTopLevelAssignedVarName(nextLine)), break; end
                         if inMergedSection
                             keepMergedLines{end+1} = nextLine;
                         else
@@ -1965,6 +1964,17 @@ set(fig, 'UserData', appData);
                 end
                 i = i + 1;
             end
+        end
+
+        [propertyOverrideMap, extraScriptKeepMask] = buildPropertyOverrideMap(extraScriptLines);
+        if propertyOverrideMap.Count > 0
+            [keepGeneratedLines, appliedGeneratedPropertyKeys] = applyPropertyOverrides(keepGeneratedLines, propertyOverrideMap);
+            [keepMergedLines, appliedMergedPropertyKeys] = applyPropertyOverrides(keepMergedLines, propertyOverrideMap);
+            appliedPropertyKeys = [appliedGeneratedPropertyKeys, appliedMergedPropertyKeys];
+            if ~isempty(appliedPropertyKeys)
+                appliedPropertyKeys = unique(appliedPropertyKeys, 'stable');
+            end
+            extraScriptLines = filterPendingPropertyOverrides(extraScriptLines, extraScriptKeepMask, appliedPropertyKeys);
         end
 
         fid = fopen(scriptPath, 'w');
@@ -1984,19 +1994,112 @@ set(fig, 'UserData', appData);
         fprintf('[OK] 已合并生成加载脚本: %s\n', scriptPath);
     end
 
+    function lhs = getAssignedLhs(line)
+        lhs = '';
+        if ~ischar(line)
+            return;
+        end
+        commentStart = regexp(line, '%', 'once');
+        if ~isempty(commentStart)
+            line = line(1:commentStart-1);
+        end
+        assignPos = regexp(line, '(?<![<>=~!])=(?!=)', 'once');
+        if isempty(assignPos)
+            return;
+        end
+        lhs = strtrim(line(1:assignPos-1));
+    end
+
+    function isPropertyAssignment = isPropertyAssignmentLhs(lhs)
+        isPropertyAssignment = ~isempty(lhs) && ~isvarname(lhs);
+    end
+
+    function [overrideMap, keepMask] = buildPropertyOverrideMap(lines)
+        overrideMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
+        keepMask = true(size(lines));
+        if isempty(lines)
+            return;
+        end
+        seenKeys = containers.Map('KeyType', 'char', 'ValueType', 'logical');
+        for lineIdx = length(lines):-1:1
+            lhs = getAssignedLhs(lines{lineIdx});
+            if ~isPropertyAssignmentLhs(lhs)
+                continue;
+            end
+            if ~isKey(seenKeys, lhs)
+                seenKeys(lhs) = true;
+                overrideMap(lhs) = lines{lineIdx};
+            else
+                keepMask(lineIdx) = false;
+            end
+        end
+    end
+
+    function [lines, appliedKeys] = applyPropertyOverrides(lines, overrideMap)
+        appliedKeys = {};
+        if isempty(lines) || overrideMap.Count == 0
+            return;
+        end
+        for lineIdx = 1:length(lines)
+            lhs = getAssignedLhs(lines{lineIdx});
+            if ~isPropertyAssignmentLhs(lhs)
+                continue;
+            end
+            if isKey(overrideMap, lhs)
+                lines{lineIdx} = overrideMap(lhs);
+                appliedKeys = appendCellRow(appliedKeys, {lhs});
+            end
+        end
+        if ~isempty(appliedKeys)
+            appliedKeys = unique(appliedKeys, 'stable');
+        end
+    end
+
+    function lines = filterPendingPropertyOverrides(lines, keepMask, appliedKeys)
+        if isempty(lines)
+            return;
+        end
+        appliedKeySet = containers.Map('KeyType', 'char', 'ValueType', 'logical');
+        for keyIdx = 1:length(appliedKeys)
+            appliedKeySet(appliedKeys{keyIdx}) = true;
+        end
+        filteredLines = {};
+        for lineIdx = 1:length(lines)
+            line = lines{lineIdx};
+            lhs = getAssignedLhs(line);
+            if ~isPropertyAssignmentLhs(lhs)
+                filteredLines{end+1} = line;
+                continue;
+            end
+            if ~keepMask(lineIdx)
+                continue;
+            end
+            if isKey(appliedKeySet, lhs)
+                continue;
+            end
+            filteredLines{end+1} = line;
+        end
+        lines = filteredLines;
+    end
+
+    function varName = getTopLevelAssignedVarName(line)
+        varName = '';
+        lhs = getAssignedLhs(line);
+        if isempty(lhs) || ~isvarname(lhs)
+            return;
+        end
+        varName = lhs;
+    end
+
     function varNames = extractAssignedVarNames(lines)
         varNames = {};
         if isempty(lines)
             return;
         end
         for lineIdx = 1:length(lines)
-            line = lines{lineIdx};
-            if ~ischar(line)
-                continue;
-            end
-            tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens', 'once');
-            if ~isempty(tokens)
-                varNames = appendCellRow(varNames, {tokens{1}});
+            varName = getTopLevelAssignedVarName(lines{lineIdx});
+            if ~isempty(varName)
+                varNames = appendCellRow(varNames, {varName});
             end
         end
         if ~isempty(varNames)
