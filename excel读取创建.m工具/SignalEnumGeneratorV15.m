@@ -1926,15 +1926,14 @@ set(fig, 'UserData', appData);
                 i = i + 1;
                 continue;
             end
-            tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens');
-            if ~isempty(tokens)
-                varName = tokens{1}{1};
+            varName = getTopLevelAssignedVarName(line);
+            if ~isempty(varName)
                 if ismember(varName, newVarSet)
                     i = i + 1;
                     while i <= length(lines)
                         nextLine = lines{i};
                         if strcmp(nextLine, generatedMarker) || strcmp(nextLine, mergedMarker), break; end
-                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
+                        if ~isempty(getTopLevelAssignedVarName(nextLine)), break; end
                         i = i + 1;
                     end
                     continue;
@@ -1948,7 +1947,7 @@ set(fig, 'UserData', appData);
                     while i <= length(lines)
                         nextLine = lines{i};
                         if strcmp(nextLine, generatedMarker) || strcmp(nextLine, mergedMarker), break; end
-                        if ~isempty(regexp(nextLine, '^\s*(\w+)\s*=', 'tokens')), break; end
+                        if ~isempty(getTopLevelAssignedVarName(nextLine)), break; end
                         if inMergedSection
                             keepMergedLines{end+1} = nextLine;
                         else
@@ -1984,19 +1983,35 @@ set(fig, 'UserData', appData);
         fprintf('[OK] 已合并生成加载脚本: %s\n', scriptPath);
     end
 
+    function varName = getTopLevelAssignedVarName(line)
+        varName = '';
+        if ~ischar(line)
+            return;
+        end
+        commentStart = regexp(line, '%', 'once');
+        if ~isempty(commentStart)
+            line = line(1:commentStart-1);
+        end
+        assignPos = regexp(line, '(?<![<>=~])=(?!=)', 'once');
+        if isempty(assignPos)
+            return;
+        end
+        lhs = strtrim(line(1:assignPos-1));
+        if isempty(lhs) || ~isvarname(lhs)
+            return;
+        end
+        varName = lhs;
+    end
+
     function varNames = extractAssignedVarNames(lines)
         varNames = {};
         if isempty(lines)
             return;
         end
         for lineIdx = 1:length(lines)
-            line = lines{lineIdx};
-            if ~ischar(line)
-                continue;
-            end
-            tokens = regexp(line, '^\s*(\w+)\s*=', 'tokens', 'once');
-            if ~isempty(tokens)
-                varNames = appendCellRow(varNames, {tokens{1}});
+            varName = getTopLevelAssignedVarName(lines{lineIdx});
+            if ~isempty(varName)
+                varNames = appendCellRow(varNames, {varName});
             end
         end
         if ~isempty(varNames)
