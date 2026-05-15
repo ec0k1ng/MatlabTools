@@ -1999,10 +1999,7 @@ set(fig, 'UserData', appData);
         if ~ischar(line)
             return;
         end
-        commentStart = regexp(line, '%', 'once');
-        if ~isempty(commentStart)
-            line = line(1:commentStart-1);
-        end
+        line = stripLineComment(line);
         assignPos = regexp(line, '(?<![<>=~!])=(?!=)', 'once');
         if isempty(assignPos)
             return;
@@ -2015,22 +2012,20 @@ set(fig, 'UserData', appData);
     end
 
     function [overrideMap, keepMask] = buildPropertyOverrideMap(lines)
-        overrideMap = containers.Map('KeyType', 'char', 'ValueType', 'char');
-        keepMask = true(size(lines));
+        overrideMap = containers.Map('KeyType', 'char', 'ValueType', 'any');
+        keepMask = true(length(lines), 1);
         if isempty(lines)
             return;
         end
+        propertyBlocks = collectPropertyAssignmentBlocks(lines);
         seenKeys = containers.Map('KeyType', 'char', 'ValueType', 'logical');
-        for lineIdx = length(lines):-1:1
-            lhs = getAssignedLhs(lines{lineIdx});
-            if ~isPropertyAssignmentLhs(lhs)
-                continue;
-            end
-            if ~isKey(seenKeys, lhs)
-                seenKeys(lhs) = true;
-                overrideMap(lhs) = lines{lineIdx};
+        for blockIdx = length(propertyBlocks):-1:1
+            block = propertyBlocks{blockIdx};
+            if ~isKey(seenKeys, block.lhs)
+                seenKeys(block.lhs) = true;
+                overrideMap(block.lhs) = block.lines;
             else
-                keepMask(lineIdx) = false;
+                keepMask(block.startIdx:block.endIdx) = false;
             end
         end
     end
@@ -2040,16 +2035,26 @@ set(fig, 'UserData', appData);
         if isempty(lines) || overrideMap.Count == 0
             return;
         end
-        for lineIdx = 1:length(lines)
+        mergedLines = cell(0, 1);
+        lineIdx = 1;
+        while lineIdx <= length(lines)
             lhs = getAssignedLhs(lines{lineIdx});
             if ~isPropertyAssignmentLhs(lhs)
+                mergedLines{end+1, 1} = lines{lineIdx};
+                lineIdx = lineIdx + 1;
                 continue;
             end
+            [statementLines, endIdx] = collectStatementLines(lines, lineIdx);
             if isKey(overrideMap, lhs)
-                lines{lineIdx} = overrideMap(lhs);
+                overrideLines = overrideMap(lhs);
+                mergedLines = [mergedLines; overrideLines(:)];
                 appliedKeys = appendCellRow(appliedKeys, {lhs});
+            else
+                mergedLines = [mergedLines; statementLines(:)];
             end
+            lineIdx = endIdx + 1;
         end
+        lines = mergedLines;
         if ~isempty(appliedKeys)
             appliedKeys = unique(appliedKeys, 'stable');
         end
@@ -2063,23 +2068,123 @@ set(fig, 'UserData', appData);
         for keyIdx = 1:length(appliedKeys)
             appliedKeySet(appliedKeys{keyIdx}) = true;
         end
-        filteredLines = {};
-        for lineIdx = 1:length(lines)
+        filteredLines = cell(0, 1);
+        lineIdx = 1;
+        while lineIdx <= length(lines)
             line = lines{lineIdx};
             lhs = getAssignedLhs(line);
             if ~isPropertyAssignmentLhs(lhs)
-                filteredLines{end+1} = line;
+                if keepMask(lineIdx)
+                    filteredLines{end+1, 1} = line;
+                end
+                lineIdx = lineIdx + 1;
                 continue;
             end
-            if ~keepMask(lineIdx)
-                continue;
+            [statementLines, endIdx] = collectStatementLines(lines, lineIdx);
+            if all(keepMask(lineIdx:endIdx)) && ~isKey(appliedKeySet, lhs)
+                filteredLines = [filteredLines; statementLines(:)];
             end
-            if isKey(appliedKeySet, lhs)
-                continue;
-            end
-            filteredLines{end+1} = line;
+            lineIdx = endIdx + 1;
         end
         lines = filteredLines;
+    end
+
+    function propertyBlocks = collectPropertyAssignmentBlocks(lines)
+        propertyBlocks = {};
+        if isempty(lines)
+            return;
+        end
+        lineIdx = 1;
+        while lineIdx <= length(lines)
+            lhs = getAssignedLhs(lines{lineIdx});
+            if ~isPropertyAssignmentLhs(lhs)
+                lineIdx = lineIdx + 1;
+                continue;
+            end
+            [statementLines, endIdx] = collectStatementLines(lines, lineIdx);
+            propertyBlocks{end+1} = struct('lhs', lhs, 'startIdx', lineIdx, 'endIdx', endIdx, 'lines', {statementLines(:)});
+            lineIdx = endIdx + 1;
+        end
+    end
+
+    function [statementLines, endIdx] = collectStatementLines(lines, startIdx)
+        statementLines = cell(0, 1);
+        endIdx = startIdx;
+        nestingDepth = 0;
+        isContinuation = false;
+        lineIdx = startIdx;
+        while lineIdx <= length(lines)
+            currentLine = lines{lineIdx};
+            statementLines{end+1, 1} = currentLine;
+            [nestingDepth, isContinuation] = updateStatementState(nestingDepth, currentLine);
+            endIdx = lineIdx;
+            if nestingDepth <= 0 && ~isContinuation
+                break;
+            end
+            lineIdx = lineIdx + 1;
+        end
+    end
+
+    function [nestingDepth, isContinuation] = updateStatementState(nestingDepth, line)
+        code = stripLineComment(line);
+        isContinuation = endsWithContinuation(code);
+        for charIdx = 1:length(code)
+            ch = code(charIdx);
+            switch ch
+                case {'[', '(', '{'}
+                    nestingDepth = nestingDepth + 1;
+                case {']', ')', '}'}
+                    nestingDepth = max(nestingDepth - 1, 0);
+            end
+        end
+    end
+
+    function isContinuation = endsWithContinuation(line)
+        trimmedLine = strtrim(line);
+        isContinuation = endsWith(trimmedLine, '...');
+    end
+
+    function line = stripLineComment(line)
+        if ~ischar(line) || isempty(line)
+            line = '';
+            return;
+        end
+        chars = char(line);
+        output = repmat(' ', 1, length(chars));
+        inString = false;
+        charIdx = 1;
+        writeIdx = 1;
+        while charIdx <= length(chars)
+            ch = chars(charIdx);
+            if ch == ''''
+                if inString && charIdx < length(chars) && chars(charIdx + 1) == ''''
+                    output(writeIdx:writeIdx+1) = '  ';
+                    charIdx = charIdx + 2;
+                    writeIdx = writeIdx + 2;
+                    continue;
+                end
+                inString = ~inString;
+                output(writeIdx) = ' ';
+                charIdx = charIdx + 1;
+                writeIdx = writeIdx + 1;
+                continue;
+            end
+            if ch == '%' && ~inString
+                break;
+            end
+            if inString
+                output(writeIdx) = ' ';
+            else
+                output(writeIdx) = ch;
+            end
+            charIdx = charIdx + 1;
+            writeIdx = writeIdx + 1;
+        end
+        if writeIdx <= 1
+            line = '';
+        else
+            line = output(1:writeIdx-1);
+        end
     end
 
     function varName = getTopLevelAssignedVarName(line)
