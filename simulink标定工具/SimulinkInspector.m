@@ -498,44 +498,204 @@ classdef SimulinkInspector < handle
             raw = obj.DataTable.Data;
             [R, C] = size(raw);
 
+            % 使用基于原始变量类型的转换函数，保证写回时保留原始数值类型
             if strcmp(obj.Mode, '2D')
-                newX = zeros(1, C-1);
-                for j = 2:C
-                    newX(j-1) = str2double(raw{1, j});
-                end
+                % X轴：第一行，第2列开始
+                newXcell = raw(1, 2:C);
+                newX = obj.castToType(newXcell, obj.XVar);
 
-                newY = zeros(R-1, 1);
-                for i = 2:R
-                    newY(i-1) = str2double(raw{i, 1});
-                end
+                % Y轴：第一列，第2行开始
+                newYcell = raw(2:R, 1);
+                newY = obj.castToType(newYcell, obj.YVar);
 
-                newT = obj.castToType(raw(2:end, 2:end));
+                % 表格主体
+                newT = obj.castToType(raw(2:end, 2:end), obj.TableVar);
+
                 obj.setWValue(obj.XVar, newX);
                 obj.setWValue(obj.YVar, newY);
                 obj.setWValue(obj.TableVar, newT);
             elseif strcmp(obj.Mode, '1D')
-                newX = zeros(1, C);
-                for j = 1:C
-                    newX(j) = str2double(raw{1, j});
-                end
+                newXcell = raw(1, 1:C);
+                newX = obj.castToType(newXcell, obj.XVar);
 
-                newT = obj.castToType(raw(2, :));
+                newTcell = raw(2, 1:C);
+                newT = obj.castToType(newTcell, obj.TableVar);
+
                 obj.setWValue(obj.XVar, newX);
                 obj.setWValue(obj.TableVar, newT);
             else
-                obj.setWValue(obj.TableVar, obj.castToType(raw));
+                obj.setWValue(obj.TableVar, obj.castToType(raw, obj.TableVar));
             end
         end
 
-        function out = castToType(obj, cellData)
+        function out = castToType(obj, cellData, varName)
+            % 将表格元胞数据转换为与工作区变量相同的数据类型并返回
+            if nargin < 3, varName = ''; end
             [R, C] = size(cellData);
+
+            % 枚举特殊处理
             if obj.IsEnum
                 sample = evalin('base', [obj.EnumClass, '.', cellData{1,1}]);
                 out = repmat(sample, R, C);
-                for i=1:R, for j=1:C, out(i,j) = evalin('base', [obj.EnumClass, '.', cellData{i,j}]); end; end
+                for i=1:R
+                    for j=1:C
+                        out(i,j) = evalin('base', [obj.EnumClass, '.', cellData{i,j}]);
+                    end
+                end
+                return;
+            end
+
+            % 先解析为 double（保留 NaN 用于非数值项）
+            nums = nan(R, C);
+            for i = 1:R
+                for j = 1:C
+                    v = cellData{i,j};
+                    if isempty(v)
+                        nums(i,j) = NaN;
+                    elseif isnumeric(v)
+                        nums(i,j) = double(v);
+                    else
+                        try
+                            s = char(v);
+                            n = str2double(s);
+                            if ~isnan(n)
+                                nums(i,j) = n;
+                            else
+                                nums(i,j) = NaN;
+                            end
+                        catch
+                            nums(i,j) = NaN;
+                        end
+                    end
+                end
+            end
+
+            % 推断目标类型并尽量保留原始语义（支持内置/别名/NumericType）
+            targetClass = '';
+            try
+                if ~isempty(varName) && isvarname(varName) && evalin('base', sprintf('exist(''%s'', ''var'')', varName))
+                    orig = evalin('base', varName);
+
+                    if isa(orig, 'Simulink.Parameter')
+                        % 优先使用 DataType（若为内置类型）
+                        if isprop(orig, 'DataType') && ~isempty(orig.DataType) && ~startsWith(orig.DataType, 'Enum:') && ~strcmpi(orig.DataType, 'auto')
+                            dt = strtrim(orig.DataType);
+                            dtLower = lower(dt);
+                            builtinTypes = {'double','single','int8','int16','int32','int64','uint8','uint16','uint32','uint64','boolean','logical'};
+                            if any(strcmp(dtLower, builtinTypes))
+                                if strcmp(dtLower, 'boolean')
+                                    targetClass = 'logical';
+                                else
+                                    targetClass = dtLower;
+                                end
+                            else
+                                % 非内置类型（AliasType/NumericType/fixdt等），尽量使用当前 Value 的类作为目标
+                                if isprop(orig, 'Value') && ~isempty(orig.Value)
+                                    if islogical(orig.Value)
+                                        targetClass = 'logical';
+                                    else
+                                        targetClass = class(orig.Value);
+                                    end
+                                else
+                                    % 尝试使用 Simulink API 解析别名类型（若可用）
+                                    aliasName = regexprep(dt, '(?i)^alias:\s*', '');
+                                    aliasName = strtrim(aliasName);
+                                    try
+                                        if exist('Simulink.data.getDataTypeByName', 'file')
+                                            dtInfo = Simulink.data.getDataTypeByName(aliasName);
+                                        elseif exist('Simulink.getDataTypeByName', 'file')
+                                            dtInfo = Simulink.getDataTypeByName(aliasName);
+                                        else
+                                            dtInfo = [];
+                                        end
+                                        if ~isempty(dtInfo) && isstruct(dtInfo) && isfield(dtInfo, 'DataType')
+                                            dti = lower(dtInfo.DataType);
+                                            if strcmp(dti, 'boolean')
+                                                targetClass = 'logical';
+                                            else
+                                                targetClass = dti;
+                                            end
+                                        end
+                                    catch
+                                        % 忽略失败，后续会回退到 Value 或 double
+                                    end
+                                end
+                            end
+
+                        else
+                            % 无明确 DataType，使用实际 Value 的类型
+                            if isprop(orig, 'Value') && ~isempty(orig.Value)
+                                if islogical(orig.Value)
+                                    targetClass = 'logical';
+                                else
+                                    targetClass = class(orig.Value);
+                                end
+                            end
+                        end
+
+                    elseif isa(orig, 'Simulink.Signal')
+                        % 尝试解析 InitialValue（'true'/'false'）或使用实际值
+                        try
+                            if isprop(orig, 'InitialValue') && ~isempty(orig.InitialValue)
+                                sInit = orig.InitialValue;
+                                if ischar(sInit) || isstring(sInit)
+                                    sStr = strtrim(lower(char(sInit)));
+                                    if strcmp(sStr, 'true') || strcmp(sStr, 'false')
+                                        targetClass = 'logical';
+                                    else
+                                        n = str2double(sStr);
+                                        if ~isnan(n)
+                                            targetClass = 'double';
+                                        else
+                                            tmp = obj.getWValue(varName);
+                                            if ~isempty(tmp), targetClass = class(tmp); end
+                                        end
+                                    end
+                                else
+                                    tmp = obj.getWValue(varName);
+                                    if ~isempty(tmp), targetClass = class(tmp); end
+                                end
+                            end
+                        catch
+                        end
+                    else
+                        if isnumeric(orig) || islogical(orig)
+                            targetClass = class(orig);
+                        end
+                    end
+                end
+            catch
+                targetClass = '';
+            end
+
+            if isempty(targetClass)
+                targetClass = 'double';
+            end
+
+            % 根据目标类型进行转换
+            intTypes = {'int8','int16','int32','int64','uint8','uint16','uint32','uint64'};
+            if any(strcmp(targetClass, intTypes))
+                nums(isnan(nums)) = 0;
+                rounded = round(nums);
+                try
+                    minv = double(intmin(targetClass));
+                    maxv = double(intmax(targetClass));
+                    rounded(rounded < minv) = minv;
+                    rounded(rounded > maxv) = maxv;
+                catch
+                end
+                out = cast(rounded, targetClass);
+            elseif strcmp(targetClass, 'logical')
+                nums(isnan(nums)) = 0;
+                out = cast(nums ~= 0, 'logical');
+            elseif strcmp(targetClass, 'single')
+                out = cast(nums, 'single');
             else
-                out = zeros(R, C);
-                for i=1:R, for j=1:C, v = str2double(cellData{i,j}); if isnan(v), v=0; end; out(i,j) = v; end; end
+                try
+                    out = cast(nums, targetClass);
+                catch
+                    out = nums; % fallback to double
+                end
             end
         end
 
@@ -558,9 +718,98 @@ classdef SimulinkInspector < handle
         function setWValue(~, varName, newVal)
             v = evalin('base', varName);
             if isa(v, 'Simulink.Parameter')
+                % 尝试在写回前将 newVal 转换为与原始 Parameter 类型一致的形式
+                try
+                    if isprop(v, 'DataType') && ~isempty(v.DataType) && ~startsWith(v.DataType, 'Enum:')
+                        dt = strtrim(v.DataType);
+                        dtLower = lower(dt);
+                        if strcmp(dtLower, 'boolean') || strcmp(dtLower, 'logical')
+                            if ~islogical(newVal)
+                                newVal = logical(newVal);
+                            end
+                        else
+                            builtins = {'double','single','int8','int16','int32','int64','uint8','uint16','uint32','uint64'};
+                            if any(strcmp(dtLower, builtins))
+                                try
+                                    newVal = cast(double(newVal), dtLower);
+                                catch
+                                end
+                            else
+                                % AliasType / NumericType / fixdt 等，优先参考原来的 Value
+                                if isprop(v, 'Value') && ~isempty(v.Value)
+                                    try
+                                        origVal = v.Value;
+                                        if islogical(origVal)
+                                            newVal = logical(newVal);
+                                        elseif isa(origVal, 'embedded.fi') || isa(origVal, 'fi')
+                                            try
+                                                nt = numerictype(origVal);
+                                                if exist('fi','file')
+                                                    newVal = fi(double(newVal), nt, origVal.Fimath);
+                                                end
+                                            catch
+                                                try
+                                                    newVal = fi(double(newVal), 'Signed', origVal.Signed, 'WordLength', origVal.WordLength, 'FractionLength', origVal.FractionLength);
+                                                catch
+                                                end
+                                            end
+                                        else
+                                            try
+                                                newVal = cast(double(newVal), class(origVal));
+                                            catch
+                                            end
+                                        end
+                                    catch
+                                    end
+                                end
+                            end
+                        end
+                    else
+                        % 无 DataType 信息时，参考现有 Value 的类型
+                        if isprop(v, 'Value') && ~isempty(v.Value)
+                            try
+                                origVal = v.Value;
+                                if islogical(origVal)
+                                    newVal = logical(newVal);
+                                elseif isa(origVal, 'embedded.fi') || isa(origVal, 'fi')
+                                    try
+                                        nt = numerictype(origVal);
+                                        if exist('fi','file')
+                                            newVal = fi(double(newVal), nt, origVal.Fimath);
+                                        end
+                                    catch
+                                    end
+                                else
+                                    try
+                                        newVal = cast(double(newVal), class(origVal));
+                                    catch
+                                    end
+                                end
+                            catch
+                            end
+                        end
+                    end
+                catch
+                end
+
                 v.Value = newVal;
             elseif isa(v, 'Simulink.Signal')
-                v.InitialValue = mat2str(newVal);
+                % 对于 Simulink.Signal，如果是 logical 类型，应写入 'true'/'false' 或 logical(...) 表达式，
+                % 避免将其写为数字字符串导致类型信息丢失。
+                if islogical(newVal)
+                    if isscalar(newVal)
+                        if newVal
+                            v.InitialValue = 'true';
+                        else
+                            v.InitialValue = 'false';
+                        end
+                    else
+                        % 数组逻辑，转换为 logical([...]) 形式
+                        v.InitialValue = ['logical(' mat2str(double(newVal)) ')'];
+                    end
+                else
+                    v.InitialValue = mat2str(newVal);
+                end
             else
                 v = newVal;
             end
@@ -1136,28 +1385,20 @@ classdef SimulinkInspector < handle
         function updateAxisDataInWorkspace(obj, axisType)
             % 从表格数据更新工作区中的坐标轴数据
             data = obj.DataTable.Data;
-
             if strcmp(axisType, 'X')
                 if strcmp(obj.Mode, '2D')
                     % 2D模式：X轴在第一行，第2列开始
-                    newData = zeros(1, size(data, 2) - 1);
-                    for j = 2:size(data, 2)
-                        newData(j-1) = str2double(data{1, j});
-                    end
+                    xCell = data(1, 2:end);
                 else
                     % 1D模式：X轴在第一行
-                    newData = zeros(1, size(data, 2));
-                    for j = 1:size(data, 2)
-                        newData(j) = str2double(data{1, j});
-                    end
+                    xCell = data(1, :);
                 end
+                newData = obj.castToType(xCell, obj.XVar);
                 obj.setWValue(obj.XVar, newData);
             else
-                % Y轴
-                newData = zeros(size(data, 1) - 1, 1);
-                for i = 2:size(data, 1)
-                    newData(i-1) = str2double(data{i, 1});
-                end
+                % Y轴：第一列，第2行开始
+                yCell = data(2:end, 1);
+                newData = obj.castToType(yCell, obj.YVar);
                 obj.setWValue(obj.YVar, newData);
             end
         end
