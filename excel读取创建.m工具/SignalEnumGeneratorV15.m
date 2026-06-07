@@ -1214,6 +1214,10 @@ set(fig, 'UserData', appData);
                 end
                 convNameCol = findColumnIndex(headers, {'ConvName'});
                 dataTypeCol = findColumnIndex(headers, {'DataType'});
+                wordLenCol = findColumnIndex(headers, {'WordLength', 'Word Length', 'Width'});
+                signedCol = findColumnIndex(headers, {'Signedness', 'Signed', 'Signed?'});
+                slopeCol = findColumnIndex(headers, {'Slope'});
+                biasCol = findColumnIndex(headers, {'Bias'});
                 descCol = findColumnIndex(headers, {'Description', '描述'});
                 if convNameCol == 0 || dataTypeCol == 0
                     warnings = appendCellMessage(warnings, sprintf('%s: numeric sheet 缺少必需列，跳过', excelFile));
@@ -1226,16 +1230,24 @@ set(fig, 'UserData', appData);
                     if isempty(typeName) || ~ischar(typeName), continue; end
                     typeName = strtrim(typeName);
                     typeName = matlab.lang.makeValidName(typeName);
-                    if dataTypeCol > size(dataRows, 2), continue; end
-                    baseType = dataRows{row, dataTypeCol};
-                    if isempty(baseType) || ~ischar(baseType)
-                        baseType = 'double';
-                    else
-                        baseType = strtrim(baseType);
+
+                    % read data type cell
+                    baseType = 'double';
+                    if dataTypeCol > 0 && dataTypeCol <= size(dataRows, 2)
+                        dt = dataRows{row, dataTypeCol};
+                        if ~isempty(dt)
+                            if ischar(dt)
+                                baseType = strtrim(dt);
+                            elseif isnumeric(dt)
+                                baseType = num2str(dt);
+                            end
+                        end
                     end
                     if strcmpi(baseType, 'boolean') || strcmpi(baseType, 'bool')
                         baseType = 'boolean';
                     end
+
+                    % read description
                     description = '';
                     if descCol > 0 && descCol <= size(dataRows, 2)
                         desc = dataRows{row, descCol};
@@ -1243,27 +1255,213 @@ set(fig, 'UserData', appData);
                             description = strtrim(desc);
                         end
                     end
-                    try
-                        aliasObj = Simulink.AliasType;
-                        aliasObj.BaseType = baseType;
-                        if ~isempty(description)
-                            aliasObj.Description = description;
-                        else
-                            aliasObj.Description = sprintf('Custom numeric type created from Excel: %s -> %s', typeName, baseType);
+
+                    % parse word length
+                    wordLength = [];
+                    if wordLenCol > 0 && wordLenCol <= size(dataRows, 2)
+                        w = dataRows{row, wordLenCol};
+                        if isnumeric(w) && ~isnan(w) && isscalar(w)
+                            wordLength = round(w);
+                        elseif ischar(w) && ~isempty(str2double(w))
+                            wordLength = round(str2double(w));
                         end
-                        assignin('base', typeName, aliasObj);
+                    end
+
+                    % parse signedness
+                    signedness = [];
+                    if signedCol > 0 && signedCol <= size(dataRows, 2)
+                        s = dataRows{row, signedCol};
+                        if ischar(s)
+                            sstr = lower(strtrim(s));
+                            if any(strcmp(sstr, {'signed','true','1','t','yes','y'}))
+                                signedness = true;
+                            elseif any(strcmp(sstr, {'unsigned','false','0','f','no','n'}))
+                                signedness = false;
+                            end
+                        elseif isnumeric(s) && ~isnan(s)
+                            signedness = logical(s);
+                        end
+                    end
+
+                    % parse slope and bias（支持表达式，如 '1/1000'）
+                    slope = [];
+                    if slopeCol > 0 && slopeCol <= size(dataRows, 2)
+                        sl = dataRows{row, slopeCol};
+                        if isempty(sl)
+                            slope = [];
+                        elseif isnumeric(sl) && ~isnan(sl)
+                            slope = double(sl);
+                        elseif ischar(sl)
+                            sstr = strtrim(sl);
+                            % 先尝试直接转为 double
+                            numval = str2double(sstr);
+                            if ~isnan(numval)
+                                slope = numval;
+                            else
+                                % 尝试用 str2num 解析表达式（可解析 1/1000 等）
+                                try
+                                    numval2 = str2num(sstr); %#ok<ST2NM>
+                                catch
+                                    numval2 = [];
+                                end
+                                if ~isempty(numval2) && isfinite(numval2) && isscalar(numval2)
+                                    slope = double(numval2);
+                                else
+                                    % 最后尝试 eval（尽量少用，作为兜底）
+                                    try
+                                        tmp = eval(sstr);
+                                        if isnumeric(tmp) && isfinite(tmp) && isscalar(tmp)
+                                            slope = double(tmp);
+                                        end
+                                    catch
+                                        slope = [];
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    bias = [];
+                    if biasCol > 0 && biasCol <= size(dataRows, 2)
+                        b = dataRows{row, biasCol};
+                        if isempty(b)
+                            bias = [];
+                        elseif isnumeric(b) && ~isnan(b)
+                            bias = double(b);
+                        elseif ischar(b)
+                            bstr = strtrim(b);
+                            bv = str2double(bstr);
+                            if ~isnan(bv)
+                                bias = bv;
+                            else
+                                try
+                                    bv2 = str2num(bstr); %#ok<ST2NM>
+                                catch
+                                    bv2 = [];
+                                end
+                                if ~isempty(bv2) && isfinite(bv2) && isscalar(bv2)
+                                    bias = double(bv2);
+                                else
+                                    try
+                                        tmpb = eval(bstr);
+                                        if isnumeric(tmpb) && isfinite(tmpb) && isscalar(tmpb)
+                                            bias = double(tmpb);
+                                        end
+                                    catch
+                                        bias = [];
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    try
+                        numObj = Simulink.NumericType;
+                        % default settings
+                        numObj.DataScope = 'Exported';
+                        numObj.DataTypeOverride = 'Inherit';
+                        numObj.FixedExponent = 0;
+
+                        if strcmpi(baseType, 'boolean')
+                            % Boolean type
+                            numObj.DataTypeMode = 'Boolean';
+                            numObj.HeaderFile = 'Asw_Enum_Type.h';
+                            numObj.SignednessBool = false;
+                            numObj.WordLength = 1;
+                            numObj.Slope = 1;
+                            numObj.Bias = 0;
+                        else
+                            % Fixed-point scaling
+                            numObj.DataTypeMode = 'Fixed-point: slope and bias scaling';
+                            % Signedness
+                            if isempty(signedness)
+                                if startsWith(lower(baseType), 'u')
+                                    numObj.SignednessBool = false;
+                                else
+                                    numObj.SignednessBool = true;
+                                end
+                            else
+                                numObj.SignednessBool = signedness;
+                            end
+                            % Word length
+                            if ~isempty(wordLength)
+                                numObj.WordLength = wordLength;
+                            else
+                                switch lower(baseType)
+                                    case 'int8',  numObj.WordLength = 8;
+                                    case 'int16', numObj.WordLength = 16;
+                                    case 'int32', numObj.WordLength = 32;
+                                    case 'int64', numObj.WordLength = 64;
+                                    case 'uint8',  numObj.WordLength = 8;
+                                    case 'uint16', numObj.WordLength = 16;
+                                    case 'uint32', numObj.WordLength = 32;
+                                    case 'uint64', numObj.WordLength = 64;
+                                    case 'single', numObj.WordLength = 32;
+                                    case 'double', numObj.WordLength = 64;
+                                    otherwise, numObj.WordLength = 32;
+                                end
+                            end
+                            % slope & bias（验证并回退到默认值）
+                            if isempty(slope)
+                                sVal = 1;
+                            else
+                                if ~isnumeric(slope) || ~isscalar(slope) || ~isfinite(slope) || slope <= 0
+                                    warnings = appendCellMessage(warnings, sprintf('%s: Slope 值无效，使用默认 Slope=1', typeName));
+                                    sVal = 1;
+                                else
+                                    sVal = double(slope);
+                                end
+                            end
+                            numObj.Slope = sVal;
+                            if isempty(bias)
+                                bVal = 0;
+                            else
+                                if ~isnumeric(bias) || ~isscalar(bias) || ~isfinite(bias)
+                                    warnings = appendCellMessage(warnings, sprintf('%s: Bias 值无效，使用默认 Bias=0', typeName));
+                                    bVal = 0;
+                                else
+                                    bVal = double(bias);
+                                end
+                            end
+                            numObj.Bias = bVal;
+                        end
+
+                        if ~isempty(description)
+                            numObj.Description = description;
+                        else
+                            numObj.Description = sprintf('NumericType created from Excel: %s -> %s', typeName, baseType);
+                        end
+                        numObj.IsAlias = 1;
+                        assignin('base', typeName, numObj);
                         varNames = appendCellRow(varNames, {typeName});
-                        lines = {
-                            sprintf('%% 自定义类型: %s', typeName);
-                            sprintf('%s = Simulink.AliasType;', typeName);
-                            sprintf('%s.BaseType = ''%s'';', typeName, baseType);
-                            sprintf('%s.Description = ''%s'';', typeName, strrep(aliasObj.Description, '''', ''''''));
-                            sprintf('assignin(''base'', ''%s'', %s);', typeName, typeName);
-                            ''};
+
+                        % build script lines
+                        lines = {};
+                        lines{end+1} = sprintf('%% 自定义数值类型: %s', typeName);
+                        lines{end+1} = sprintf('%s = Simulink.NumericType;', typeName);
+                        lines{end+1} = sprintf('%s.Description = ''%s'';', typeName, strrep(numObj.Description, '''', ''''''));
+                        lines{end+1} = sprintf('%s.DataTypeMode = ''%s'';', typeName, numObj.DataTypeMode);
+                        lines{end+1} = sprintf('%s.DataScope = ''%s'';', typeName, numObj.DataScope);
+                        if isprop(numObj, 'HeaderFile') && ~isempty(numObj.HeaderFile)
+                            lines{end+1} = sprintf('%s.HeaderFile = ''%s'';', typeName, numObj.HeaderFile);
+                        end
+                        if numObj.SignednessBool
+                            sstr = 'true';
+                        else
+                            sstr = 'false';
+                        end
+                        lines{end+1} = sprintf('%s.SignednessBool = %s;', typeName, sstr);
+                        lines{end+1} = sprintf('%s.WordLength = %d;', typeName, numObj.WordLength);
+                        lines{end+1} = sprintf('%s.FixedExponent = %d;', typeName, numObj.FixedExponent);
+                        lines{end+1} = sprintf('%s.Slope = %s;', typeName, mat2str(numObj.Slope));
+                        lines{end+1} = sprintf('%s.Bias = %s;', typeName, mat2str(numObj.Bias));
+                        lines{end+1} = sprintf('%s.DataTypeOverride = ''%s'';', typeName, numObj.DataTypeOverride);
+                        lines{end+1} = sprintf('%s.IsAlias = %d;', typeName, double(numObj.IsAlias));
+                        lines{end+1} = sprintf('assignin(''base'', ''%s'', %s);', typeName, typeName);
+                        lines{end+1} = '';
                         recordScriptLine(typeName, lines);
-                        fprintf('   [OK] 创建自定义类型: %s (本质类型: %s)\n', typeName, baseType);
+                        fprintf('   [OK] 创建数值类型: %s (模式: %s)\n', typeName, numObj.DataTypeMode);
                     catch ME
-                        errors = appendCellMessage(errors, sprintf('创建AliasType失败 %s: %s', typeName, ME.message));
+                        errors = appendCellMessage(errors, sprintf('创建NumericType失败 %s: %s', typeName, ME.message));
                     end
                 end
             catch ME
@@ -1534,7 +1732,7 @@ set(fig, 'UserData', appData);
                         dataTypeRaw = strtrim(dt);
                     end
                 end
-                [valid, errMsg] = validateDataType(dataTypeRaw);
+                [valid, dataType, errMsg] = validateDataType(dataTypeRaw);
                 if ~valid
                     errors = appendCellMessage(errors, sprintf('参数 %s 数据类型无效: %s', varName, errMsg));
                     continue;
@@ -1592,8 +1790,8 @@ set(fig, 'UserData', appData);
                         description = strtrim(d);
                     end
                 end
-                if startsWith(dataTypeRaw, 'Enum:', 'IgnoreCase', true)
-                    enumClassName = strtrim(dataTypeRaw(6:end));
+                if startsWith(dataType, 'Enum:', 'IgnoreCase', true)
+                    enumClassName = strtrim(dataType(6:end));
                     enumClassName = matlab.lang.makeValidName(enumClassName);
                     try
                         if ~exist(enumClassName, 'class')
@@ -1622,24 +1820,46 @@ set(fig, 'UserData', appData);
                             end
                         elseif ischar(defaultValue)
                             memberStr = strtrim(defaultValue);
-                            if contains(memberStr, '.')
-                                parts = strsplit(memberStr, '.');
-                                memberName = parts{end};
-                            else
-                                memberName = memberStr;
-                            end
-                            memberName = strrep(memberName, '''', '');
+                            constructed = false;
+                            % 支持 ClassName(number) 构造形式，如: Drbs_Com_Dbf_Req_St_conv(0)
                             try
-                                enumValue = eval([enumClassName '.' memberName]);
+                                tok = regexp(memberStr, '^(\w+)\s*\(\s*(-?\d+)\s*\)$', 'tokens');
+                                if ~isempty(tok) && ~isempty(tok{1})
+                                    clsNameTok = tok{1}{1};
+                                    numTok = tok{1}{2};
+                                    if strcmpi(clsNameTok, enumClassName)
+                                        valNum = str2double(numTok);
+                                        try
+                                            enumValue = eval(sprintf('%s(%d)', enumClassName, round(valNum)));
+                                            constructed = true;
+                                        catch
+                                            constructed = false;
+                                        end
+                                    end
+                                end
                             catch
-                                members = enumeration(enumClassName);
-                                memberNames = arrayfun(@(m) char(m), members, 'UniformOutput', false);
-                                idx = find(strcmpi(memberNames, memberName), 1);
-                                if ~isempty(idx)
-                                    enumValue = members(idx);
+                                constructed = false;
+                            end
+                            if ~constructed
+                                if contains(memberStr, '.')
+                                    parts = strsplit(memberStr, '.');
+                                    memberName = parts{end};
                                 else
-                                    errors = appendCellMessage(errors, sprintf('枚举类 %s 中未找到成员 %s', enumClassName, memberName));
-                                    continue;
+                                    memberName = memberStr;
+                                end
+                                memberName = strrep(memberName, '''', '');
+                                try
+                                    enumValue = eval([enumClassName '.' memberName]);
+                                catch
+                                    members = enumeration(enumClassName);
+                                    memberNames = arrayfun(@(m) char(m), members, 'UniformOutput', false);
+                                    idx = find(strcmpi(memberNames, memberName), 1);
+                                    if ~isempty(idx)
+                                        enumValue = members(idx);
+                                    else
+                                        errors = appendCellMessage(errors, sprintf('枚举类 %s 中未找到成员 %s', enumClassName, memberName));
+                                        continue;
+                                    end
                                 end
                             end
                         else
@@ -1668,11 +1888,11 @@ set(fig, 'UserData', appData);
                 else
                     try
                         param = Simulink.Parameter;
-                        [baseType, isBuiltin] = resolveBaseTypeWithFlag(dataTypeRaw);
+                        [baseType, isBuiltin] = resolveBaseTypeWithFlag(dataType);
                         if isBuiltin
                             param.DataType = baseType;
                         else
-                            param.DataType = dataTypeRaw;
+                            param.DataType = dataType;
                         end
                         if width > 1 && ~isArray && isnumeric(defaultValue) && isscalar(defaultValue)
                             defaultValue = defaultValue * ones(1, width);
@@ -1741,7 +1961,7 @@ set(fig, 'UserData', appData);
                         dataType = strtrim(dt);
                     end
                 end
-                [valid, errMsg] = validateDataType(dataType);
+                [valid, dataType, errMsg] = validateDataType(dataType);
                 if ~valid
                     errors = appendCellMessage(errors, sprintf('信号 %s 数据类型无效: %s', sigName, errMsg));
                     continue;
@@ -1840,37 +2060,94 @@ set(fig, 'UserData', appData);
             end
         end
 
-        function [valid, errMsg] = validateDataType(dataType)
-            valid = true; errMsg = '';
-            dataType = strtrim(dataType);
-            builtinTypes = {'uint8','uint16','uint32','uint64','int8','int16','int32','int64','single','double','logical','boolean'};
-            if ismember(lower(dataType), builtinTypes), return; end
-            if startsWith(dataType, 'Enum:', 'IgnoreCase', true)
-                enumName = strtrim(dataType(6:end));
-                if exist(enumName, 'class')
-                    return;
-                else
-                    valid = false;
-                    errMsg = sprintf('枚举类 %s 不存在', enumName);
-                    return;
-                end
-            end
-            if startsWith(dataType, 'Bus:', 'IgnoreCase', true)
-                busName = strtrim(dataType(5:end));
-                if evalin('base', sprintf('exist(''%s'', ''var'')', busName)) && evalin('base', sprintf('isa(%s, ''Simulink.Bus'')', busName))
-                    return;
-                else
-                    valid = false;
-                    errMsg = sprintf('Bus对象 %s 不存在', busName);
-                    return;
-                end
-            end
-            if evalin('base', sprintf('exist(''%s'', ''var'')', dataType)) && evalin('base', sprintf('isa(%s, ''Simulink.AliasType'')', dataType))
+        function [valid, outType, errMsg] = validateDataType(dataType)
+            % 返回: valid - 是否有效
+            %       outType - 可能被补全后的数据类型字符串（例如 'Enum:MyEnum' / 'Bus:MyBus' / 'double'）
+            %       errMsg - 错误信息
+            valid = true; errMsg = ''; outType = strtrim(dataType);
+            if isempty(outType)
+                outType = 'double';
                 return;
-            else
-                valid = false;
-                errMsg = sprintf('数据类型 %s 不是内置类型、枚举、Bus或已定义的AliasType', dataType);
             end
+
+            builtinTypes = {'uint8','uint16','uint32','uint64','int8','int16','int32','int64','single','double','logical','boolean'};
+            if ismember(lower(outType), builtinTypes)
+                % 标准化内置类型为小写形式（将 bool 视为 boolean）
+                if strcmpi(outType, 'bool'), outType = 'boolean'; else outType = lower(outType); end
+                return;
+            end
+
+            % 明确指定的 Enum: 或 Bus: 前缀
+            if startsWith(outType, 'Enum:', 'IgnoreCase', true)
+                enumName = strtrim(outType(6:end));
+                if isempty(enumName)
+                    valid = false; errMsg = '枚举类名为空'; return;
+                end
+                try
+                    members = enumeration(enumName);
+                    if ~isempty(members)
+                        outType = ['Enum:' enumName];
+                        return;
+                    end
+                catch
+                    if exist(enumName, 'class')
+                        outType = ['Enum:' enumName];
+                        return;
+                    end
+                end
+                valid = false; errMsg = sprintf('枚举类 %s 不存在', enumName); return;
+            end
+
+            if startsWith(outType, 'Bus:', 'IgnoreCase', true)
+                busName = strtrim(outType(5:end));
+                if isempty(busName)
+                    valid = false; errMsg = 'Bus 名为空'; return;
+                end
+                try
+                    if evalin('base', sprintf('exist(''%s'', ''var'')', busName)) && evalin('base', sprintf('isa(%s, ''Simulink.Bus'')', busName))
+                        outType = ['Bus:' busName];
+                        return;
+                    end
+                catch
+                end
+                valid = false; errMsg = sprintf('Bus对象 %s 不存在', busName); return;
+            end
+
+            % 检查是否为工作区中的 AliasType/NumericType
+            try
+                if evalin('base', sprintf('exist(''%s'', ''var'')', outType))
+                    isAlias = false; isNumericType = false;
+                    try isAlias = evalin('base', sprintf('isa(%s, ''Simulink.AliasType'')', outType)); catch, end
+                    try isNumericType = evalin('base', sprintf('isa(%s, ''Simulink.NumericType'')', outType)); catch, end
+                    if isAlias || isNumericType
+                        return;
+                    end
+                end
+            catch
+            end
+
+            % 额外智能补全：若用户直接填写枚举类名或总线名，尝试补全
+            % 1) 检查是否为枚举类名
+            try
+                members = enumeration(outType);
+                if ~isempty(members)
+                    outType = ['Enum:' outType];
+                    return;
+                end
+            catch
+            end
+
+            % 2) 检查是否为总线对象名（工作区变量）
+            try
+                if evalin('base', sprintf('exist(''%s'', ''var'')', outType)) && evalin('base', sprintf('isa(%s, ''Simulink.Bus'')', outType))
+                    outType = ['Bus:' outType];
+                    return;
+                end
+            catch
+            end
+
+            valid = false;
+            errMsg = sprintf('数据类型 %s 不是内置类型、枚举、Bus或已定义的AliasType/NumericType', dataType);
         end
     end
 
